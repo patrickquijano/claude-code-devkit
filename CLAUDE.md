@@ -10,6 +10,14 @@ This file guide Claude Code (claude.ai/code) in this repo.
 
 Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config exist (`.markdownlint.jsonc` + `.markdownlintignore`) — see "Linting and formatting" below. `.claude/` hold local plugin-dev file, git-ignore except `.gitignore`, `settings.json`, `rules/` — plugin piece (skill, agent, hook, command) go there as built, follow `.claude/rules/`.
 
+## Project rules
+
+@LEAN-CTX.md
+@.claude/rules/plugins.md
+@.claude/rules/skills.md
+@.claude/rules/subagents.md
+@.claude/rules/hooks.md
+
 ## Linting and formatting
 
 - Markdown lint: `npx markdownlint-cli2 "**/*.md"` to check, `npx markdownlint-cli2 --fix "**/*.md"` to autofix.
@@ -27,14 +35,7 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
   `dependency_update.md`, `release.md`, `security.md`); GitHub prompt
   pick one when open PR.
 - `.claude/` — local plugin dev workspace, git-ignored except `.gitignore`, `settings.json`, `rules/`.
-  - `.claude/rules/` — plugin component rules, see "Plugin component rules" below.
-
-## Plugin component rules
-
-@.claude/rules/plugins.md
-@.claude/rules/skills.md
-@.claude/rules/subagents.md
-@.claude/rules/hooks.md
+  - `.claude/rules/` — plugin component rules, see "Project rules" below.
 
 ## Branch naming
 
