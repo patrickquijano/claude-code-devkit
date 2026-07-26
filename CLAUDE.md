@@ -18,6 +18,18 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
 @.claude/rules/subagents.md
 @.claude/rules/hooks.md
 
+## Session behavior
+
+- New session: activate `/caveman ultra` skill (fallback `/caveman`) before any task.
+- Output: brief, concise, structured format.
+- No hallucination.
+- No assumption.
+- Task unclear/ambiguous: ask for clarification.
+- Any question to user: use `AskUserQuestion` tool.
+- Always apply DRY and KISS principle.
+- Simplest solution first; add complexity only when necessary.
+- Issue resolved: remember issue + solution, avoid repeat.
+
 ## Linting and formatting
 
 - Markdown lint: `npx markdownlint-cli2 "**/*.md"` to check, `npx markdownlint-cli2 --fix "**/*.md"` to autofix.
