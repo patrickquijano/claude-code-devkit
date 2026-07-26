@@ -15,10 +15,11 @@ and not yet published.
 - `LICENSE` — MIT.
 - `CLAUDE.md` — guidance for Claude Code when working in this repo.
 - `.editorconfig` — shared editor formatting rules.
+- `.markdownlint.jsonc` / `.markdownlintignore` — markdown lint config (no line-length limit).
 - `.github/PULL_REQUEST_TEMPLATE/` — per-change-type PR templates
   (feature, bug fix, documentation, refactoring, dependency update,
   release, security).
-- `.claude/` — local plugin development workspace (git-ignored).
+- `.claude/` — local plugin development workspace (git-ignored except `.gitignore`, `settings.json`, `rules/`).
 
 ## Installation
 
@@ -42,6 +43,7 @@ on. Usage details will be documented here as components are built.
 - Open pull requests using the template matching your change type
   from `.github/PULL_REQUEST_TEMPLATE/`.
 - Keep this README and `CLAUDE.md` consistent with each other.
+- Follow the component guidelines in `.claude/rules/` when adding or updating skills, agents, hooks, or plugin structure.
 
 ## License
 

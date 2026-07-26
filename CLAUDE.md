@@ -8,18 +8,29 @@ This file guide Claude Code (claude.ai/code) in this repo.
 
 ## Current state
 
-Repo scaffold only. No plugin code, no build, no linter, no test yet. No build/lint/test command run. `.claude/` hold local plugin-dev file, git-ignore except own `.gitignore` — plugin piece (skill, agent, hook, command) go there as built.
+Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config exist (`.markdownlint.jsonc` + `.markdownlintignore`) — check via `npx markdownlint-cli2 "**/*.md"`. `.claude/` hold local plugin-dev file, git-ignore except `.gitignore`, `settings.json`, `rules/` — plugin piece (skill, agent, hook, command) go there as built, follow `.claude/rules/`.
 
 ## Repository structure
 
 - `README.md` — project overview.
 - `LICENSE` — MIT.
 - `.editorconfig` — 2-space indent, LF, UTF-8, trim trailing whitespace.
+- `.markdownlint.jsonc` / `.markdownlintignore` — markdown lint rule + ignore config; long line disabled, no manual wrap.
 - `.github/PULL_REQUEST_TEMPLATE/` — one template per change type
   (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`,
   `dependency_update.md`, `release.md`, `security.md`); GitHub prompt
   pick one when open PR.
-- `.claude/` — local plugin dev workspace, git-ignored.
+- `.claude/` — local plugin dev workspace, git-ignored except `.gitignore`, `settings.json`, `rules/`.
+  - `.claude/rules/` — plugin component rules, see "Plugin component rules" below.
+
+## Plugin component rules
+
+- `.claude/rules/plugins.md` — plugin layout, manifest, naming, promote-from-`.claude/` workflow.
+- `.claude/rules/skills.md` — SKILL.md structure, naming, frontmatter, description writing, size limit, testing.
+- `.claude/rules/subagents.md` — agent scope, frontmatter, tool restriction, single-responsibility design, testing.
+- `.claude/rules/hooks.md` — hook location, matcher/`if` narrowing, security, testing.
+
+Rule files auto-load every session (Claude Code `.claude/rules/*.md` convention) — apply when build component under `.claude/` or promote into packaged plugin.
 
 ## Branch naming
 
