@@ -31,12 +31,10 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
 
 ## Plugin component rules
 
-- `.claude/rules/plugins.md` — plugin layout, manifest, naming, promote-from-`.claude/` workflow.
-- `.claude/rules/skills.md` — SKILL.md structure, naming, frontmatter, description writing, size limit, testing.
-- `.claude/rules/subagents.md` — agent scope, frontmatter, tool restriction, single-responsibility design, testing.
-- `.claude/rules/hooks.md` — hook location, matcher/`if` narrowing, security, testing.
-
-Rule files auto-load every session (Claude Code `.claude/rules/*.md` convention) — apply when build component under `.claude/` or promote into packaged plugin.
+@.claude/rules/plugins.md
+@.claude/rules/skills.md
+@.claude/rules/subagents.md
+@.claude/rules/hooks.md
 
 ## Branch naming
 
