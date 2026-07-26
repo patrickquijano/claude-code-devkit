@@ -11,11 +11,6 @@
   // Match .editorconfig's 2-space indent convention for nested list items.
   "MD007": { "indent": 2 },
 
-  // Match .editorconfig's trim_trailing_whitespace: don't allow
-  // trailing-space hard line breaks, since an editor would strip them
-  // anyway. Use a blank line between paragraphs instead.
-  "MD009": { "br_spaces": 0 },
-
   // Allow the same heading text to reappear under different parent
   // sections (e.g. "## Testing" in more than one PR template file, or
   // repeated across sibling sections of one rules file).

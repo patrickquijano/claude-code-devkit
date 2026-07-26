@@ -20,7 +20,7 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
 
 - `README.md` — project overview.
 - `LICENSE` — MIT.
-- `.editorconfig` — 2-space indent, LF, UTF-8, trim trailing whitespace.
+- `.editorconfig` — 2-space indent, LF, UTF-8.
 - `.markdownlint.jsonc` / `.markdownlintignore` — markdown lint rule + ignore config; long line disabled, no manual wrap.
 - `.github/PULL_REQUEST_TEMPLATE/` — one template per change type
   (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`,
