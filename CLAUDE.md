@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file guide Claude Code (claude.ai/code) when work in this repo.
+This file guides Claude Code (claude.ai/code) when working in this repo.
 
 ## Project
 
@@ -8,7 +8,7 @@ This file guide Claude Code (claude.ai/code) when work in this repo.
 
 ## Current state
 
-Repo scaffold only. No plugin source code, no build system, no linter, no test suite yet. No build/lint/test commands to run. `.claude/` hold local plugin-dev files, git-ignored except own `.gitignore` — plugin pieces (skills, agents, hooks, commands) go there as built.
+Repo scaffold only. No plugin source code, no build system, no linter, no test suite yet. No build/lint/test commands to run. `.claude/` holds local plugin-dev files, git-ignored except own `.gitignore` — plugin pieces (skills, agents, hooks, commands) go there as built.
 
 ## Repository structure
 
@@ -25,7 +25,7 @@ Repo scaffold only. No plugin source code, no build system, no linter, no test s
 
 - Descriptive, conventional: `type/short-description` (types match commit
   types — `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`).
-- Name reflect actual purpose of change, concise, easy to understand.
+- Name reflects actual purpose of change, concise, easy to understand.
 - No generic/ambiguous names (`patch-1`, `update`, `fix-stuff`).
 
 ## Commit messages
@@ -43,7 +43,7 @@ Repo scaffold only. No plugin source code, no build system, no linter, no test s
 ## Pull requests
 
 - Use matching template from `.github/PULL_REQUEST_TEMPLATE/` for change type.
-- PR title follow commit message rules above.
+- PR title follows commit message rules above.
 - PR description: clear concise summary of change, relevant context/background, instructions for test or review.
 
 ## Documentation sync
@@ -53,4 +53,4 @@ Repo scaffold only. No plugin source code, no build system, no linter, no test s
 
 ## Self-healing
 
-- When verify (build, lint, test) fail, diagnose and fix root cause self. Don't stop on unresolved failure.
+- Once build/lint/test commands exist: when verify fail, diagnose and fix root cause self. Don't stop on unresolved failure.
