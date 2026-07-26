@@ -44,6 +44,8 @@ on. Usage details will be documented here as components are built.
   from `.github/PULL_REQUEST_TEMPLATE/`.
 - Keep this README and `CLAUDE.md` consistent with each other.
 - Follow the component guidelines in `.claude/rules/` when adding or updating skills, agents, hooks, or plugin structure.
+- Lint/format markdown with `npx markdownlint-cli2 "**/*.md"` and
+  `npx prettier --check "**/*.md"` before opening a PR.
 
 ## License
 

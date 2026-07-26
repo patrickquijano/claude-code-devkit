@@ -8,7 +8,13 @@ This file guide Claude Code (claude.ai/code) in this repo.
 
 ## Current state
 
-Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config exist (`.markdownlint.jsonc` + `.markdownlintignore`) — check via `npx markdownlint-cli2 "**/*.md"`. `.claude/` hold local plugin-dev file, git-ignore except `.gitignore`, `settings.json`, `rules/` — plugin piece (skill, agent, hook, command) go there as built, follow `.claude/rules/`.
+Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config exist (`.markdownlint.jsonc` + `.markdownlintignore`) — see "Linting and formatting" below. `.claude/` hold local plugin-dev file, git-ignore except `.gitignore`, `settings.json`, `rules/` — plugin piece (skill, agent, hook, command) go there as built, follow `.claude/rules/`.
+
+## Linting and formatting
+
+- Markdown lint: `npx markdownlint-cli2 "**/*.md"` to check, `npx markdownlint-cli2 --fix "**/*.md"` to autofix.
+- Markdown format: `npx prettier --check "**/*.md"` to check, `npx prettier --write "**/*.md"` to format.
+- Run format before lint — prettier reformat, then markdownlint verify style rule.
 
 ## Repository structure
 
