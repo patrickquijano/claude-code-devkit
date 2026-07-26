@@ -21,6 +21,13 @@ Repo scaffold only. No plugin source code, no build system, no linter, no test s
   pick one when open PR.
 - `.claude/` — local plugin dev workspace, git-ignored.
 
+## Branch naming
+
+- Descriptive, conventional: `type/short-description` (types match commit
+  types — `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`).
+- Name reflect actual purpose of change, concise, easy to understand.
+- No generic/ambiguous names (`patch-1`, `update`, `fix-stuff`).
+
 ## Commit messages
 
 - Conventional Commits format (`type: subject`).
