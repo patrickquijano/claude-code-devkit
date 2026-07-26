@@ -23,5 +23,9 @@
 
   // Accept either all "1." ordered-list markers or real incrementing
   // numbers — both are common GitHub-flavored styles.
-  "MD029": { "style": "one_or_ordered" }
+  "MD029": { "style": "one_or_ordered" },
+
+  // Allow files whose first line isn't a top-level heading (e.g. partial
+  // files meant to be included elsewhere).
+  "MD041": false
 }
