@@ -1,14 +1,14 @@
 # CLAUDE.md
 
-This file guides Claude Code (claude.ai/code) when working in this repo.
+This file guide Claude Code (claude.ai/code) in this repo.
 
 ## Project
 
-`claude-code-devkit` — Claude Code plugin. Give reusable skills, agents, hooks, commands, configs. Streamline dev across any app (see README.md).
+`claude-code-devkit` — Claude Code plugin. Give reusable skill, agent, hook, command, config. Streamline dev across any app (see README.md).
 
 ## Current state
 
-Repo scaffold only. No plugin source code, no build system, no linter, no test suite yet. No build/lint/test commands to run. `.claude/` holds local plugin-dev files, git-ignored except own `.gitignore` — plugin pieces (skills, agents, hooks, commands) go there as built.
+Repo scaffold only. No plugin code, no build, no linter, no test yet. No build/lint/test command run. `.claude/` hold local plugin-dev file, git-ignore except own `.gitignore` — plugin piece (skill, agent, hook, command) go there as built.
 
 ## Repository structure
 
@@ -23,34 +23,34 @@ Repo scaffold only. No plugin source code, no build system, no linter, no test s
 
 ## Branch naming
 
-- Descriptive, conventional: `type/short-description` (types match commit
-  types — `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`).
-- Name reflects actual purpose of change, concise, easy to understand.
-- No generic/ambiguous names (`patch-1`, `update`, `fix-stuff`).
+- Descriptive, conventional: `type/short-description` (type match commit
+  type — `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`).
+- Name show real purpose of change, short, easy understand.
+- No generic/vague name (`patch-1`, `update`, `fix-stuff`).
 
 ## Commit messages
 
 - Conventional Commits format (`type: subject`).
-- Imperative mood, concise, ≤72 char.
-- Describe change made, not file touched or reason why.
+- Imperative mood, short, ≤72 char.
+- Say what change do, not file touch or why.
 - No body, no footer, no attribution line.
 
 ## Commit granularity
 
-- Atomic, self-contained: one logical change per commit.
-- Don't bundle unrelated changes together.
+- Atomic, self-contained: one logic change per commit.
+- Don't bundle unrelated change together.
 
 ## Pull requests
 
-- Use matching template from `.github/PULL_REQUEST_TEMPLATE/` for change type.
-- PR title follows commit message rules above.
-- PR description: clear concise summary of change, relevant context/background, instructions for test or review.
+- Use match template from `.github/PULL_REQUEST_TEMPLATE/` for change type.
+- PR title follow commit message rule above.
+- PR description: clear short summary of change, relevant context/background, instruction for test or review.
 
 ## Documentation sync
 
-- Update README.md whenever change affect what user/contributor need know.
+- Update README.md when change affect what user/contributor need know.
 - Keep README.md match this file — don't let two contradict.
 
 ## Self-healing
 
-- Once build/lint/test commands exist: when verify fail, diagnose and fix root cause self. Don't stop on unresolved failure.
+- Once build/lint/test command exist: when verify fail, find root cause self and fix. Don't stop on unresolved failure.
