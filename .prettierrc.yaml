@@ -1,0 +1,4 @@
+# Community defaults with this repo's explicit overrides only.
+printWidth: 160
+tabWidth: 2
+endOfLine: lf
