@@ -17,6 +17,7 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
 @.claude/rules/claude-extensions/skills.md
 @.claude/rules/claude-extensions/subagents.md
 @.claude/rules/claude-extensions/hooks.md
+@.claude/rules/github-actions.md
 
 ## Session behavior
 
@@ -49,6 +50,7 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
 - `.claude/` — local plugin dev workspace, git-ignored except `.gitignore`, `settings.json`, `rules/`.
   - `.claude/rules/` — project rules, see "Project rules" below.
     - `.claude/rules/claude-extensions/` — Claude Code plugin component rules (plugins, skills, subagents, hooks).
+    - `.claude/rules/github-actions.md` — GitHub Actions authoring rules.
 
 ## Branch naming
 
