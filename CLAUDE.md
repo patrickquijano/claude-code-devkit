@@ -13,10 +13,10 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
 ## Project rules
 
 @LEAN-CTX.md
-@.claude/rules/plugins.md
-@.claude/rules/skills.md
-@.claude/rules/subagents.md
-@.claude/rules/hooks.md
+@.claude/rules/claude-extensions/plugins.md
+@.claude/rules/claude-extensions/skills.md
+@.claude/rules/claude-extensions/subagents.md
+@.claude/rules/claude-extensions/hooks.md
 
 ## Session behavior
 
@@ -47,7 +47,8 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
   `dependency_update.md`, `release.md`, `security.md`); GitHub prompt
   pick one when open PR.
 - `.claude/` — local plugin dev workspace, git-ignored except `.gitignore`, `settings.json`, `rules/`.
-  - `.claude/rules/` — plugin component rules, see "Project rules" below.
+  - `.claude/rules/` — project rules, see "Project rules" below.
+    - `.claude/rules/claude-extensions/` — Claude Code plugin component rules (plugins, skills, subagents, hooks).
 
 ## Branch naming
 
