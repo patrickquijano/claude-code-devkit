@@ -1,0 +1,4 @@
+# Strict: no ignored rules, fail on anything (including info-level).
+# No Dockerfiles exist yet — enforce best practice from the first one.
+failure-threshold: info
+ignored: []
