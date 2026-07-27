@@ -60,7 +60,7 @@ script with the same answers any number of times is always safe.
 
 Format then lint every supported file type in this repo, using the exact
 commands documented in root `CLAUDE.md`'s "Linting and formatting"
-section, as one entrypoint instead of five copy-pasted commands.
+section, as one entrypoint instead of six copy-pasted commands.
 
 Run from the repo root or any subdirectory of this git work tree:
 
@@ -77,6 +77,8 @@ Steps, in order (format first, then lint each language):
    with a warning if `shellcheck` isn't on PATH
 5. `hadolint` on every `Dockerfile*` not in `.hadolintignore` — skipped
    with a warning if `hadolint` isn't on PATH
+6. `ruff format .` then `ruff check --fix .` — skipped with a warning if
+   `ruff` isn't on PATH
 
 All steps run even if an earlier one fails, so one pass gives the full
 picture; the script exits non-zero if any step that ran failed.
@@ -152,7 +154,7 @@ it.
 
 `bash`, `git` for `setup-git-config.sh`. `format-and-lint.sh` additionally
 needs `npx` (for `prettier` and `markdownlint-cli2`, fetched on demand);
-`yamllint`, `shellcheck`, and `hadolint` are optional — each step is
+`yamllint`, `shellcheck`, `hadolint`, and `ruff` are optional — each step is
 skipped with a warning if its binary isn't on PATH.
 
 ## Linting

@@ -2,7 +2,7 @@
 #
 # Format then lint every supported file type in this repo, using the
 # exact commands documented in CLAUDE.md's "Linting and formatting"
-# section, as one entrypoint instead of five copy-pasted commands.
+# section, as one entrypoint instead of six copy-pasted commands.
 #
 # Usage:
 #   ./scripts/format-and-lint.sh     (run from the repo root, or any
@@ -14,9 +14,10 @@
 #   3. yamllint .                             (if installed)
 #   4. shellcheck on every *.sh file not in .shellcheckignore (if installed)
 #   5. hadolint on every Dockerfile* not in .hadolintignore (if installed)
+#   6. ruff format . then ruff check --fix . (if installed)
 #
-# yamllint, shellcheck, and hadolint are optional local binaries (not
-# fetched via npx) — if one isn't on PATH, that step is skipped with a
+# yamllint, shellcheck, hadolint, and ruff are optional local binaries
+# (not fetched via npx) — if one isn't on PATH, that step is skipped with a
 # warning instead of failing the whole run. prettier and markdownlint-cli2
 # run via `npx`, which fetches them on demand.
 #
@@ -88,6 +89,13 @@ main() {
       failures=$((failures + 1))
   else
     devkit_log_warn 'hadolint not found on PATH, skipping.'
+  fi
+
+  if devkit_command_exists ruff; then
+    devkit_run_step 'ruff format' ruff format . || failures=$((failures + 1))
+    devkit_run_step 'ruff check --fix' ruff check --fix . || failures=$((failures + 1))
+  else
+    devkit_log_warn 'ruff not found on PATH, skipping.'
   fi
 
   if ((failures > 0)); then
