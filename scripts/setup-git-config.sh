@@ -31,6 +31,12 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 lib_dir="${script_dir}/lib"
 
+# shellcheck source=lib/devkit_log_info.sh disable=SC1091
+source "${lib_dir}/devkit_log_info.sh"
+# shellcheck source=lib/devkit_log_success.sh disable=SC1091
+source "${lib_dir}/devkit_log_success.sh"
+# shellcheck source=lib/devkit_log_error.sh disable=SC1091
+source "${lib_dir}/devkit_log_error.sh"
 # shellcheck source=lib/gitcfg_require_repo.sh disable=SC1091
 source "${lib_dir}/gitcfg_require_repo.sh"
 # shellcheck source=lib/gitcfg_local_get.sh disable=SC1091
@@ -59,6 +65,7 @@ source "${lib_dir}/gitcfg_edit_gpg_format.sh"
 source "${lib_dir}/gitcfg_edit_gpgsign.sh"
 
 main() {
+  devkit_log_info 'Starting git config setup.'
   gitcfg_require_repo
   gitcfg_print_config
   local choice
@@ -88,7 +95,7 @@ main() {
       gitcfg_edit_gpgsign
       ;;
     0)
-      printf 'Done.\n'
+      devkit_log_success 'Git config setup complete.'
       gitcfg_print_config
       return 0
       ;;
