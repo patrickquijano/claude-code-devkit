@@ -33,9 +33,12 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
 
 ## Linting and formatting
 
+- Format (all files): `npx prettier --check .` to check, `npx prettier --write .` to format (config: `.prettierrc.yaml` + `.prettierignore`).
 - Markdown lint: `npx markdownlint-cli2 "**/*.md"` to check, `npx markdownlint-cli2 --fix "**/*.md"` to autofix.
-- Markdown format: `npx prettier --check "**/*.md"` to check, `npx prettier --write "**/*.md"` to format.
-- Run format before lint — prettier reformat, then markdownlint verify style rule.
+- YAML lint: `yamllint .` (config + inline ignore patterns: `.yamllint.yaml`).
+- Shell lint: `find . -type f -name "*.sh" | grep -vFf .shellcheckignore | xargs -I{} shellcheck {}` (config: `.shellcheckrc`).
+- Dockerfile lint: `find . -iname "Dockerfile*" | grep -vFf .hadolintignore | xargs -I{} hadolint {}` (config: `.hadolint.yaml`).
+- Run order: format first, then lint each language — prettier reformat, linters verify style/rule compliance on top.
 
 ## Repository structure
 
@@ -43,6 +46,10 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
 - `LICENSE` — MIT.
 - `.editorconfig` — 2-space indent, LF, UTF-8.
 - `.markdownlint.jsonc` / `.markdownlintignore` — markdown lint rule + ignore config; long line disabled, no manual wrap.
+- `.yamllint.yaml` — YAML lint config; default ruleset, 160-char line length, inline ignore patterns.
+- `.shellcheckrc` / `.shellcheckignore` — shell lint config (enterprise-hardened optional checks) + ignore patterns.
+- `.hadolint.yaml` / `.hadolintignore` — Dockerfile lint config (strict, no ignored rules) + ignore patterns.
+- `.prettierrc.yaml` / `.prettierignore` — Prettier format config (160-char line length) + ignore patterns.
 - `.github/PULL_REQUEST_TEMPLATE/` — one template per change type
   (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`,
   `dependency_update.md`, `release.md`, `security.md`); GitHub prompt

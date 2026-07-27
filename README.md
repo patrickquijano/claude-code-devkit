@@ -13,6 +13,10 @@ This repository is currently a scaffold. Plugin components (skills, agents, hook
 - `CLAUDE.md` — guidance for Claude Code when working in this repo.
 - `.editorconfig` — shared editor formatting rules.
 - `.markdownlint.jsonc` / `.markdownlintignore` — markdown lint config (no line-length limit).
+- `.yamllint.yaml` — YAML lint config (default ruleset, 160-char line length, inline ignore patterns).
+- `.shellcheckrc` / `.shellcheckignore` — shell lint config + ignore patterns.
+- `.hadolint.yaml` / `.hadolintignore` — Dockerfile lint config + ignore patterns.
+- `.prettierrc.yaml` / `.prettierignore` — Prettier format config (160-char line length) + ignore patterns.
 - `.github/PULL_REQUEST_TEMPLATE/` — per-change-type PR templates (feature, bug fix, documentation, refactoring, dependency update, release, security).
 - `.claude/` — local plugin development workspace (git-ignored except `.gitignore`, `settings.json`, `rules/`).
 
@@ -31,7 +35,7 @@ Once installed, the plugin's skills, agents, hooks, and commands will be availab
 - Open pull requests using the template matching your change type from `.github/PULL_REQUEST_TEMPLATE/`.
 - Keep this README and `CLAUDE.md` consistent with each other.
 - Follow the component guidelines in `.claude/rules/` when adding or updating skills, agents, hooks, or plugin structure.
-- Lint/format markdown with `npx markdownlint-cli2 "**/*.md"` and `npx prettier --check "**/*.md"` before opening a PR.
+- Format all files with `npx prettier --check .` and lint with `markdownlint-cli2`, `yamllint`, `shellcheck`, and `hadolint` before opening a PR.
 
 ## License
 
