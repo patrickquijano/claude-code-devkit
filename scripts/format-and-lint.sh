@@ -30,8 +30,8 @@
 # skipped for a missing tool) succeeded; a summary line is printed either
 # way.
 #
-# All logic lives in scripts/lib/devkit_*.sh (one function per file,
-# devkit_-namespaced so they're safe to source from other scripts). This
+# All logic lives in scripts/lib/devkit_*.sh (devkit_-namespaced so
+# they're safe to source from other scripts). This
 # file only wires them together — see scripts/README.md for the full
 # function reference and how to reuse individual functions elsewhere.
 # Sourcing this file instead of executing it skips the main run and just
@@ -54,6 +54,10 @@ source "${lib_dir}/devkit_log_error.sh"
 source "${lib_dir}/devkit_command_exists.sh"
 # shellcheck source=lib/devkit_run_step.sh disable=SC1091
 source "${lib_dir}/devkit_run_step.sh"
+# shellcheck source=lib/devkit_format.sh disable=SC1091
+source "${lib_dir}/devkit_format.sh"
+# shellcheck source=lib/devkit_lint.sh disable=SC1091
+source "${lib_dir}/devkit_lint.sh"
 # shellcheck source=lib/gitcfg_require_repo.sh disable=SC1091
 source "${lib_dir}/gitcfg_require_repo.sh"
 
@@ -66,34 +70,30 @@ main() {
   devkit_log_info 'Starting format and lint.'
   local failures=0
 
-  devkit_run_step 'prettier --write' npx prettier --write . || failures=$((failures + 1))
-  devkit_run_step 'markdownlint-cli2 --fix' npx markdownlint-cli2 --fix '**/*.md' || failures=$((failures + 1))
+  devkit_format_prettier || failures=$((failures + 1))
+  devkit_format_markdownlint || failures=$((failures + 1))
 
   if devkit_command_exists yamllint; then
-    devkit_run_step 'yamllint' yamllint . || failures=$((failures + 1))
+    devkit_lint_yamllint || failures=$((failures + 1))
   else
     devkit_log_warn 'yamllint not found on PATH, skipping.'
   fi
 
   if devkit_command_exists shellcheck; then
-    devkit_run_step 'shellcheck' bash -c \
-      'find . -type f -name "*.sh" | grep -vFf .shellcheckignore | xargs -I{} shellcheck {}' ||
-      failures=$((failures + 1))
+    devkit_lint_shellcheck || failures=$((failures + 1))
   else
     devkit_log_warn 'shellcheck not found on PATH, skipping.'
   fi
 
   if devkit_command_exists hadolint; then
-    devkit_run_step 'hadolint' bash -c \
-      'find . -iname "Dockerfile*" | grep -vFf .hadolintignore | xargs -I{} hadolint {}' ||
-      failures=$((failures + 1))
+    devkit_lint_hadolint || failures=$((failures + 1))
   else
     devkit_log_warn 'hadolint not found on PATH, skipping.'
   fi
 
   if devkit_command_exists ruff; then
-    devkit_run_step 'ruff format' ruff format . || failures=$((failures + 1))
-    devkit_run_step 'ruff check --fix' ruff check --fix . || failures=$((failures + 1))
+    devkit_format_ruff || failures=$((failures + 1))
+    devkit_lint_ruff || failures=$((failures + 1))
   else
     devkit_log_warn 'ruff not found on PATH, skipping.'
   fi
