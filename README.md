@@ -20,6 +20,7 @@ This repository is currently a scaffold. Plugin components (skills, agents, hook
 - `.github/PULL_REQUEST_TEMPLATE/` — per-change-type PR templates (feature, bug fix, documentation, refactoring, dependency update, release, security).
 - `.claude/` — local plugin development workspace (git-ignored except `.gitignore`, `settings.json`, `rules/`).
 - `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
+- `scripts/format-and-lint.sh` — runs prettier, markdownlint-cli2, yamllint, shellcheck, and hadolint in one step.
 
 ## Installation
 

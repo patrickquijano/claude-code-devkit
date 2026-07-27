@@ -39,6 +39,7 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
 - Shell lint: `find . -type f -name "*.sh" | grep -vFf .shellcheckignore | xargs -I{} shellcheck {}` (config: `.shellcheckrc`).
 - Dockerfile lint: `find . -iname "Dockerfile*" | grep -vFf .hadolintignore | xargs -I{} hadolint {}` (config: `.hadolint.yaml`).
 - Run order: format first, then lint each language — prettier reformat, linters verify style/rule compliance on top.
+- Convenience script: `./scripts/format-and-lint.sh` run all of the above in one step (see `scripts/README.md`).
 
 ## Repository structure
 
@@ -59,6 +60,7 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
     - `.claude/rules/claude-components/` — Claude Code plugin component rules (plugins, skills, subagents, hooks).
     - `.claude/rules/github-actions.md` — GitHub Actions authoring rules.
 - `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
+- `scripts/format-and-lint.sh` — run all format/lint command above in one step.
 
 ## Branch naming
 

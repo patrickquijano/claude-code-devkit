@@ -56,30 +56,68 @@ git work tree.
 <value> (no change)` instead of `<key> set to <value>`. Re-running the
 script with the same answers any number of times is always safe.
 
+## format-and-lint.sh
+
+Format then lint every supported file type in this repo, using the exact
+commands documented in root `CLAUDE.md`'s "Linting and formatting"
+section, as one entrypoint instead of five copy-pasted commands.
+
+Run from the repo root or any subdirectory of this git work tree:
+
+```sh
+./scripts/format-and-lint.sh
+```
+
+Steps, in order (format first, then lint each language):
+
+1. `prettier --write .` (via `npx`)
+2. `markdownlint-cli2 --fix "**/*.md"` (via `npx`)
+3. `yamllint .` — skipped with a warning if `yamllint` isn't on PATH
+4. `shellcheck` on every `*.sh` file not in `.shellcheckignore` — skipped
+   with a warning if `shellcheck` isn't on PATH
+5. `hadolint` on every `Dockerfile*` not in `.hadolintignore` — skipped
+   with a warning if `hadolint` isn't on PATH
+
+All steps run even if an earlier one fails, so one pass gives the full
+picture; the script exits non-zero if any step that ran failed.
+
+**Idempotent**: re-running against an already-formatted, lint-clean repo
+is a no-op pass — `prettier`/`markdownlint-cli2` make no further changes,
+and every lint step is read-only.
+
 ## lib/
 
-One function per file, named `gitcfg_<name>.sh` → defines `gitcfg_<name>()`.
-Every function and the one global (`GITCFG_CONFIG_KEYS`, in
-`gitcfg_print_config.sh`) is `gitcfg_`-namespaced on purpose: `scripts/lib/`
-is a shared sourcing target for other scripts in this repo, and a generic
-name like `prompt_text` or `is_non_empty` would be free to collide with an
+One function per file, named `<namespace>_<name>.sh` → defines
+`<namespace>_<name>()`. Two namespaces live here: `gitcfg_` (git-config
+specific, used only by `setup-git-config.sh`) and `devkit_` (repo-wide —
+logging, command checks, a step runner — reusable by any script in this
+directory). Every function and the one global (`GITCFG_CONFIG_KEYS`, in
+`gitcfg_print_config.sh`) is namespaced on purpose: `scripts/lib/` is a
+shared sourcing target for every script in this repo, and a generic name
+like `prompt_text` or `is_non_empty` would be free to collide with an
 unrelated same-named function defined by another script's own lib files.
 
-| File                        | Function                 | Purpose                                                              |
-| --------------------------- | ------------------------ | -------------------------------------------------------------------- |
-| `gitcfg_require_repo.sh`    | `gitcfg_require_repo`    | Exit 1 if not inside a git work tree.                                |
-| `gitcfg_local_get.sh`       | `gitcfg_local_get`       | Read a `--local` config value (empty string if unset).               |
-| `gitcfg_local_set.sh`       | `gitcfg_local_set`       | Idempotently write a `--local` config value; prints the status line. |
-| `gitcfg_print_config.sh`    | `gitcfg_print_config`    | Print all 5 managed keys' current values.                            |
-| `gitcfg_is_non_empty.sh`    | `gitcfg_is_non_empty`    | Validator: non-empty string.                                         |
-| `gitcfg_is_valid_email.sh`  | `gitcfg_is_valid_email`  | Validator: basic email syntax check.                                 |
-| `gitcfg_prompt_text.sh`     | `gitcfg_prompt_text`     | Free-text prompt with default + validator, re-prompts on failure.    |
-| `gitcfg_prompt_choice.sh`   | `gitcfg_prompt_choice`   | Numbered choice-list prompt for fields with a fixed value set.       |
-| `gitcfg_edit_user_name.sh`  | `gitcfg_edit_user_name`  | Prompt + idempotently set `user.name`.                               |
-| `gitcfg_edit_user_email.sh` | `gitcfg_edit_user_email` | Prompt + idempotently set `user.email`.                              |
-| `gitcfg_edit_signingkey.sh` | `gitcfg_edit_signingkey` | Prompt + idempotently set `user.signingkey`.                         |
-| `gitcfg_edit_gpg_format.sh` | `gitcfg_edit_gpg_format` | Prompt + idempotently set `gpg.format`.                              |
-| `gitcfg_edit_gpgsign.sh`    | `gitcfg_edit_gpgsign`    | Prompt + idempotently set `commit.gpgsign`.                          |
+| File                        | Function                 | Purpose                                                                         |
+| --------------------------- | ------------------------ | ------------------------------------------------------------------------------- |
+| `gitcfg_require_repo.sh`    | `gitcfg_require_repo`    | Exit 1 if not inside a git work tree.                                           |
+| `gitcfg_local_get.sh`       | `gitcfg_local_get`       | Read a `--local` config value (empty string if unset).                          |
+| `gitcfg_local_set.sh`       | `gitcfg_local_set`       | Idempotently write a `--local` config value; logs the outcome.                  |
+| `gitcfg_print_config.sh`    | `gitcfg_print_config`    | Print all 5 managed keys' current values.                                       |
+| `gitcfg_is_non_empty.sh`    | `gitcfg_is_non_empty`    | Validator: non-empty string.                                                    |
+| `gitcfg_is_valid_email.sh`  | `gitcfg_is_valid_email`  | Validator: basic email syntax check.                                            |
+| `gitcfg_prompt_text.sh`     | `gitcfg_prompt_text`     | Free-text prompt with default + validator, re-prompts on failure.               |
+| `gitcfg_prompt_choice.sh`   | `gitcfg_prompt_choice`   | Numbered choice-list prompt for fields with a fixed value set.                  |
+| `gitcfg_edit_user_name.sh`  | `gitcfg_edit_user_name`  | Prompt + idempotently set `user.name`.                                          |
+| `gitcfg_edit_user_email.sh` | `gitcfg_edit_user_email` | Prompt + idempotently set `user.email`.                                         |
+| `gitcfg_edit_signingkey.sh` | `gitcfg_edit_signingkey` | Prompt + idempotently set `user.signingkey`.                                    |
+| `gitcfg_edit_gpg_format.sh` | `gitcfg_edit_gpg_format` | Prompt + idempotently set `gpg.format`.                                         |
+| `gitcfg_edit_gpgsign.sh`    | `gitcfg_edit_gpgsign`    | Prompt + idempotently set `commit.gpgsign`.                                     |
+| `devkit_log_info.sh`        | `devkit_log_info`        | Print `[INFO] <msg>` to stdout.                                                 |
+| `devkit_log_success.sh`     | `devkit_log_success`     | Print `[OK] <msg>` to stdout.                                                   |
+| `devkit_log_warn.sh`        | `devkit_log_warn`        | Print `[WARN] <msg>` to stderr.                                                 |
+| `devkit_log_error.sh`       | `devkit_log_error`       | Print `[ERROR] <msg>` to stderr.                                                |
+| `devkit_command_exists.sh`  | `devkit_command_exists`  | Validator: is a command on PATH.                                                |
+| `devkit_run_step.sh`        | `devkit_run_step`        | Run + log a labeled command; returns its exit status without tripping `set -e`. |
 
 Every file documents its own args / stdout / exit status in a header
 comment — read the file directly for the exact contract before reusing a
@@ -92,6 +130,12 @@ documented dependencies noted in its header):
 
 ```sh
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/devkit_log_info.sh disable=SC1091
+source "${script_dir}/../scripts/lib/devkit_log_info.sh"
+# shellcheck source=lib/devkit_log_success.sh disable=SC1091
+source "${script_dir}/../scripts/lib/devkit_log_success.sh"
+# shellcheck source=lib/devkit_log_error.sh disable=SC1091
+source "${script_dir}/../scripts/lib/devkit_log_error.sh"
 # shellcheck source=lib/gitcfg_local_get.sh disable=SC1091
 source "${script_dir}/../scripts/lib/gitcfg_local_get.sh"
 # shellcheck source=lib/gitcfg_local_set.sh disable=SC1091
@@ -106,7 +150,10 @@ it.
 
 ## Requirements
 
-`bash`, `git`. No other dependencies.
+`bash`, `git` for `setup-git-config.sh`. `format-and-lint.sh` additionally
+needs `npx` (for `prettier` and `markdownlint-cli2`, fetched on demand);
+`yamllint`, `shellcheck`, and `hadolint` are optional — each step is
+skipped with a warning if its binary isn't on PATH.
 
 ## Linting
 
