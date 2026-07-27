@@ -4,7 +4,7 @@ A Claude Code plugin offering reusable skills, agents, hooks, commands, and conf
 
 ## Status
 
-This repository is currently a scaffold. Plugin components (skills, agents, hooks, commands) are under active development in `.claude/` and not yet published.
+This repository is an early-stage Claude Code plugin (`devkit`, see `.claude-plugin/plugin.json`). It ships a `PostToolUse` lint/format hook (`hooks/`); further components (skills, agents, commands) are under active development in `.claude/` and not yet published.
 
 ## Repository structure
 
@@ -18,6 +18,8 @@ This repository is currently a scaffold. Plugin components (skills, agents, hook
 - `.hadolint.yaml` / `.hadolintignore` — Dockerfile lint config + ignore patterns.
 - `.prettierrc.yaml` / `.prettierignore` — Prettier format config (160-char line length) + ignore patterns.
 - `.github/PULL_REQUEST_TEMPLATE/` — per-change-type PR templates (feature, bug fix, documentation, refactoring, dependency update, release, security).
+- `.claude-plugin/plugin.json` — plugin manifest (`devkit`: name, description, version).
+- `hooks/` — `hooks.json` (`PostToolUse` lint/format hook) + `scripts/` (dispatcher and `lib/` helpers, one function per file); see `hooks/README.md`.
 - `.claude/` — local plugin development workspace (git-ignored except `.gitignore`, `settings.json`, `rules/`).
 - `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
 - `scripts/format-and-lint.sh` — runs prettier, markdownlint-cli2, yamllint, shellcheck, and hadolint in one step.
