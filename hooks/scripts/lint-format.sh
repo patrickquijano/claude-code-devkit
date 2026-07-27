@@ -11,72 +11,32 @@
 # exits 0 (PostToolUse can't deny a call anyway), so lint/format failures
 # only ever show up as warnings, not a stopped session.
 #
-# All logic lives in hooks/scripts/lib/lintfmt_*.sh (one function per
-# file) — see hooks/README.md for the full function reference. Sourcing
-# this file instead of executing it skips the main run and just defines
-# the functions.
+# All logic lives in hooks/scripts/lib/lintfmt_*.sh (grouped by concern)
+# — see hooks/README.md for the full function reference. Sourcing this
+# file instead of executing it skips the main run and just defines the
+# functions.
 
 set -uo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 lib_dir="${script_dir}/lib"
 
-# shellcheck source=lib/lintfmt_log_info.sh disable=SC1091
-source "${lib_dir}/lintfmt_log_info.sh"
-# shellcheck source=lib/lintfmt_log_warn.sh disable=SC1091
-source "${lib_dir}/lintfmt_log_warn.sh"
-# shellcheck source=lib/lintfmt_log_error.sh disable=SC1091
-source "${lib_dir}/lintfmt_log_error.sh"
-# shellcheck source=lib/lintfmt_command_exists.sh disable=SC1091
-source "${lib_dir}/lintfmt_command_exists.sh"
-# shellcheck source=lib/lintfmt_run_step.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_step.sh"
-# shellcheck source=lib/lintfmt_read_file_path.sh disable=SC1091
-source "${lib_dir}/lintfmt_read_file_path.sh"
-# shellcheck source=lib/lintfmt_read_cwd.sh disable=SC1091
-source "${lib_dir}/lintfmt_read_cwd.sh"
-# shellcheck source=lib/lintfmt_is_blade_template.sh disable=SC1091
-source "${lib_dir}/lintfmt_is_blade_template.sh"
-# shellcheck source=lib/lintfmt_extension_of.sh disable=SC1091
-source "${lib_dir}/lintfmt_extension_of.sh"
-# shellcheck source=lib/lintfmt_eslint_config_exists.sh disable=SC1091
-source "${lib_dir}/lintfmt_eslint_config_exists.sh"
-# shellcheck source=lib/lintfmt_stylelint_config_exists.sh disable=SC1091
-source "${lib_dir}/lintfmt_stylelint_config_exists.sh"
-# shellcheck source=lib/lintfmt_dotnet_project_exists.sh disable=SC1091
-source "${lib_dir}/lintfmt_dotnet_project_exists.sh"
-# shellcheck source=lib/lintfmt_run_eslint.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_eslint.sh"
-# shellcheck source=lib/lintfmt_run_stylelint.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_stylelint.sh"
-# shellcheck source=lib/lintfmt_run_hadolint.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_hadolint.sh"
-# shellcheck source=lib/lintfmt_run_markdownlint.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_markdownlint.sh"
-# shellcheck source=lib/lintfmt_run_ruff.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_ruff.sh"
-# shellcheck source=lib/lintfmt_run_shfmt.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_shfmt.sh"
-# shellcheck source=lib/lintfmt_run_shellcheck.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_shellcheck.sh"
-# shellcheck source=lib/lintfmt_run_yamllint.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_yamllint.sh"
-# shellcheck source=lib/lintfmt_pint_binary.sh disable=SC1091
-source "${lib_dir}/lintfmt_pint_binary.sh"
-# shellcheck source=lib/lintfmt_run_pint.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_pint.sh"
-# shellcheck source=lib/lintfmt_run_php_lint.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_php_lint.sh"
-# shellcheck source=lib/lintfmt_run_dotnet_format.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_dotnet_format.sh"
-# shellcheck source=lib/lintfmt_run_prettier.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_prettier.sh"
-# shellcheck source=lib/lintfmt_run_htmlhint.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_htmlhint.sh"
-# shellcheck source=lib/lintfmt_run_xmllint_format.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_xmllint_format.sh"
-# shellcheck source=lib/lintfmt_run_xmllint_lint.sh disable=SC1091
-source "${lib_dir}/lintfmt_run_xmllint_lint.sh"
+# shellcheck source=lib/lintfmt_log.sh disable=SC1091
+source "${lib_dir}/lintfmt_log.sh"
+# shellcheck source=lib/lintfmt_util.sh disable=SC1091
+source "${lib_dir}/lintfmt_util.sh"
+# shellcheck source=lib/lintfmt_run_web.sh disable=SC1091
+source "${lib_dir}/lintfmt_run_web.sh"
+# shellcheck source=lib/lintfmt_run_shell.sh disable=SC1091
+source "${lib_dir}/lintfmt_run_shell.sh"
+# shellcheck source=lib/lintfmt_run_php.sh disable=SC1091
+source "${lib_dir}/lintfmt_run_php.sh"
+# shellcheck source=lib/lintfmt_run_dotnet.sh disable=SC1091
+source "${lib_dir}/lintfmt_run_dotnet.sh"
+# shellcheck source=lib/lintfmt_run_xml.sh disable=SC1091
+source "${lib_dir}/lintfmt_run_xml.sh"
+# shellcheck source=lib/lintfmt_run_simple.sh disable=SC1091
+source "${lib_dir}/lintfmt_run_simple.sh"
 
 main() {
   local payload

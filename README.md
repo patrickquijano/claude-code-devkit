@@ -20,7 +20,7 @@ This repository is an early-stage Claude Code plugin (`devkit`, see `.claude-plu
 - `.prettierrc.yaml` / `.prettierignore` — Prettier format config (160-char line length) + ignore patterns.
 - `.github/PULL_REQUEST_TEMPLATE/` — per-change-type PR templates (feature, bug fix, documentation, refactoring, dependency update, release, security).
 - `.claude-plugin/plugin.json` — plugin manifest (`devkit`: schema, name, description, version, author, license, dependencies).
-- `hooks/` — `hooks.json` (`PostToolUse` lint/format hook) + `scripts/` (dispatcher and `lib/` helpers, one function per file); see `hooks/README.md`.
+- `hooks/` — `hooks.json` (`PostToolUse` lint/format hook) + `scripts/` (dispatcher and `lib/` helpers, grouped by concern); see `hooks/README.md`.
 - `.claude/` — local plugin development workspace (git-ignored except `.gitignore`, `settings.json`, `rules/`).
 - `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
 - `scripts/format-and-lint.sh` — runs prettier, markdownlint-cli2, yamllint, shellcheck, and hadolint in one step.

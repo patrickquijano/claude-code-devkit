@@ -8,7 +8,7 @@ This file guide Claude Code (claude.ai/code) in this repo.
 
 ## Current state
 
-Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `PostToolUse` lint/format hook (`hooks.json` + `hooks/scripts/` dispatcher + `lib/` helper, one function per file — see `hooks/README.md`). No build/test yet beyond the hook itself. Markdown lint config exist (`.markdownlint.jsonc` + `.markdownlintignore`) — see "Linting and formatting" below. `.claude/` hold local plugin-dev file, git-ignore except `.gitignore`, `settings.json`, `rules/` — remaining plugin piece (skill, agent, command) go there as built, follow `.claude/rules/`.
+Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `PostToolUse` lint/format hook (`hooks.json` + `hooks/scripts/` dispatcher + `lib/` helper, grouped by concern — see `hooks/README.md`). No build/test yet beyond the hook itself. Markdown lint config exist (`.markdownlint.jsonc` + `.markdownlintignore`) — see "Linting and formatting" below. `.claude/` hold local plugin-dev file, git-ignore except `.gitignore`, `settings.json`, `rules/` — remaining plugin piece (skill, agent, command) go there as built, follow `.claude/rules/`.
 
 ## Project rules
 
@@ -60,7 +60,7 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - `.claude-plugin/plugin.json` — plugin manifest (`devkit`: schema, name, description, version, author, license, dependencies).
 - `hooks/` — `hooks.json` (`PostToolUse` lint/format hook, matcher `Edit|Write`) +
   `hooks/scripts/lint-format.sh` (dispatcher, extension-based) +
-  `hooks/scripts/lib/` (`lintfmt_*.sh` helper, one function per file); see `hooks/README.md`.
+  `hooks/scripts/lib/` (`lintfmt_*.sh` helper, grouped by concern); see `hooks/README.md`.
 - `.claude/` — local plugin dev workspace, git-ignored except `.gitignore`, `settings.json`, `rules/`.
   - `.claude/rules/` — project rules, see "Project rules" below.
     - `.claude/rules/claude-components/` — Claude Code plugin component rules (plugins, skills, subagents, hooks).
