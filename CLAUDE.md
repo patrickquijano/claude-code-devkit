@@ -38,6 +38,7 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - YAML lint: `yamllint .` (config + inline ignore patterns: `.yamllint.yaml`).
 - Shell lint: `find . -type f -name "*.sh" | grep -vFf .shellcheckignore | xargs -I{} shellcheck {}` (config: `.shellcheckrc`).
 - Dockerfile lint: `find . -iname "Dockerfile*" | grep -vFf .hadolintignore | xargs -I{} hadolint {}` (config: `.hadolint.yaml`).
+- Python lint: `ruff format` to format, `ruff check --fix` to lint+fix (config: `.ruff.toml` + `.ruffignore`).
 - Run order: format first, then lint each language — prettier reformat, linters verify style/rule compliance on top.
 - Convenience script: `./scripts/format-and-lint.sh` run all of the above in one step (see `scripts/README.md`).
 
@@ -50,12 +51,13 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - `.yamllint.yaml` — YAML lint config; default ruleset, 160-char line length, inline ignore patterns.
 - `.shellcheckrc` / `.shellcheckignore` — shell lint config (enterprise-hardened optional checks) + ignore patterns.
 - `.hadolint.yaml` / `.hadolintignore` — Dockerfile lint config (strict, no ignored rules) + ignore patterns.
+- `.ruff.toml` / `.ruffignore` — Python lint config (community rules + line-length override) + native ignore file.
 - `.prettierrc.yaml` / `.prettierignore` — Prettier format config (160-char line length) + ignore patterns.
 - `.github/PULL_REQUEST_TEMPLATE/` — one template per change type
   (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`,
   `dependency_update.md`, `release.md`, `security.md`); GitHub prompt
   pick one when open PR.
-- `.claude-plugin/plugin.json` — plugin manifest (`devkit`: name, description, version, dependencies).
+- `.claude-plugin/plugin.json` — plugin manifest (`devkit`: schema, name, description, version, author, license, dependencies).
 - `hooks/` — `hooks.json` (`PostToolUse` lint/format hook, matcher `Edit|Write`) +
   `hooks/scripts/lint-format.sh` (dispatcher, extension-based) +
   `hooks/scripts/lib/` (`lintfmt_*.sh` helper, one function per file); see `hooks/README.md`.

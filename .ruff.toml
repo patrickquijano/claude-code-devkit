@@ -1,0 +1,10 @@
+# Ruff config: community-recommended rule selection beyond Ruff's
+# default (E4/E7/E9/F), plus this repo's line-length convention. No
+# Python files exist yet — enforce best practice from the first one,
+# same stance as .hadolint.yaml.
+
+line-length = 160
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM"]

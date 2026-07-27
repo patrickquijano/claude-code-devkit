@@ -1,0 +1,3 @@
+# Native Ruff ignore file (gitignore-style), read automatically — no
+# extra glue needed in lint commands, unlike hadolint's ignore file.
+node_modules/

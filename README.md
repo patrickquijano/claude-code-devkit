@@ -16,9 +16,10 @@ This repository is an early-stage Claude Code plugin (`devkit`, see `.claude-plu
 - `.yamllint.yaml` — YAML lint config (default ruleset, 160-char line length, inline ignore patterns).
 - `.shellcheckrc` / `.shellcheckignore` — shell lint config + ignore patterns.
 - `.hadolint.yaml` / `.hadolintignore` — Dockerfile lint config + ignore patterns.
+- `.ruff.toml` / `.ruffignore` — Python lint config + native ignore file.
 - `.prettierrc.yaml` / `.prettierignore` — Prettier format config (160-char line length) + ignore patterns.
 - `.github/PULL_REQUEST_TEMPLATE/` — per-change-type PR templates (feature, bug fix, documentation, refactoring, dependency update, release, security).
-- `.claude-plugin/plugin.json` — plugin manifest (`devkit`: name, description, version, dependencies).
+- `.claude-plugin/plugin.json` — plugin manifest (`devkit`: schema, name, description, version, author, license, dependencies).
 - `hooks/` — `hooks.json` (`PostToolUse` lint/format hook) + `scripts/` (dispatcher and `lib/` helpers, one function per file); see `hooks/README.md`.
 - `.claude/` — local plugin development workspace (git-ignored except `.gitignore`, `settings.json`, `rules/`).
 - `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
@@ -39,7 +40,7 @@ Once installed, the plugin's skills, agents, hooks, and commands will be availab
 - Open pull requests using the template matching your change type from `.github/PULL_REQUEST_TEMPLATE/`.
 - Keep this README and `CLAUDE.md` consistent with each other.
 - Follow the component guidelines in `.claude/rules/` when adding or updating skills, agents, hooks, or plugin structure.
-- Format all files with `npx prettier --check .` and lint with `markdownlint-cli2`, `yamllint`, `shellcheck`, and `hadolint` before opening a PR.
+- Format all files with `npx prettier --check .` and lint with `markdownlint-cli2`, `yamllint`, `shellcheck`, `hadolint`, and `ruff` before opening a PR.
 
 ## License
 
