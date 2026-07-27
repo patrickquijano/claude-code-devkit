@@ -1,0 +1,3 @@
+# Custom ignore file — shellcheck has no native path-ignore mechanism.
+# Consumed by the shell-lint command in CLAUDE.md via grep -vFf.
+node_modules/

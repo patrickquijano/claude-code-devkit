@@ -1,0 +1,3 @@
+# Custom ignore file — hadolint has no native path-ignore mechanism.
+# Consumed by the Dockerfile-lint command in CLAUDE.md via grep -vFf.
+node_modules/

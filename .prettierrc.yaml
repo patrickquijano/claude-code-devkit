@@ -1,0 +1,5 @@
+# Community defaults with this repo's explicit overrides only.
+printWidth: 160
+singleQuote: true
+tabWidth: 2
+trailingComma: none

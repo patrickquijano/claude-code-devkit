@@ -1,0 +1,26 @@
+{
+  // Community-default ruleset (markdownlint / markdownlint-cli2), with a
+  // few overrides tailored to this repo. Every override below is
+  // commented with why it exists.
+  "default": true,
+
+  // Long lines are allowed and intentional — this repo does not
+  // hard-wrap markdown prose. Never flag line length.
+  "MD013": false,
+
+  // Match .editorconfig's 2-space indent convention for nested list items.
+  "MD007": { "indent": 2 },
+
+  // Allow the same heading text to reappear under different parent
+  // sections (e.g. "## Testing" in more than one PR template file, or
+  // repeated across sibling sections of one rules file).
+  "MD024": { "siblings_only": true },
+
+  // Accept either all "1." ordered-list markers or real incrementing
+  // numbers — both are common GitHub-flavored styles.
+  "MD029": { "style": "one_or_ordered" },
+
+  // Allow files whose first line isn't a top-level heading (e.g. partial
+  // files meant to be included elsewhere).
+  "MD041": false
+}

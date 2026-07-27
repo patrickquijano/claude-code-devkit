@@ -1,0 +1,3 @@
+# Standard excludes. Nothing generated or vendored lives here yet;
+# extend this list as build tooling is added.
+node_modules/
