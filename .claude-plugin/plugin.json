@@ -3,7 +3,11 @@
   "name": "devkit",
   "description": "Reusable Claude Code skills, agents, hooks, and commands for streamlining development across any app.",
   "version": "0.1.0",
-  "author": "Patrick Quijano",
+  "author": {
+    "name": "Patrick Quijano",
+    "email": "me@patrickquijano.com",
+    "url": "https://github.com/patrickquijano"
+  },
   "license": "MIT",
   "dependencies": [
     "claude-code-setup@claude-plugins-official",
