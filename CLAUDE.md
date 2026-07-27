@@ -58,6 +58,7 @@ Repo scaffold only. No plugin code, no build, no test yet. Markdown lint config 
   - `.claude/rules/` — project rules, see "Project rules" below.
     - `.claude/rules/claude-components/` — Claude Code plugin component rules (plugins, skills, subagents, hooks).
     - `.claude/rules/github-actions.md` — GitHub Actions authoring rules.
+- `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
 
 ## Branch naming
 
