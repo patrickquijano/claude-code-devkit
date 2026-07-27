@@ -55,7 +55,7 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
   (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`,
   `dependency_update.md`, `release.md`, `security.md`); GitHub prompt
   pick one when open PR.
-- `.claude-plugin/plugin.json` — plugin manifest (`devkit`: name, description, version).
+- `.claude-plugin/plugin.json` — plugin manifest (`devkit`: name, description, version, dependencies).
 - `hooks/` — `hooks.json` (`PostToolUse` lint/format hook, matcher `Edit|Write`) +
   `hooks/scripts/lint-format.sh` (dispatcher, extension-based) +
   `hooks/scripts/lib/` (`lintfmt_*.sh` helper, one function per file); see `hooks/README.md`.
