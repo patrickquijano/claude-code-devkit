@@ -69,7 +69,7 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
 - `scripts/format-and-lint.sh` — run all format/lint command above in one step.
 - `scripts/install-git-hooks.sh` — point `--local` `core.hooksPath` at `.githooks/`.
-- `.githooks/` — `pre-commit` (format + lint) git hook; see `.githooks/README.md`.
+- `.githooks/` — `pre-commit` (format + lint) and `commit-msg` (Conventional Commits) git hooks; see `.githooks/README.md`.
 
 ## Branch naming
 
@@ -84,6 +84,7 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - Imperative mood, short, ≤72 char.
 - Say what change do, not file touch or why.
 - No body, no footer, no attribution line.
+- Once `./scripts/install-git-hooks.sh` run, `commit-msg` git hook enforce format above.
 
 ## Commit granularity
 

@@ -25,7 +25,7 @@ This repository is an early-stage Claude Code plugin (`devkit`, see `.claude-plu
 - `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
 - `scripts/format-and-lint.sh` — runs prettier, markdownlint-cli2, yamllint, shellcheck, and hadolint in one step.
 - `scripts/install-git-hooks.sh` — points `--local` `core.hooksPath` at `.githooks/`.
-- `.githooks/` — `pre-commit` (format + lint) git hook; see `.githooks/README.md`.
+- `.githooks/` — `pre-commit` (format + lint) and `commit-msg` (Conventional Commits) git hooks; see `.githooks/README.md`.
 
 ## Installation
 
@@ -39,7 +39,7 @@ Once installed, the plugin's skills, agents, hooks, and commands will be availab
 
 - Branch names follow `type/short-description` (e.g. `feat/add-hook-x`, `chore/scaffold-project-docs`).
 - Commit messages follow Conventional Commits: imperative, ≤72 characters, no body/footer/attribution. See `CLAUDE.md`.
-- Run `./scripts/install-git-hooks.sh` once to enable the `pre-commit` (format + lint) git hook.
+- Run `./scripts/install-git-hooks.sh` once to enable the `pre-commit` (format + lint) and `commit-msg` (Conventional Commits) git hooks.
 - Open pull requests using the template matching your change type from `.github/PULL_REQUEST_TEMPLATE/`.
 - Keep this README and `CLAUDE.md` consistent with each other.
 - Follow the component guidelines in `.claude/rules/` when adding or updating skills, agents, hooks, or plugin structure.

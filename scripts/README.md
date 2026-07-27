@@ -116,29 +116,30 @@ shared sourcing target for every script in this repo, and a generic name
 like `prompt_text` or `is_non_empty` would be free to collide with an
 unrelated same-named function defined by another script's own lib files.
 
-| File                        | Function                                                                                     | Purpose                                                                         |
-| --------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `gitcfg_require_repo.sh`    | `gitcfg_require_repo`                                                                        | Exit 1 if not inside a git work tree.                                           |
-| `gitcfg_local_get.sh`       | `gitcfg_local_get`                                                                           | Read a `--local` config value (empty string if unset).                          |
-| `gitcfg_local_set.sh`       | `gitcfg_local_set`                                                                           | Idempotently write a `--local` config value; logs the outcome.                  |
-| `gitcfg_print_config.sh`    | `gitcfg_print_config`                                                                        | Print all 5 managed keys' current values.                                       |
-| `gitcfg_is_non_empty.sh`    | `gitcfg_is_non_empty`                                                                        | Validator: non-empty string.                                                    |
-| `gitcfg_is_valid_email.sh`  | `gitcfg_is_valid_email`                                                                      | Validator: basic email syntax check.                                            |
-| `gitcfg_prompt_text.sh`     | `gitcfg_prompt_text`                                                                         | Free-text prompt with default + validator, re-prompts on failure.               |
-| `gitcfg_prompt_choice.sh`   | `gitcfg_prompt_choice`                                                                       | Numbered choice-list prompt for fields with a fixed value set.                  |
-| `gitcfg_edit_user_name.sh`  | `gitcfg_edit_user_name`                                                                      | Prompt + idempotently set `user.name`.                                          |
-| `gitcfg_edit_user_email.sh` | `gitcfg_edit_user_email`                                                                     | Prompt + idempotently set `user.email`.                                         |
-| `gitcfg_edit_signingkey.sh` | `gitcfg_edit_signingkey`                                                                     | Prompt + idempotently set `user.signingkey`.                                    |
-| `gitcfg_edit_gpg_format.sh` | `gitcfg_edit_gpg_format`                                                                     | Prompt + idempotently set `gpg.format`.                                         |
-| `gitcfg_edit_gpgsign.sh`    | `gitcfg_edit_gpgsign`                                                                        | Prompt + idempotently set `commit.gpgsign`.                                     |
-| `devkit_log_info.sh`        | `devkit_log_info`                                                                            | Print `[INFO] <msg>` to stdout.                                                 |
-| `devkit_log_success.sh`     | `devkit_log_success`                                                                         | Print `[OK] <msg>` to stdout.                                                   |
-| `devkit_log_warn.sh`        | `devkit_log_warn`                                                                            | Print `[WARN] <msg>` to stderr.                                                 |
-| `devkit_log_error.sh`       | `devkit_log_error`                                                                           | Print `[ERROR] <msg>` to stderr.                                                |
-| `devkit_command_exists.sh`  | `devkit_command_exists`                                                                      | Validator: is a command on PATH.                                                |
-| `devkit_run_step.sh`        | `devkit_run_step`                                                                            | Run + log a labeled command; returns its exit status without tripping `set -e`. |
-| `devkit_format.sh`          | `devkit_format_prettier`, `devkit_format_markdownlint`, `devkit_format_ruff`                 | Thin `devkit_run_step` wrappers for each formatting step.                       |
-| `devkit_lint.sh`            | `devkit_lint_yamllint`, `devkit_lint_shellcheck`, `devkit_lint_hadolint`, `devkit_lint_ruff` | Thin `devkit_run_step` wrappers for each lint step.                             |
+| File                            | Function                                                                                     | Purpose                                                                         |
+| ------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `gitcfg_require_repo.sh`        | `gitcfg_require_repo`                                                                        | Exit 1 if not inside a git work tree.                                           |
+| `gitcfg_local_get.sh`           | `gitcfg_local_get`                                                                           | Read a `--local` config value (empty string if unset).                          |
+| `gitcfg_local_set.sh`           | `gitcfg_local_set`                                                                           | Idempotently write a `--local` config value; logs the outcome.                  |
+| `gitcfg_print_config.sh`        | `gitcfg_print_config`                                                                        | Print all 5 managed keys' current values.                                       |
+| `gitcfg_is_non_empty.sh`        | `gitcfg_is_non_empty`                                                                        | Validator: non-empty string.                                                    |
+| `gitcfg_is_valid_email.sh`      | `gitcfg_is_valid_email`                                                                      | Validator: basic email syntax check.                                            |
+| `gitcfg_prompt_text.sh`         | `gitcfg_prompt_text`                                                                         | Free-text prompt with default + validator, re-prompts on failure.               |
+| `gitcfg_prompt_choice.sh`       | `gitcfg_prompt_choice`                                                                       | Numbered choice-list prompt for fields with a fixed value set.                  |
+| `gitcfg_edit_user_name.sh`      | `gitcfg_edit_user_name`                                                                      | Prompt + idempotently set `user.name`.                                          |
+| `gitcfg_edit_user_email.sh`     | `gitcfg_edit_user_email`                                                                     | Prompt + idempotently set `user.email`.                                         |
+| `gitcfg_edit_signingkey.sh`     | `gitcfg_edit_signingkey`                                                                     | Prompt + idempotently set `user.signingkey`.                                    |
+| `gitcfg_edit_gpg_format.sh`     | `gitcfg_edit_gpg_format`                                                                     | Prompt + idempotently set `gpg.format`.                                         |
+| `gitcfg_edit_gpgsign.sh`        | `gitcfg_edit_gpgsign`                                                                        | Prompt + idempotently set `commit.gpgsign`.                                     |
+| `devkit_log_info.sh`            | `devkit_log_info`                                                                            | Print `[INFO] <msg>` to stdout.                                                 |
+| `devkit_log_success.sh`         | `devkit_log_success`                                                                         | Print `[OK] <msg>` to stdout.                                                   |
+| `devkit_log_warn.sh`            | `devkit_log_warn`                                                                            | Print `[WARN] <msg>` to stderr.                                                 |
+| `devkit_log_error.sh`           | `devkit_log_error`                                                                           | Print `[ERROR] <msg>` to stderr.                                                |
+| `devkit_command_exists.sh`      | `devkit_command_exists`                                                                      | Validator: is a command on PATH.                                                |
+| `devkit_run_step.sh`            | `devkit_run_step`                                                                            | Run + log a labeled command; returns its exit status without tripping `set -e`. |
+| `devkit_format.sh`              | `devkit_format_prettier`, `devkit_format_markdownlint`, `devkit_format_ruff`                 | Thin `devkit_run_step` wrappers for each formatting step.                       |
+| `devkit_lint.sh`                | `devkit_lint_yamllint`, `devkit_lint_shellcheck`, `devkit_lint_hadolint`, `devkit_lint_ruff` | Thin `devkit_run_step` wrappers for each lint step.                             |
+| `devkit_validate_commit_msg.sh` | `devkit_validate_commit_msg`                                                                 | Validate a commit message against this repo's Conventional Commits rule.        |
 
 Every file documents its own args / stdout / exit status in a header
 comment — read the file directly for the exact contract before reusing a

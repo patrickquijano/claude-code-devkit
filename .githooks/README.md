@@ -23,6 +23,14 @@ commit. Aborts the commit if:
   something) — review the changes, `git add` them, and commit again.
   Never silently re-stages files for you.
 
+## commit-msg
+
+Validates the commit message's first line against this repo's
+Conventional Commits rule (`CLAUDE.md`'s "Commit messages" section):
+`<type>[(scope)]: <subject>`, one of `feat fix docs style refactor perf
+test build ci chore revert`, `<=72` chars. Rejects the commit with the
+offending line otherwise.
+
 ## Requirements
 
 `bash`, `git`. Same requirements as `scripts/format-and-lint.sh` for
