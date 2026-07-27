@@ -41,6 +41,7 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - Python lint: `ruff format` to format, `ruff check --fix` to lint+fix (config: `.ruff.toml` + `.ruffignore`).
 - Run order: format first, then lint each language — prettier reformat, linters verify style/rule compliance on top.
 - Convenience script: `./scripts/format-and-lint.sh` run all of the above in one step (see `scripts/README.md`).
+- Once `./scripts/install-git-hooks.sh` run, `pre-commit` git hook run this automatically before every commit.
 
 ## Repository structure
 
@@ -67,6 +68,8 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
     - `.claude/rules/github-actions.md` — GitHub Actions authoring rules.
 - `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
 - `scripts/format-and-lint.sh` — run all format/lint command above in one step.
+- `scripts/install-git-hooks.sh` — point `--local` `core.hooksPath` at `.githooks/`.
+- `.githooks/` — `pre-commit` (format + lint) git hook; see `.githooks/README.md`.
 
 ## Branch naming
 

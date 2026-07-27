@@ -87,6 +87,22 @@ picture; the script exits non-zero if any step that ran failed.
 is a no-op pass — `prettier`/`markdownlint-cli2` make no further changes,
 and every lint step is read-only.
 
+## install-git-hooks.sh
+
+Idempotently points this repo's `--local` `core.hooksPath` at
+`.githooks/` (see that directory's own README) so the `pre-commit`
+(format + lint) hook actually runs.
+
+Run from the repo root or any subdirectory of this git work tree:
+
+```sh
+./scripts/install-git-hooks.sh
+```
+
+**Idempotent**: reuses `gitcfg_local_set`'s own idempotent-write
+behavior — re-running when `core.hooksPath` is already `.githooks` is a
+no-op.
+
 ## lib/
 
 Mostly one function per file (a couple group a handful of closely-related
@@ -155,7 +171,7 @@ it.
 
 ## Requirements
 
-`bash`, `git` for `setup-git-config.sh`. `format-and-lint.sh` additionally
+`bash`, `git` for `setup-git-config.sh` and `install-git-hooks.sh`. `format-and-lint.sh` additionally
 needs `npx` (for `prettier` and `markdownlint-cli2`, fetched on demand);
 `yamllint`, `shellcheck`, `hadolint`, and `ruff` are optional — each step is
 skipped with a warning if its binary isn't on PATH.

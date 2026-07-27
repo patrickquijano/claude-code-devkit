@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#
+# pre-commit — runs scripts/format-and-lint.sh before every commit.
+# Aborts the commit if the run fails, or if it changed any file's
+# working-tree status — never silently re-stages files; the developer
+# reviews and re-`git add`s instead.
+#
+# Installed via `core.hooksPath`; see scripts/install-git-hooks.sh.
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+lib_dir="${repo_root}/scripts/lib"
+
+# shellcheck source=scripts/lib/devkit_log_info.sh disable=SC1091
+source "${lib_dir}/devkit_log_info.sh"
+# shellcheck source=scripts/lib/devkit_log_error.sh disable=SC1091
+source "${lib_dir}/devkit_log_error.sh"
+
+devkit_log_info 'pre-commit: running format-and-lint.sh...'
+
+before_status="$(git -C "${repo_root}" status --porcelain)"
+
+if ! "${repo_root}/scripts/format-and-lint.sh"; then
+  devkit_log_error 'pre-commit: format-and-lint.sh failed. Fix the reported issues and try again.'
+  exit 1
+fi
+
+after_status="$(git -C "${repo_root}" status --porcelain)"
+
+if [[ "${before_status}" != "${after_status}" ]]; then
+  devkit_log_error 'pre-commit: formatting changed the working tree. Review the changes, git add them, and commit again.'
+  exit 1
+fi
+
+devkit_log_info 'pre-commit: clean.'
