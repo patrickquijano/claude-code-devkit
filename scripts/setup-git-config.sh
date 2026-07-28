@@ -19,8 +19,8 @@
 # `git config` call, reported as "already set ... (no change)") — safe to
 # re-run with the same answers any number of times.
 #
-# All logic lives in scripts/lib/gitcfg_*.sh (one function per file,
-# gitcfg_-namespaced so they're safe to source from other scripts). This
+# All logic lives in scripts/lib/gitcfg_*.sh (gitcfg_-namespaced so
+# they're safe to source from other scripts). This
 # file only wires them together — see scripts/README.md for the full
 # function reference and how to reuse individual functions elsewhere.
 # Sourcing this file instead of executing it skips the interactive main
@@ -31,38 +31,18 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 lib_dir="${script_dir}/lib"
 
-# shellcheck source=lib/devkit_log_info.sh disable=SC1091
-source "${lib_dir}/devkit_log_info.sh"
-# shellcheck source=lib/devkit_log_success.sh disable=SC1091
-source "${lib_dir}/devkit_log_success.sh"
-# shellcheck source=lib/devkit_log_error.sh disable=SC1091
-source "${lib_dir}/devkit_log_error.sh"
-# shellcheck source=lib/gitcfg_require_repo.sh disable=SC1091
-source "${lib_dir}/gitcfg_require_repo.sh"
-# shellcheck source=lib/gitcfg_local_get.sh disable=SC1091
-source "${lib_dir}/gitcfg_local_get.sh"
-# shellcheck source=lib/gitcfg_local_set.sh disable=SC1091
-source "${lib_dir}/gitcfg_local_set.sh"
-# shellcheck source=lib/gitcfg_print_config.sh disable=SC1091
-source "${lib_dir}/gitcfg_print_config.sh"
-# shellcheck source=lib/gitcfg_is_non_empty.sh disable=SC1091
-source "${lib_dir}/gitcfg_is_non_empty.sh"
-# shellcheck source=lib/gitcfg_is_valid_email.sh disable=SC1091
-source "${lib_dir}/gitcfg_is_valid_email.sh"
-# shellcheck source=lib/gitcfg_prompt_text.sh disable=SC1091
-source "${lib_dir}/gitcfg_prompt_text.sh"
-# shellcheck source=lib/gitcfg_prompt_choice.sh disable=SC1091
-source "${lib_dir}/gitcfg_prompt_choice.sh"
-# shellcheck source=lib/gitcfg_edit_user_name.sh disable=SC1091
-source "${lib_dir}/gitcfg_edit_user_name.sh"
-# shellcheck source=lib/gitcfg_edit_user_email.sh disable=SC1091
-source "${lib_dir}/gitcfg_edit_user_email.sh"
-# shellcheck source=lib/gitcfg_edit_signingkey.sh disable=SC1091
-source "${lib_dir}/gitcfg_edit_signingkey.sh"
-# shellcheck source=lib/gitcfg_edit_gpg_format.sh disable=SC1091
-source "${lib_dir}/gitcfg_edit_gpg_format.sh"
-# shellcheck source=lib/gitcfg_edit_gpgsign.sh disable=SC1091
-source "${lib_dir}/gitcfg_edit_gpgsign.sh"
+# shellcheck source=lib/devkit_log.sh disable=SC1091
+source "${lib_dir}/devkit_log.sh"
+# shellcheck source=lib/gitcfg_util.sh disable=SC1091
+source "${lib_dir}/gitcfg_util.sh"
+# shellcheck source=lib/gitcfg_local.sh disable=SC1091
+source "${lib_dir}/gitcfg_local.sh"
+# shellcheck source=lib/gitcfg_validate.sh disable=SC1091
+source "${lib_dir}/gitcfg_validate.sh"
+# shellcheck source=lib/gitcfg_prompt.sh disable=SC1091
+source "${lib_dir}/gitcfg_prompt.sh"
+# shellcheck source=lib/gitcfg_edit.sh disable=SC1091
+source "${lib_dir}/gitcfg_edit.sh"
 
 main() {
   devkit_log_info 'Starting git config setup.'

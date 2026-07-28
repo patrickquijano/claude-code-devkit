@@ -42,24 +42,16 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 lib_dir="${script_dir}/lib"
 
-# shellcheck source=lib/devkit_log_info.sh disable=SC1091
-source "${lib_dir}/devkit_log_info.sh"
-# shellcheck source=lib/devkit_log_success.sh disable=SC1091
-source "${lib_dir}/devkit_log_success.sh"
-# shellcheck source=lib/devkit_log_warn.sh disable=SC1091
-source "${lib_dir}/devkit_log_warn.sh"
-# shellcheck source=lib/devkit_log_error.sh disable=SC1091
-source "${lib_dir}/devkit_log_error.sh"
-# shellcheck source=lib/devkit_command_exists.sh disable=SC1091
-source "${lib_dir}/devkit_command_exists.sh"
-# shellcheck source=lib/devkit_run_step.sh disable=SC1091
-source "${lib_dir}/devkit_run_step.sh"
+# shellcheck source=lib/devkit_log.sh disable=SC1091
+source "${lib_dir}/devkit_log.sh"
+# shellcheck source=lib/devkit_util.sh disable=SC1091
+source "${lib_dir}/devkit_util.sh"
 # shellcheck source=lib/devkit_format.sh disable=SC1091
 source "${lib_dir}/devkit_format.sh"
 # shellcheck source=lib/devkit_lint.sh disable=SC1091
 source "${lib_dir}/devkit_lint.sh"
-# shellcheck source=lib/gitcfg_require_repo.sh disable=SC1091
-source "${lib_dir}/gitcfg_require_repo.sh"
+# shellcheck source=lib/gitcfg_util.sh disable=SC1091
+source "${lib_dir}/gitcfg_util.sh"
 
 main() {
   gitcfg_require_repo

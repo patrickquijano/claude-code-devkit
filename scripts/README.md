@@ -105,41 +105,28 @@ no-op.
 
 ## lib/
 
-Mostly one function per file (a couple group a handful of closely-related
-steps), named `<namespace>_<name>.sh` → defines
-`<namespace>_<name>()`. Two namespaces live here: `gitcfg_` (git-config
-specific, used only by `setup-git-config.sh`) and `devkit_` (repo-wide —
-logging, command checks, a step runner — reusable by any script in this
-directory). Every function and the one global (`GITCFG_CONFIG_KEYS`, in
-`gitcfg_print_config.sh`) is namespaced on purpose: `scripts/lib/` is a
-shared sourcing target for every script in this repo, and a generic name
-like `prompt_text` or `is_non_empty` would be free to collide with an
-unrelated same-named function defined by another script's own lib files.
+Grouped by concern, named `<namespace>_<name>.sh`. Two namespaces live
+here: `gitcfg_` (git-config specific, used only by `setup-git-config.sh`)
+and `devkit_` (repo-wide — logging, command checks, a step runner —
+reusable by any script in this directory). Every function and the one
+global (`GITCFG_CONFIG_KEYS`, in `gitcfg_util.sh`) is namespaced on
+purpose: `scripts/lib/` is a shared sourcing target for every script in
+this repo, and a generic name like `prompt_text` or `is_non_empty` would
+be free to collide with an unrelated same-named function defined by
+another script's own lib files.
 
-| File                            | Function                                                                                     | Purpose                                                                         |
-| ------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `gitcfg_require_repo.sh`        | `gitcfg_require_repo`                                                                        | Exit 1 if not inside a git work tree.                                           |
-| `gitcfg_local_get.sh`           | `gitcfg_local_get`                                                                           | Read a `--local` config value (empty string if unset).                          |
-| `gitcfg_local_set.sh`           | `gitcfg_local_set`                                                                           | Idempotently write a `--local` config value; logs the outcome.                  |
-| `gitcfg_print_config.sh`        | `gitcfg_print_config`                                                                        | Print all 5 managed keys' current values.                                       |
-| `gitcfg_is_non_empty.sh`        | `gitcfg_is_non_empty`                                                                        | Validator: non-empty string.                                                    |
-| `gitcfg_is_valid_email.sh`      | `gitcfg_is_valid_email`                                                                      | Validator: basic email syntax check.                                            |
-| `gitcfg_prompt_text.sh`         | `gitcfg_prompt_text`                                                                         | Free-text prompt with default + validator, re-prompts on failure.               |
-| `gitcfg_prompt_choice.sh`       | `gitcfg_prompt_choice`                                                                       | Numbered choice-list prompt for fields with a fixed value set.                  |
-| `gitcfg_edit_user_name.sh`      | `gitcfg_edit_user_name`                                                                      | Prompt + idempotently set `user.name`.                                          |
-| `gitcfg_edit_user_email.sh`     | `gitcfg_edit_user_email`                                                                     | Prompt + idempotently set `user.email`.                                         |
-| `gitcfg_edit_signingkey.sh`     | `gitcfg_edit_signingkey`                                                                     | Prompt + idempotently set `user.signingkey`.                                    |
-| `gitcfg_edit_gpg_format.sh`     | `gitcfg_edit_gpg_format`                                                                     | Prompt + idempotently set `gpg.format`.                                         |
-| `gitcfg_edit_gpgsign.sh`        | `gitcfg_edit_gpgsign`                                                                        | Prompt + idempotently set `commit.gpgsign`.                                     |
-| `devkit_log_info.sh`            | `devkit_log_info`                                                                            | Print `[INFO] <msg>` to stdout.                                                 |
-| `devkit_log_success.sh`         | `devkit_log_success`                                                                         | Print `[OK] <msg>` to stdout.                                                   |
-| `devkit_log_warn.sh`            | `devkit_log_warn`                                                                            | Print `[WARN] <msg>` to stderr.                                                 |
-| `devkit_log_error.sh`           | `devkit_log_error`                                                                           | Print `[ERROR] <msg>` to stderr.                                                |
-| `devkit_command_exists.sh`      | `devkit_command_exists`                                                                      | Validator: is a command on PATH.                                                |
-| `devkit_run_step.sh`            | `devkit_run_step`                                                                            | Run + log a labeled command; returns its exit status without tripping `set -e`. |
-| `devkit_format.sh`              | `devkit_format_prettier`, `devkit_format_markdownlint`, `devkit_format_ruff`                 | Thin `devkit_run_step` wrappers for each formatting step.                       |
-| `devkit_lint.sh`                | `devkit_lint_yamllint`, `devkit_lint_shellcheck`, `devkit_lint_hadolint`, `devkit_lint_ruff` | Thin `devkit_run_step` wrappers for each lint step.                             |
-| `devkit_validate_commit_msg.sh` | `devkit_validate_commit_msg`                                                                 | Validate a commit message against this repo's Conventional Commits rule.        |
+| File                            | Functions                                                                                                                    | Purpose                                                                            |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `devkit_log.sh`                 | `devkit_log_info`, `devkit_log_success`, `devkit_log_warn`, `devkit_log_error`                                               | Print `[INFO]`/`[OK]`/`[WARN]`/`[ERROR] <msg>` to stdout/stderr.                   |
+| `devkit_util.sh`                | `devkit_command_exists`, `devkit_run_step`                                                                                   | `PATH` check; labeled step runner (returns exit status without tripping `set -e`). |
+| `devkit_format.sh`              | `devkit_format_prettier`, `devkit_format_markdownlint`, `devkit_format_ruff`                                                 | Thin `devkit_run_step` wrappers for each formatting step.                          |
+| `devkit_lint.sh`                | `devkit_lint_yamllint`, `devkit_lint_shellcheck`, `devkit_lint_hadolint`, `devkit_lint_ruff`                                 | Thin `devkit_run_step` wrappers for each lint step.                                |
+| `devkit_validate_commit_msg.sh` | `devkit_validate_commit_msg`                                                                                                 | Validate a commit message against this repo's Conventional Commits rule.           |
+| `gitcfg_local.sh`               | `gitcfg_local_get`, `gitcfg_local_set`                                                                                       | Read/idempotently write a `--local` config value.                                  |
+| `gitcfg_validate.sh`            | `gitcfg_is_non_empty`, `gitcfg_is_valid_email`                                                                               | Free-text field validators.                                                        |
+| `gitcfg_prompt.sh`              | `gitcfg_prompt_text`, `gitcfg_prompt_choice`                                                                                 | Free-text / numbered-choice-list prompts, re-prompt on invalid input.              |
+| `gitcfg_edit.sh`                | `gitcfg_edit_user_name`, `gitcfg_edit_user_email`, `gitcfg_edit_signingkey`, `gitcfg_edit_gpg_format`, `gitcfg_edit_gpgsign` | Prompt + idempotently set each of the 5 managed config keys.                       |
+| `gitcfg_util.sh`                | `gitcfg_require_repo`, `gitcfg_print_config`                                                                                 | Git-repo guard clause; print all 5 managed keys' current values.                   |
 
 Every file documents its own args / stdout / exit status in a header
 comment — read the file directly for the exact contract before reusing a
@@ -152,16 +139,10 @@ documented dependencies noted in its header):
 
 ```sh
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=lib/devkit_log_info.sh disable=SC1091
-source "${script_dir}/../scripts/lib/devkit_log_info.sh"
-# shellcheck source=lib/devkit_log_success.sh disable=SC1091
-source "${script_dir}/../scripts/lib/devkit_log_success.sh"
-# shellcheck source=lib/devkit_log_error.sh disable=SC1091
-source "${script_dir}/../scripts/lib/devkit_log_error.sh"
-# shellcheck source=lib/gitcfg_local_get.sh disable=SC1091
-source "${script_dir}/../scripts/lib/gitcfg_local_get.sh"
-# shellcheck source=lib/gitcfg_local_set.sh disable=SC1091
-source "${script_dir}/../scripts/lib/gitcfg_local_set.sh"
+# shellcheck source=lib/devkit_log.sh disable=SC1091
+source "${script_dir}/../scripts/lib/devkit_log.sh"
+# shellcheck source=lib/gitcfg_local.sh disable=SC1091
+source "${script_dir}/../scripts/lib/gitcfg_local.sh"
 
 gitcfg_local_set user.email "you@example.com"
 ```
