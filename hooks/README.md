@@ -1,15 +1,10 @@
 # hooks
 
-Claude Code hook config for this plugin. `hooks.json` wires event →
-matcher → command; the command scripts live in `scripts/`.
+Claude Code hook config for this plugin. `hooks.json` wires event → matcher → command; the command scripts live in `scripts/`.
 
 ## PostToolUse: lint-format.sh
 
-Runs right after Claude edits or writes a file (`Edit` / `Write`
-matcher), lints and formats that one file based on its extension, and
-reports the outcome. Never blocks the edit — `PostToolUse` can't deny a
-call anyway — so the hook always exits `0`; a missing or unconfigured
-tool is a logged skip, not a failure.
+Runs right after Claude edits or writes a file (`Edit` / `Write` matcher), lints and formats that one file based on its extension, and reports the outcome. Never blocks the edit — `PostToolUse` can't deny a call anyway — so the hook always exits `0`; a missing or unconfigured tool is a logged skip, not a failure.
 
 ```json
 {
@@ -49,14 +44,7 @@ tool is a logged skip, not a failure.
 | `.xml`                            | XML + related         | xmllint            | `xmllint --format --output` (format) then `xmllint --noout` (lint/validate)                         |
 | anything else                     | —                     | —                  | no-op                                                                                               |
 
-Every wrapper checks its tool is actually usable before running it:
-`npx`-based tools (eslint, stylelint, markdownlint-cli2, prettier,
-htmlhint) need `npx` on `PATH`; direct binaries (hadolint, shellcheck,
-shfmt, yamllint, ruff, php, pint, dotnet, xmllint) need themselves on
-`PATH`; eslint and stylelint additionally need a real config file in
-`cwd` (they hard-error otherwise); `dotnet format` additionally needs a
-`.sln`/`.csproj` in `cwd` (it requires project context). Anything
-missing is a `[WARN]`/`[INFO]` skip, never a crash.
+Every wrapper checks its tool is actually usable before running it: `npx`-based tools (eslint, stylelint, markdownlint-cli2, prettier, htmlhint) need `npx` on `PATH`; direct binaries (hadolint, shellcheck, shfmt, yamllint, ruff, php, pint, dotnet, xmllint) need themselves on `PATH`; eslint and stylelint additionally need a real config file in `cwd` (they hard-error otherwise); `dotnet format` additionally needs a `.sln`/`.csproj` in `cwd` (it requires project context). Anything missing is a `[WARN]`/`[INFO]` skip, never a crash.
 
 ## scripts/
 
@@ -78,18 +66,10 @@ missing is a `[WARN]`/`[INFO]` skip, never a crash.
 | `lintfmt_run_xml.sh`    | `lintfmt_run_xmllint_format`, `lintfmt_run_xmllint_lint`                                                                                                         | `xmllint --format --output` (format) + `xmllint --noout` (lint).                                                                  |
 | `lintfmt_run_simple.sh` | `lintfmt_run_ruff`, `lintfmt_run_markdownlint`, `lintfmt_run_yamllint`, `lintfmt_run_hadolint`                                                                   | Single-command linters with no config-check helper: ruff, markdownlint-cli2, yamllint, hadolint.                                  |
 
-Every file documents its own args / stdout / exit status in a header
-comment. Lib files never call `set -euo pipefail` themselves — sourcing
-one won't silently flip strict mode on in the caller.
+Every file documents its own args / stdout / exit status in a header comment. Lib files never call `set -euo pipefail` themselves — sourcing one won't silently flip strict mode on in the caller.
 
-This directory is self-contained on purpose (no sourcing from the
-repo's top-level `scripts/lib/`) so the `devkit` plugin stays a portable,
-standalone directory per `.claude/rules/claude-components/plugins.md`.
+This directory is self-contained on purpose (no sourcing from the repo's top-level `scripts/lib/`) so the `devkit` plugin stays a portable, standalone directory per `.claude/rules/claude-components/plugins.md`.
 
 ## Requirements
 
-`bash`, `jq` (to parse the hook's JSON payload). Every lint/format tool
-itself is optional — each is skipped with a warning if not on `PATH`,
-and eslint/stylelint/dotnet-format additionally need project config
-before they run at all. See the dispatch table above for which binary
-each extension needs.
+`bash`, `jq` (to parse the hook's JSON payload). Every lint/format tool itself is optional — each is skipped with a warning if not on `PATH`, and eslint/stylelint/dotnet-format additionally need project config before they run at all. See the dispatch table above for which binary each extension needs.
