@@ -54,27 +54,21 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - `.hadolint.yaml` / `.hadolintignore` — Dockerfile lint config (strict, no ignored rules) + ignore patterns.
 - `.ruff.toml` / `.ruffignore` — Python lint config (community rules + line-length override) + native ignore file.
 - `.prettierrc.yaml` / `.prettierignore` — Prettier format config (160-char line length) + ignore patterns.
-- `.github/PULL_REQUEST_TEMPLATE/` — one template per change type
-  (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`,
-  `dependency_update.md`, `release.md`, `security.md`); GitHub prompt
-  pick one when open PR.
+- `.github/PULL_REQUEST_TEMPLATE/` — one template per change type (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`, `dependency_update.md`, `release.md`, `security.md`); GitHub prompt pick one when open PR.
 - `.claude-plugin/plugin.json` — plugin manifest (`devkit`: schema, name, description, version, author, license, dependencies).
-- `hooks/` — `hooks.json` (`PostToolUse` lint/format hook, matcher `Edit|Write`) +
-  `hooks/scripts/lint-format.sh` (dispatcher, extension-based) +
-  `hooks/scripts/lib/` (`lintfmt_*.sh` helper, grouped by concern); see `hooks/README.md`.
+- `hooks/` — `hooks.json` (`PostToolUse` lint/format hook, matcher `Edit|Write`) + `hooks/scripts/lint-format.sh` (dispatcher, extension-based) + `hooks/scripts/lib/` (`lintfmt_*.sh` helper, grouped by concern); see `hooks/README.md`.
 - `.claude/` — local plugin dev workspace, git-ignored except `.gitignore`, `settings.json`, `rules/`.
   - `.claude/rules/` — project rules, see "Project rules" below.
     - `.claude/rules/claude-components/` — Claude Code plugin component rules (plugins, skills, subagents, hooks).
     - `.claude/rules/github-actions.md` — GitHub Actions authoring rules.
-- `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
+- `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` / `push.autoSetupRemote` setup.
 - `scripts/format-and-lint.sh` — run all format/lint command above in one step.
 - `scripts/install-git-hooks.sh` — point `--local` `core.hooksPath` at `.githooks/`.
 - `.githooks/` — `pre-commit` (format + lint) and `commit-msg` (Conventional Commits) git hooks; see `.githooks/README.md`.
 
 ## Branch naming
 
-- Descriptive, conventional: `type/short-description` (type match commit
-  type — `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`).
+- Descriptive, conventional: `type/short-description` (type match commit type — `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`).
 - Name show real purpose of change, short, easy understand.
 - No generic/vague name (`patch-1`, `update`, `fix-stuff`).
 

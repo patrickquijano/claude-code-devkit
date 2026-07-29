@@ -14,11 +14,11 @@ gitcfg_require_repo() {
   fi
 }
 
-# The 5 git config keys this script manages, in menu/display order.
+# The 6 git config keys this script manages, in menu/display order.
 # Namespaced (not just CONFIG_KEYS) because scripts/lib/ is sourced by
 # other scripts too, and an uppercase global here would otherwise be
 # free to collide with an unrelated same-named constant elsewhere.
-readonly GITCFG_CONFIG_KEYS=(user.name user.email user.signingkey gpg.format commit.gpgsign)
+readonly GITCFG_CONFIG_KEYS=(user.name user.email user.signingkey gpg.format commit.gpgsign push.autoSetupRemote)
 
 # gitcfg_print_config — print the current --local value of every git
 # config key this script manages. Depends on gitcfg_local_get being
@@ -33,9 +33,9 @@ gitcfg_print_config() {
   for key in "${GITCFG_CONFIG_KEYS[@]}"; do
     value="$(gitcfg_local_get "${key}")"
     if [[ -n "${value}" ]]; then
-      printf '  %-16s %s\n' "${key}" "${value}"
+      printf '  %-21s %s\n' "${key}" "${value}"
     else
-      printf '  %-16s %s\n' "${key}" "(not set)"
+      printf '  %-21s %s\n' "${key}" "(not set)"
     fi
   done
 }

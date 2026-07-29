@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Prompt + idempotently set each of the 5 managed --local git config
+# Prompt + idempotently set each of the 6 managed --local git config
 # keys. Depend on gitcfg_local_get, gitcfg_local_set, gitcfg_prompt_text/
 # gitcfg_prompt_choice, and (for the two free-text ones) gitcfg_is_non_empty/
 # gitcfg_is_valid_email being sourced first.
@@ -49,4 +49,15 @@ gitcfg_edit_gpgsign() {
   fi
   value="$(gitcfg_prompt_choice 'commit.gpgsign' "${current}" true false)"
   gitcfg_local_set commit.gpgsign "${value}"
+}
+
+# gitcfg_edit_push_autosetupremote — prompt for and idempotently set --local push.autoSetupRemote (true|false).
+gitcfg_edit_push_autosetupremote() {
+  local current value
+  current="$(gitcfg_local_get push.autoSetupRemote)"
+  if [[ -z "${current}" ]]; then
+    current='false'
+  fi
+  value="$(gitcfg_prompt_choice 'push.autoSetupRemote' "${current}" true false)"
+  gitcfg_local_set push.autoSetupRemote "${value}"
 }
