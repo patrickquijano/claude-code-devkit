@@ -18,10 +18,8 @@ This repository is an early-stage Claude Code plugin (`devkit`, see `.claude-plu
 - `.hadolint.yaml` / `.hadolintignore` — Dockerfile lint config + ignore patterns.
 - `.ruff.toml` / `.ruffignore` — Python lint config (community rules + line-length override) + native ignore file.
 - `pyproject.toml` / `uv.lock` — uv-managed dev dependencies (`yamllint`, `ruff`), invoked via `uv run`.
-- `package.json` / `package-lock.json` — npm devDependencies for prettier, markdownlint-cli2, eslint, stylelint, htmlhint (pinned, caret ranges).
+- `package.json` / `package-lock.json` — npm devDependencies for prettier, markdownlint-cli2 (pinned, caret ranges).
 - `.prettierrc.json` / `.prettierignore` — Prettier format config (160-char line length; plugins: `prettier-plugin-sh`, `prettier-plugin-markdown-html`, `prettier-plugin-yaml`, `@htnabe/prettier-plugin-go-template`) + ignore patterns.
-- `eslint.config.js` — ESLint flat config (`@eslint/js` recommended ruleset; scaffolded, no `.js`/`.ts` files yet).
-- `.stylelintrc.yaml` — stylelint config (`stylelint-config-standard`; scaffolded, no `.css` files yet).
 - `.github/PULL_REQUEST_TEMPLATE/` — per-change-type PR templates (feature, bug fix, documentation, refactoring, dependency update, release, security).
 - `.claude-plugin/plugin.json` — plugin manifest (`devkit`: schema, name, description, version, author, license, dependencies).
 - `hooks/` — `hooks.json` (`PostToolUse` lint/format hook) + `scripts/` (dispatcher and `lib/` helpers, grouped by concern); see `hooks/README.md`.

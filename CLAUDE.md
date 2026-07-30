@@ -55,10 +55,8 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - `.hadolint.yaml` / `.hadolintignore` — Dockerfile lint config (strict, no ignored rules) + ignore patterns.
 - `.ruff.toml` / `.ruffignore` — Python lint config (community rules + line-length override) + native ignore file.
 - `pyproject.toml` / `uv.lock` — uv-managed dev dependencies (`yamllint`, `ruff`), invoked via `uv run`.
-- `package.json` / `package-lock.json` — npm devDependencies for prettier, markdownlint-cli2, eslint, stylelint, htmlhint (pinned, caret ranges).
+- `package.json` / `package-lock.json` — npm devDependencies for prettier, markdownlint-cli2 (pinned, caret ranges).
 - `.prettierrc.json` / `.prettierignore` — Prettier format config (160-char line length; plugins: `prettier-plugin-sh`, `prettier-plugin-markdown-html`, `prettier-plugin-yaml`, `@htnabe/prettier-plugin-go-template`) + ignore patterns.
-- `eslint.config.js` — ESLint flat config (`@eslint/js` recommended ruleset; scaffolded, no `.js`/`.ts` files yet).
-- `.stylelintrc.yaml` — stylelint config (`stylelint-config-standard`; scaffolded, no `.css` files yet).
 - `.github/PULL_REQUEST_TEMPLATE/` — one template per change type (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`, `dependency_update.md`, `release.md`, `security.md`); GitHub prompt pick one when open PR.
 - `.claude-plugin/plugin.json` — plugin manifest (`devkit`: schema, name, description, version, author, license, dependencies).
 - `hooks/` — `hooks.json` (`PostToolUse` lint/format hook, matcher `Edit|Write`) + `hooks/scripts/lint-format.sh` (dispatcher, extension-based) + `hooks/scripts/lib/` (`lintfmt_*.sh` helper, grouped by concern); see `hooks/README.md`.

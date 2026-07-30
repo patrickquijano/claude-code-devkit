@@ -59,13 +59,6 @@ main() {
   ext="$(lintfmt_extension_of "${file}")"
 
   case "${ext}" in
-    ts | tsx | mts | cts | js | jsx | mjs | cjs | vue)
-      if lintfmt_eslint_config_exists "${cwd}"; then
-        lintfmt_run_eslint "${file}"
-      else
-        lintfmt_log_info 'No eslint config found, skipping.'
-      fi
-      ;;
     dockerfile)
       lintfmt_run_hadolint "${file}"
       ;;
@@ -86,13 +79,6 @@ main() {
       lintfmt_run_pint "${file}" "${cwd}"
       lintfmt_run_php_lint "${file}"
       ;;
-    css | scss | sass | less)
-      if lintfmt_stylelint_config_exists "${cwd}"; then
-        lintfmt_run_stylelint "${file}"
-      else
-        lintfmt_log_info 'No stylelint config found, skipping.'
-      fi
-      ;;
     cs | csx)
       if lintfmt_dotnet_project_exists "${cwd}"; then
         lintfmt_run_dotnet_format "${file}" "${cwd}"
@@ -102,7 +88,6 @@ main() {
       ;;
     html | htm)
       lintfmt_run_prettier "${file}"
-      lintfmt_run_htmlhint "${file}"
       ;;
     xml)
       lintfmt_run_xmllint_format "${file}"
