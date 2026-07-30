@@ -1,0 +1,25 @@
+{
+  "printWidth": 160,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "none",
+  "plugins": ["prettier-plugin-sh", "prettier-plugin-markdown-html", "prettier-plugin-yaml", "@htnabe/prettier-plugin-go-template"],
+  "overrides": [
+    {
+      "files": ["*.sh", "*.bash"],
+      "options": { "parser": "sh", "switchCaseIndent": true, "spaceRedirects": false }
+    },
+    {
+      "files": ["*.md", "*.markdown"],
+      "options": { "parser": "markdown" }
+    },
+    {
+      "files": ["*.yaml", "*.yml"],
+      "options": { "parser": "yaml" }
+    },
+    {
+      "files": ["*.tmpl", "*.gotmpl"],
+      "options": { "parser": "go-template" }
+    }
+  ]
+}
