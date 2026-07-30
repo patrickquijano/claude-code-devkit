@@ -1,0 +1,15 @@
+{
+  "name": "claude-code-devkit",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Reusable Claude Code skills, agents, hooks, and commands for streamlining development across any app.",
+  "devDependencies": {
+    "@htnabe/prettier-plugin-go-template": "^0.0.2",
+    "markdownlint-cli2": "^0.23.2",
+    "prettier": "^3.9.6",
+    "prettier-plugin-markdown-html": "^1.4.1",
+    "prettier-plugin-sh": "^0.19.0",
+    "prettier-plugin-yaml": "^1.2.0"
+  }
+}

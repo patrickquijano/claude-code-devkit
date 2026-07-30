@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#
+# commit-msg — validates the commit message follows this repo's
+# Conventional Commits rule (see CLAUDE.md's "Commit messages" section):
+# `<type>: <subject>`, <=72 chars.
+#
+# Installed via `core.hooksPath`; see scripts/install-git-hooks.sh.
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+lib_dir="${repo_root}/scripts/lib"
+
+# shellcheck source=scripts/lib/devkit_log.sh disable=SC1091
+source "${lib_dir}/devkit_log.sh"
+# shellcheck source=scripts/lib/devkit_validate_commit_msg.sh disable=SC1091
+source "${lib_dir}/devkit_validate_commit_msg.sh"
+
+devkit_validate_commit_msg "${1}"

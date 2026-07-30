@@ -8,6 +8,7 @@ rules:
   line-length:
     max: 160
 
-# gitignore-style patterns. Nothing generated or vendored lives here yet.
+# gitignore-style patterns — excludes generated/vendored trees (npm, uv).
 ignore: |
   node_modules/
+  .venv/

@@ -1,5 +1,22 @@
 {
+  "$schema": "https://www.schemastore.org/claude-code-plugin-manifest.json",
   "name": "devkit",
   "description": "Reusable Claude Code skills, agents, hooks, and commands for streamlining development across any app.",
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "author": {
+    "name": "Patrick Quijano",
+    "email": "me@patrickquijano.com",
+    "url": "https://github.com/patrickquijano"
+  },
+  "license": "MIT",
+  "dependencies": [
+    "claude-code-setup@claude-plugins-official",
+    "claude-md-management@claude-plugins-official",
+    "code-review@claude-plugins-official",
+    "code-simplifier@claude-plugins-official",
+    "feature-dev@claude-plugins-official",
+    "remember@claude-plugins-official",
+    "skill-creator@claude-plugins-official",
+    "superpowers@claude-plugins-official"
+  ]
 }

@@ -2,8 +2,7 @@
 
 ## Summary
 
-<!-- High-level description. Avoid exploit-level detail in a public PR
-if disclosure is not yet coordinated. -->
+<!-- High-level description. Avoid exploit-level detail in a public PR if disclosure is not yet coordinated. -->
 
 ## Vulnerability details
 
@@ -21,8 +20,7 @@ if disclosure is not yet coordinated. -->
 
 ## Testing
 
-<!-- How the fix was verified, including that the vulnerable path is no
-longer exploitable. -->
+<!-- How the fix was verified, including that the vulnerable path is no longer exploitable. -->
 
 ## Checklist
 

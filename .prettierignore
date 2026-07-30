@@ -1,3 +1,4 @@
-# Standard excludes. Nothing generated or vendored lives here yet;
-# extend this list as build tooling is added.
+# Standard excludes for generated/vendored trees (npm, uv).
+# Extend this list as build tooling is added.
 node_modules/
+.venv/

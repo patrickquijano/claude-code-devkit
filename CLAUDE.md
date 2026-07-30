@@ -8,7 +8,7 @@ This file guide Claude Code (claude.ai/code) in this repo.
 
 ## Current state
 
-Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `PostToolUse` lint/format hook (`hooks.json` + `hooks/scripts/` dispatcher + `lib/` helper, one function per file — see `hooks/README.md`). No build/test yet beyond the hook itself. Markdown lint config exist (`.markdownlint.jsonc` + `.markdownlintignore`) — see "Linting and formatting" below. `.claude/` hold local plugin-dev file, git-ignore except `.gitignore`, `settings.json`, `rules/` — remaining plugin piece (skill, agent, command) go there as built, follow `.claude/rules/`.
+Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `PostToolUse` lint/format hook (`hooks.json` + `hooks/scripts/` dispatcher + `lib/` helper, grouped by concern — see `hooks/README.md`). No build/test yet beyond the hook itself. Markdown lint config exist (`.markdownlint.jsonc` + `.markdownlintignore`) — see "Linting and formatting" below. `.claude/` hold local plugin-dev file, git-ignore except `.gitignore`, `settings.json`, `rules/` — remaining plugin piece (skill, agent, command) go there as built, follow `.claude/rules/`.
 
 ## Project rules
 
@@ -33,13 +33,16 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 
 ## Linting and formatting
 
-- Format (all files): `npx prettier --check .` to check, `npx prettier --write .` to format (config: `.prettierrc.yaml` + `.prettierignore`).
-- Markdown lint: `npx markdownlint-cli2 "**/*.md"` to check, `npx markdownlint-cli2 --fix "**/*.md"` to autofix.
-- YAML lint: `yamllint .` (config + inline ignore patterns: `.yamllint.yaml`).
+- Prerequisite (once per checkout): `npm install` (prettier + web linters) and `uv sync` (yamllint + ruff).
+- Format (all files): `npx prettier --check .` to check, `npx prettier --write .` to format (config: `.prettierrc.json` + `.prettierignore`; plugins: `prettier-plugin-sh`, `prettier-plugin-markdown-html`, `prettier-plugin-yaml`, `@htnabe/prettier-plugin-go-template`).
+- Markdown lint: `npx markdownlint-cli2 "**/*.md" "#node_modules" "#.venv"` to check, add `--fix` to autofix (excludes vendored trees markdownlint-cli2 doesn't ignore by default).
+- YAML lint: `uv run yamllint .` (config + inline ignore patterns: `.yamllint.yaml`).
 - Shell lint: `find . -type f -name "*.sh" | grep -vFf .shellcheckignore | xargs -I{} shellcheck {}` (config: `.shellcheckrc`).
 - Dockerfile lint: `find . -iname "Dockerfile*" | grep -vFf .hadolintignore | xargs -I{} hadolint {}` (config: `.hadolint.yaml`).
+- Python lint: `uv run ruff format` to format, `uv run ruff check --fix` to lint+fix (config: `.ruff.toml` + `.ruffignore`).
 - Run order: format first, then lint each language — prettier reformat, linters verify style/rule compliance on top.
 - Convenience script: `./scripts/format-and-lint.sh` run all of the above in one step (see `scripts/README.md`).
+- Once `./scripts/install-git-hooks.sh` run, `pre-commit` git hook run this automatically before every commit.
 
 ## Repository structure
 
@@ -50,26 +53,25 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - `.yamllint.yaml` — YAML lint config; default ruleset, 160-char line length, inline ignore patterns.
 - `.shellcheckrc` / `.shellcheckignore` — shell lint config (enterprise-hardened optional checks) + ignore patterns.
 - `.hadolint.yaml` / `.hadolintignore` — Dockerfile lint config (strict, no ignored rules) + ignore patterns.
-- `.prettierrc.yaml` / `.prettierignore` — Prettier format config (160-char line length) + ignore patterns.
-- `.github/PULL_REQUEST_TEMPLATE/` — one template per change type
-  (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`,
-  `dependency_update.md`, `release.md`, `security.md`); GitHub prompt
-  pick one when open PR.
-- `.claude-plugin/plugin.json` — plugin manifest (`devkit`: name, description, version).
-- `hooks/` — `hooks.json` (`PostToolUse` lint/format hook, matcher `Edit|Write`) +
-  `hooks/scripts/lint-format.sh` (dispatcher, extension-based) +
-  `hooks/scripts/lib/` (`lintfmt_*.sh` helper, one function per file); see `hooks/README.md`.
+- `.ruff.toml` / `.ruffignore` — Python lint config (community rules + line-length override) + native ignore file.
+- `pyproject.toml` / `uv.lock` — uv-managed dev dependencies (`yamllint`, `ruff`), invoked via `uv run`.
+- `package.json` / `package-lock.json` — npm devDependencies for prettier, markdownlint-cli2 (pinned, caret ranges).
+- `.prettierrc.json` / `.prettierignore` — Prettier format config (160-char line length; plugins: `prettier-plugin-sh`, `prettier-plugin-markdown-html`, `prettier-plugin-yaml`, `@htnabe/prettier-plugin-go-template`) + ignore patterns.
+- `.github/PULL_REQUEST_TEMPLATE/` — one template per change type (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`, `dependency_update.md`, `release.md`, `security.md`); GitHub prompt pick one when open PR.
+- `.claude-plugin/plugin.json` — plugin manifest (`devkit`: schema, name, description, version, author, license, dependencies).
+- `hooks/` — `hooks.json` (`PostToolUse` lint/format hook, matcher `Edit|Write`) + `hooks/scripts/lint-format.sh` (dispatcher, extension-based) + `hooks/scripts/lib/` (`lintfmt_*.sh` helper, grouped by concern); see `hooks/README.md`.
 - `.claude/` — local plugin dev workspace, git-ignored except `.gitignore`, `settings.json`, `rules/`.
   - `.claude/rules/` — project rules, see "Project rules" below.
     - `.claude/rules/claude-components/` — Claude Code plugin component rules (plugins, skills, subagents, hooks).
     - `.claude/rules/github-actions.md` — GitHub Actions authoring rules.
-- `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` setup.
+- `scripts/setup-git-config.sh` — interactive per-repo `user.name` / `user.email` / `user.signingkey` / `gpg.format` / `commit.gpgsign` / `push.autoSetupRemote` setup.
 - `scripts/format-and-lint.sh` — run all format/lint command above in one step.
+- `scripts/install-git-hooks.sh` — point `--local` `core.hooksPath` at `.githooks/`.
+- `.githooks/` — `pre-commit` (format + lint) and `commit-msg` (Conventional Commits) git hooks; see `.githooks/README.md`.
 
 ## Branch naming
 
-- Descriptive, conventional: `type/short-description` (type match commit
-  type — `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`).
+- Descriptive, conventional: `type/short-description` (type match commit type — `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`).
 - Name show real purpose of change, short, easy understand.
 - No generic/vague name (`patch-1`, `update`, `fix-stuff`).
 
@@ -79,6 +81,7 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - Imperative mood, short, ≤72 char.
 - Say what change do, not file touch or why.
 - No body, no footer, no attribution line.
+- Once `./scripts/install-git-hooks.sh` run, `commit-msg` git hook enforce format above.
 
 ## Commit granularity
 
