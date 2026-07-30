@@ -61,32 +61,32 @@ main() {
     printf '  0) Exit\n'
     read -r -p 'Choice: ' choice
     case "${choice}" in
-    1)
-      gitcfg_edit_user_name
-      ;;
-    2)
-      gitcfg_edit_user_email
-      ;;
-    3)
-      gitcfg_edit_signingkey
-      ;;
-    4)
-      gitcfg_edit_gpg_format
-      ;;
-    5)
-      gitcfg_edit_gpgsign
-      ;;
-    6)
-      gitcfg_edit_push_autosetupremote
-      ;;
-    0)
-      devkit_log_success 'Git config setup complete.'
-      gitcfg_print_config
-      return 0
-      ;;
-    *)
-      printf 'Invalid choice.\n' >&2
-      ;;
+      1)
+        gitcfg_edit_user_name
+        ;;
+      2)
+        gitcfg_edit_user_email
+        ;;
+      3)
+        gitcfg_edit_signingkey
+        ;;
+      4)
+        gitcfg_edit_gpg_format
+        ;;
+      5)
+        gitcfg_edit_gpgsign
+        ;;
+      6)
+        gitcfg_edit_push_autosetupremote
+        ;;
+      0)
+        devkit_log_success 'Git config setup complete.'
+        gitcfg_print_config
+        return 0
+        ;;
+      *)
+        printf 'Invalid choice.\n' >&2
+        ;;
     esac
   done
 }
