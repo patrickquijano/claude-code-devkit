@@ -33,9 +33,9 @@ Runs right after Claude edits or writes a file (`Edit` / `Write` matcher), lints
 | `.vue`                            | Vue.js / Nuxt.js SFC  | eslint             | `npx eslint --fix` — only if an eslint config is found in `cwd`                                     |
 | `Dockerfile*` (basename match)    | —                     | hadolint           | `hadolint`                                                                                          |
 | `.md .markdown`                   | —                     | markdownlint-cli2  | `npx markdownlint-cli2 --fix`                                                                       |
-| `.py .pyi`                        | —                     | ruff               | `ruff format` then `ruff check --fix`                                                               |
+| `.py .pyi`                        | —                     | ruff               | `uv run ruff format` then `uv run ruff check --fix`                                                 |
 | `.sh .bash`                       | —                     | shfmt, shellcheck  | `shfmt -w -i 2 -ci` (format) then `shellcheck` (lint)                                               |
-| `.yml .yaml`                      | —                     | yamllint           | `yamllint` (lint-only)                                                                              |
+| `.yml .yaml`                      | —                     | yamllint           | `uv run yamllint` (lint-only)                                                                       |
 | `.php .phtml` (not `*.blade.php`) | PHP + Laravel         | Pint, `php -l`     | `vendor/bin/pint` (or global `pint`) then `php -l`                                                  |
 | `*.blade.php`                     | Laravel Blade         | —                  | skipped — Blade mixes HTML + directives, not valid PHP syntax, so no tool here is safe to run on it |
 | `.css .scss .sass .less`          | Stylesheets + related | stylelint          | `npx stylelint --fix` — only if a stylelint config is found in `cwd`                                |
@@ -44,7 +44,7 @@ Runs right after Claude edits or writes a file (`Edit` / `Write` matcher), lints
 | `.xml`                            | XML + related         | xmllint            | `xmllint --format --output` (format) then `xmllint --noout` (lint/validate)                         |
 | anything else                     | —                     | —                  | no-op                                                                                               |
 
-Every wrapper checks its tool is actually usable before running it: `npx`-based tools (eslint, stylelint, markdownlint-cli2, prettier, htmlhint) need `npx` on `PATH`; direct binaries (hadolint, shellcheck, shfmt, yamllint, ruff, php, pint, dotnet, xmllint) need themselves on `PATH`; eslint and stylelint additionally need a real config file in `cwd` (they hard-error otherwise); `dotnet format` additionally needs a `.sln`/`.csproj` in `cwd` (it requires project context). Anything missing is a `[WARN]`/`[INFO]` skip, never a crash.
+Every wrapper checks its tool is actually usable before running it: `npx`-based tools (eslint, stylelint, markdownlint-cli2, prettier, htmlhint) need `npx` on `PATH` (resolved from `node_modules/.bin` once `npm install` has run); `uv`-based tools (yamllint, ruff) need `uv` on `PATH` (resolved from the project `.venv` once `uv sync`/`uv run` has run); direct binaries (hadolint, shellcheck, shfmt, php, pint, dotnet, xmllint) need themselves on `PATH`; eslint and stylelint additionally need a real config file in `cwd` (they hard-error otherwise); `dotnet format` additionally needs a `.sln`/`.csproj` in `cwd` (it requires project context). Anything missing is a `[WARN]`/`[INFO]` skip, never a crash.
 
 ## scripts/
 
@@ -72,4 +72,4 @@ This directory is self-contained on purpose (no sourcing from the repo's top-lev
 
 ## Requirements
 
-`bash`, `jq` (to parse the hook's JSON payload). Every lint/format tool itself is optional — each is skipped with a warning if not on `PATH`, and eslint/stylelint/dotnet-format additionally need project config before they run at all. See the dispatch table above for which binary each extension needs.
+`bash`, `jq` (to parse the hook's JSON payload). Every lint/format tool itself is optional — each is skipped with a warning if not on `PATH` (`npx`-based tools need `npm install` run first; `yamllint`/`ruff` need `uv` on `PATH`, resolved via `uv run`), and eslint/stylelint/dotnet-format additionally need project config before they run at all. See the dispatch table above for which binary each extension needs.

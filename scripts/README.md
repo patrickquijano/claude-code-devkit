@@ -62,11 +62,11 @@ Run from the repo root or any subdirectory of this git work tree:
 Steps, in order (format first, then lint each language):
 
 1. `prettier --write .` (via `npx`)
-2. `markdownlint-cli2 --fix "**/*.md"` (via `npx`)
-3. `yamllint .` — skipped with a warning if `yamllint` isn't on PATH
+2. `markdownlint-cli2 --fix "**/*.md" "#node_modules" "#.venv"` (via `npx`; excludes vendored trees markdownlint-cli2 doesn't ignore by default)
+3. `uv run yamllint .` — skipped with a warning if `uv` isn't on PATH
 4. `shellcheck` on every `*.sh` file not in `.shellcheckignore` — skipped with a warning if `shellcheck` isn't on PATH
 5. `hadolint` on every `Dockerfile*` not in `.hadolintignore` — skipped with a warning if `hadolint` isn't on PATH
-6. `ruff format .` then `ruff check --fix .` — skipped with a warning if `ruff` isn't on PATH
+6. `uv run ruff format .` then `uv run ruff check --fix .` — skipped with a warning if `uv` isn't on PATH
 
 All steps run even if an earlier one fails, so one pass gives the full picture; the script exits non-zero if any step that ran failed.
 
@@ -121,7 +121,7 @@ Lib files never call `set -euo pipefail` themselves — sourcing one won't silen
 
 ## Requirements
 
-`bash`, `git` for `setup-git-config.sh` and `install-git-hooks.sh`. `format-and-lint.sh` additionally needs `npx` (for `prettier` and `markdownlint-cli2`, fetched on demand); `yamllint`, `shellcheck`, `hadolint`, and `ruff` are optional — each step is skipped with a warning if its binary isn't on PATH.
+`bash`, `git` for `setup-git-config.sh` and `install-git-hooks.sh`. `format-and-lint.sh` additionally needs: `npx` (for `prettier` and `markdownlint-cli2`, resolved from `node_modules/.bin` once `npm install` has run); `uv` (for `yamllint` and `ruff`, resolved from the project `.venv` once `uv sync`/`uv run` has run) — skipped with a warning if `uv` isn't on PATH; `shellcheck` and `hadolint` are optional local binaries, each step skipped with a warning if its binary isn't on PATH.
 
 ## Linting
 

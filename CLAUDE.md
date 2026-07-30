@@ -33,12 +33,13 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 
 ## Linting and formatting
 
-- Format (all files): `npx prettier --check .` to check, `npx prettier --write .` to format (config: `.prettierrc.yaml` + `.prettierignore`).
-- Markdown lint: `npx markdownlint-cli2 "**/*.md"` to check, `npx markdownlint-cli2 --fix "**/*.md"` to autofix.
-- YAML lint: `yamllint .` (config + inline ignore patterns: `.yamllint.yaml`).
+- Prerequisite (once per checkout): `npm install` (prettier + web linters) and `uv sync` (yamllint + ruff).
+- Format (all files): `npx prettier --check .` to check, `npx prettier --write .` to format (config: `.prettierrc.json` + `.prettierignore`; plugins: `prettier-plugin-sh`, `prettier-plugin-markdown-html`, `prettier-plugin-yaml`, `@htnabe/prettier-plugin-go-template`).
+- Markdown lint: `npx markdownlint-cli2 "**/*.md" "#node_modules" "#.venv"` to check, add `--fix` to autofix (excludes vendored trees markdownlint-cli2 doesn't ignore by default).
+- YAML lint: `uv run yamllint .` (config + inline ignore patterns: `.yamllint.yaml`).
 - Shell lint: `find . -type f -name "*.sh" | grep -vFf .shellcheckignore | xargs -I{} shellcheck {}` (config: `.shellcheckrc`).
 - Dockerfile lint: `find . -iname "Dockerfile*" | grep -vFf .hadolintignore | xargs -I{} hadolint {}` (config: `.hadolint.yaml`).
-- Python lint: `ruff format` to format, `ruff check --fix` to lint+fix (config: `.ruff.toml` + `.ruffignore`).
+- Python lint: `uv run ruff format` to format, `uv run ruff check --fix` to lint+fix (config: `.ruff.toml` + `.ruffignore`).
 - Run order: format first, then lint each language — prettier reformat, linters verify style/rule compliance on top.
 - Convenience script: `./scripts/format-and-lint.sh` run all of the above in one step (see `scripts/README.md`).
 - Once `./scripts/install-git-hooks.sh` run, `pre-commit` git hook run this automatically before every commit.
@@ -53,7 +54,11 @@ Plugin manifest at `.claude-plugin/plugin.json` (name `devkit`). `hooks/` hold `
 - `.shellcheckrc` / `.shellcheckignore` — shell lint config (enterprise-hardened optional checks) + ignore patterns.
 - `.hadolint.yaml` / `.hadolintignore` — Dockerfile lint config (strict, no ignored rules) + ignore patterns.
 - `.ruff.toml` / `.ruffignore` — Python lint config (community rules + line-length override) + native ignore file.
-- `.prettierrc.yaml` / `.prettierignore` — Prettier format config (160-char line length) + ignore patterns.
+- `pyproject.toml` / `uv.lock` — uv-managed dev dependencies (`yamllint`, `ruff`), invoked via `uv run`.
+- `package.json` / `package-lock.json` — npm devDependencies for prettier, markdownlint-cli2, eslint, stylelint, htmlhint (pinned, caret ranges).
+- `.prettierrc.json` / `.prettierignore` — Prettier format config (160-char line length; plugins: `prettier-plugin-sh`, `prettier-plugin-markdown-html`, `prettier-plugin-yaml`, `@htnabe/prettier-plugin-go-template`) + ignore patterns.
+- `eslint.config.js` — ESLint flat config (`@eslint/js` recommended ruleset; scaffolded, no `.js`/`.ts` files yet).
+- `.stylelintrc.yaml` — stylelint config (`stylelint-config-standard`; scaffolded, no `.css` files yet).
 - `.github/PULL_REQUEST_TEMPLATE/` — one template per change type (`feature.md`, `bug_fix.md`, `documentation.md`, `refactoring.md`, `dependency_update.md`, `release.md`, `security.md`); GitHub prompt pick one when open PR.
 - `.claude-plugin/plugin.json` — plugin manifest (`devkit`: schema, name, description, version, author, license, dependencies).
 - `hooks/` — `hooks.json` (`PostToolUse` lint/format hook, matcher `Edit|Write`) + `hooks/scripts/lint-format.sh` (dispatcher, extension-based) + `hooks/scripts/lib/` (`lintfmt_*.sh` helper, grouped by concern); see `hooks/README.md`.
