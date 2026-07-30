@@ -11,13 +11,13 @@
 #   statuses (both run even if the first fails).
 lintfmt_run_ruff() {
   local file="${1}"
-  if ! lintfmt_command_exists ruff; then
-    lintfmt_log_warn 'ruff not found on PATH, skipping.'
+  if ! lintfmt_command_exists uv; then
+    lintfmt_log_warn 'uv not found on PATH, skipping ruff.'
     return 0
   fi
   local status=0
-  lintfmt_run_step 'ruff format' ruff format "${file}" || status="${?}"
-  lintfmt_run_step 'ruff check --fix' ruff check --fix "${file}" || status="${?}"
+  lintfmt_run_step 'ruff format' uv run ruff format "${file}" || status="${?}"
+  lintfmt_run_step 'ruff check --fix' uv run ruff check --fix "${file}" || status="${?}"
   return "${status}"
 }
 
@@ -38,11 +38,11 @@ lintfmt_run_markdownlint() {
 # Args: $1 = file path.
 lintfmt_run_yamllint() {
   local file="${1}"
-  if ! lintfmt_command_exists yamllint; then
-    lintfmt_log_warn 'yamllint not found on PATH, skipping.'
+  if ! lintfmt_command_exists uv; then
+    lintfmt_log_warn 'uv not found on PATH, skipping yamllint.'
     return 0
   fi
-  lintfmt_run_step 'yamllint' yamllint "${file}"
+  lintfmt_run_step 'yamllint' uv run yamllint "${file}"
 }
 
 # lintfmt_run_hadolint — lint a Dockerfile with hadolint.

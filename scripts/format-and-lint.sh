@@ -11,15 +11,17 @@
 # Steps, in order (format first, then lint each language):
 #   1. prettier --write .                     (all supported files)
 #   2. markdownlint-cli2 --fix "**/*.md"      (markdown autofix)
-#   3. yamllint .                             (if installed)
+#   3. yamllint .                             (if uv installed)
 #   4. shellcheck on every *.sh file not in .shellcheckignore (if installed)
 #   5. hadolint on every Dockerfile* not in .hadolintignore (if installed)
-#   6. ruff format . then ruff check --fix . (if installed)
+#   6. ruff format . then ruff check --fix . (if uv installed)
 #
-# yamllint, shellcheck, hadolint, and ruff are optional local binaries
-# (not fetched via npx) — if one isn't on PATH, that step is skipped with a
-# warning instead of failing the whole run. prettier and markdownlint-cli2
-# run via `npx`, which fetches them on demand.
+# yamllint and ruff are uv-managed project dependencies (pyproject.toml +
+# uv.lock), invoked via `uv run` — if `uv` isn't on PATH, that step is
+# skipped with a warning instead of failing the whole run. shellcheck and
+# hadolint remain optional local binaries, unmanaged by any package manager.
+# prettier and markdownlint-cli2 are pinned npm devDependencies, resolved
+# automatically by `npx` from node_modules/.bin once `npm install` has run.
 #
 # Idempotent: re-running against an already-formatted, lint-clean repo
 # is a no-op pass — prettier/markdownlint-cli2 make no further changes,
@@ -65,10 +67,10 @@ main() {
   devkit_format_prettier || failures=$((failures + 1))
   devkit_format_markdownlint || failures=$((failures + 1))
 
-  if devkit_command_exists yamllint; then
+  if devkit_command_exists uv; then
     devkit_lint_yamllint || failures=$((failures + 1))
   else
-    devkit_log_warn 'yamllint not found on PATH, skipping.'
+    devkit_log_warn 'uv not found on PATH, skipping yamllint.'
   fi
 
   if devkit_command_exists shellcheck; then
@@ -83,11 +85,11 @@ main() {
     devkit_log_warn 'hadolint not found on PATH, skipping.'
   fi
 
-  if devkit_command_exists ruff; then
+  if devkit_command_exists uv; then
     devkit_format_ruff || failures=$((failures + 1))
     devkit_lint_ruff || failures=$((failures + 1))
   else
-    devkit_log_warn 'ruff not found on PATH, skipping.'
+    devkit_log_warn 'uv not found on PATH, skipping ruff.'
   fi
 
   if ((failures > 0)); then

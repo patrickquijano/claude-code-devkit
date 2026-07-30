@@ -11,7 +11,7 @@
 # Returns: the wrapped command's exit status.
 
 devkit_lint_yamllint() {
-  devkit_run_step 'yamllint' yamllint .
+  devkit_run_step 'yamllint' uv run yamllint .
 }
 
 devkit_lint_shellcheck() {
@@ -25,5 +25,5 @@ devkit_lint_hadolint() {
 }
 
 devkit_lint_ruff() {
-  devkit_run_step 'ruff check --fix' ruff check --fix .
+  devkit_run_step 'ruff check --fix' uv run ruff check --fix .
 }

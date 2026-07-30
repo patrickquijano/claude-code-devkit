@@ -15,9 +15,9 @@ devkit_format_prettier() {
 }
 
 devkit_format_markdownlint() {
-  devkit_run_step 'markdownlint-cli2 --fix' npx markdownlint-cli2 --fix '**/*.md'
+  devkit_run_step 'markdownlint-cli2 --fix' npx markdownlint-cli2 --fix '**/*.md' '#node_modules' '#.venv'
 }
 
 devkit_format_ruff() {
-  devkit_run_step 'ruff format' ruff format .
+  devkit_run_step 'ruff format' uv run ruff format .
 }
