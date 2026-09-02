@@ -1,0 +1,81 @@
+---
+# yamllint configuration.
+# https://yamllint.readthedocs.io/en/stable/configuration.html
+#
+# The runner passes an explicit file list computed from .lintignore, so the
+# `ignore` block below does not affect a `scripts/lint-yaml.sh` run. It is there
+# for the by-hand case FR-013a is about: `yamllint .` invoked directly must skip
+# what the repository excludes. scripts/lint-scope.sh compares the two and fails
+# when they diverge (FR-013b).
+#
+# `ignore` and `ignore-from-file` may not be used together, so this is `ignore`
+# alone -- .lintignore is not in yamllint's syntax and cannot be pointed at.
+
+# The strict preset. `relaxed` was rejected: it disables the rules most likely
+# to catch a real mistake.
+extends: default
+
+# FR-013a: this check's own declaration of what it does not examine. Mirrors
+# .lintignore, in gitignore-style patterns.
+ignore: |
+  .git
+  .specify/scripts
+  .specify/templates
+  .specify/integrations
+  .specify/workflows
+  .specify/extensions
+  .specify/.gitignore
+  .specify/init-options.json
+  .specify/integration.json
+  .specify/memory/.constitution-template.json
+  .claude
+  LEAN-CTX.md
+  .remember
+  node_modules
+  .venv
+  venv
+  .ruff_cache
+  __pycache__
+  .lint-selftest-tmp
+rules:
+  # OFF, for the same reason as Markdown's MD013. Consistency between the two
+  # standards matters more than either individual limit.
+  line-length: disable
+
+  # OFF. A leading `---` adds nothing to a single-document config file, and
+  # warning about its absence produces noise on every file in the repository.
+  document-start: disable
+
+  # The ten rules below are disabled because Prettier now formats YAML
+  # (FR-022). Each governs something Prettier rewrites, so leaving it on would
+  # mean two checks rewriting one file and a verdict that depends on which ran
+  # last. Classified by hand against yamllint's conf/default.yaml -- unlike
+  # markdownlint, yamllint publishes no Prettier preset (research.md section 16).
+  braces: disable
+  brackets: disable
+  colons: disable
+  commas: disable
+  hyphens: disable
+  indentation: disable
+  empty-lines: disable
+  new-line-at-end-of-file: disable
+  new-lines: disable
+  trailing-spaces: disable
+
+  # STILL ENABLED, and this is the interesting half of FR-022. `comments` and
+  # `comments-indentation` look like formatting rules and are not Prettier's:
+  # Prettier preserves YAML comments verbatim and enforces nothing about the
+  # space after `#` or the gap before an inline comment. Disabling them would
+  # delete a check rather than relocate one. Left at the default preset's
+  # warning level.
+  #
+  # `key-duplicates` and `anchors` stay for the same reason from the other
+  # direction: they are semantic, and Prettier does not detect them at all.
+
+  # Raised from warning to error: yes/no/on/off parsing as booleans is a
+  # genuine source of silent misconfiguration, so it should fail rather than
+  # warn. check-keys is off because GitHub Actions' `on:` key is a legitimate
+  # exception that cannot be renamed.
+  truthy:
+    level: error
+    check-keys: false

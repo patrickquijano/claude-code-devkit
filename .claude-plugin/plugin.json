@@ -1,0 +1,21 @@
+{
+  "name": "claude-code-devkit",
+  "displayName": "Claude Code Devkit",
+  "description": "A developer toolkit for building custom agents, commands, skills, and MCP servers, with templates, patterns, and workflows for AI-powered automation and context engineering.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Patrick Quijano",
+    "url": "https://github.com/patrickquijano"
+  },
+  "homepage": "https://github.com/patrickquijano/claude-code-devkit",
+  "repository": "https://github.com/patrickquijano/claude-code-devkit",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "devkit",
+    "toolkit",
+    "linting",
+    "formatting",
+    "spec-driven-development"
+  ]
+}

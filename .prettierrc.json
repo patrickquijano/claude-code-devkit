@@ -1,0 +1,33 @@
+{
+  "printWidth": 100,
+  "trailingComma": "none",
+  "singleQuote": true,
+  "plugins": ["@prettier/plugin-xml", "prettier-plugin-sh"],
+  "overrides": [
+    {
+      "files": ["*.md", "*.markdown"],
+      "options": {
+        "parser": "markdown"
+      }
+    },
+    {
+      "files": ["*.yml", "*.yaml"],
+      "options": {
+        "parser": "yaml"
+      }
+    },
+    {
+      "files": ["*.xml"],
+      "options": {
+        "parser": "xml",
+        "xmlWhitespaceSensitivity": "ignore"
+      }
+    },
+    {
+      "files": ["*.sh", "*.bash"],
+      "options": {
+        "parser": "sh"
+      }
+    }
+  ]
+}

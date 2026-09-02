@@ -1,0 +1,56 @@
+# ShellCheck configuration. Committed, because behaviour that depends on a
+# per-developer setting is not a standard (constitution, Principle V).
+
+# The load-bearing line. Without it ShellCheck assumes bash and every bashism
+# passes -- which would make Principle IV unenforceable by the tooling that
+# exists to enforce it.
+shell=sh
+
+# Every finding fails the check. A laxer severity would let style findings pass
+# silently, which contradicts FR-005: non-zero when a violation is found.
+severity=style
+
+# Follow the sourced helpers in scripts/lib/ so their definitions are checked in
+# context, instead of producing "cannot follow source" on every runner.
+external-sources=true
+source-path=SCRIPTDIR
+
+# Optional checks, chosen rather than blanket-enabled.
+#
+# `enable=all` is deliberately NOT used: it includes require-double-brackets,
+# which mandates [[ ]] -- a bashism, and therefore in direct conflict with
+# shell=sh above. The four below each prevent a defect the others do not.
+
+# An unhandled case branch in tool resolution is a silent no-op, which is
+# exactly what Principle II forbids.
+enable=add-default-case
+
+# Finds the places where an exit status is swallowed. Principle II, mechanically.
+enable=check-extra-masked-returns
+
+# set -e not applying inside a function call is the classic way fail-fast quietly
+# stops being fail-fast.
+enable=check-set-e-suppressed
+
+# `command -v` is POSIX; `which` is not, and its exit status is unreliable.
+enable=deprecate-which
+
+# FR-013c. The other five checks each declare their own excluded paths in their
+# own configuration file. ShellCheck cannot, and this is the record of that
+# rather than a gap nobody wrote down.
+#
+# .shellcheckrc accepts shell, severity, source-path, external-sources, enable
+# and disable. Every one is a directive about rules or interpretation; none is
+# about which files to visit. The `-e`/`--exclude` flag excludes warning CODES,
+# not paths -- a reader who assumes otherwise from the name gets silent
+# under-checking rather than an error. See research.md section 13.
+#
+# Consequence: a contributor running `shellcheck` by hand over a directory may
+# check files this repository excludes. The runner is unaffected, because
+# scripts/lint-shell.sh passes the .lintignore-derived file list.
+# scripts/lint-scope.sh reports this check as UNVERIFIABLE on every run rather
+# than counting it as agreeing, so the gap stays visible (FR-013b).
+#
+# Filtering ShellCheck's input from the wrapper was considered and rejected:
+# that puts scope logic in a script with no configuration file behind it, which
+# is the second source of truth FR-013b exists to detect.

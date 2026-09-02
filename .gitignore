@@ -1,0 +1,52 @@
+# Agent-local and machine-local state. Nothing here is shared, and committing it
+# would put per-machine settings and generated output into the lint scope and the
+# plugin package. See specs/001-quality-gate-plugin/spec.md FR-018.
+
+# Claude Code: consumer-side state, not this repository's authored content
+.claude/logs/
+.claude/settings.local.json
+.claude/prompt.md
+
+# Spec Kit: machine-local run state and per-checkout feature pointer
+.specify/.speckit-run-state.json
+.specify/.speckit-dirty-snapshot
+.specify/feature.json
+
+# Spec Kit extensions: machine-local working state only. Everything else the six
+# extensions produce is committed on purpose -- see FR-027 and
+# specs/001-quality-gate-plugin/research.md section 19. In particular
+# .specify/extensions.yml, .specify/extensions/, .specify/assessments/ and
+# .specify/bugs/ are project history, not state.
+#
+# The downloaded catalog, cached per machine. A 212 KB snapshot of
+# raw.githubusercontent.com with a `cached_at` timestamp, refetched on demand and
+# stale the moment upstream publishes. .registry is NOT here: that records which
+# extensions are installed at which version, which is exactly what another
+# checkout needs to reproduce this one.
+.specify/extensions/.cache/
+
+# token-budget writes <artifact>.full.md alongside each artifact it compacts, as
+# a restore point for /speckit.token-budget.restore. A backup of one machine's
+# pre-compaction copy is not a decision anyone needs to review.
+*.full.md
+
+# Agent memory
+.remember/
+
+# Dependency directories, fetched rather than authored
+node_modules/
+.venv/
+venv/
+
+# Tool caches
+.ruff_cache/
+__pycache__/
+*.pyc
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Self-test fixtures. Deliberately non-conforming, created and removed by
+# scripts/selftest.sh. Also in .lintignore -- both are required.
+.lint-selftest-tmp/

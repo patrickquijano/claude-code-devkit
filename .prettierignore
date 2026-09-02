@@ -1,0 +1,33 @@
+# FR-013a: this check's own declaration of what it does not examine.
+#
+# Until 2026-09-02 this file also listed *.md, *.markdown, *.yml and *.yaml, on
+# the ground that markdownlint owned Markdown and yamllint owned YAML. FR-022
+# reversed that: Prettier now formats both, and those two tools gave up the
+# rules Prettier rewrites, so each of those content kinds has exactly one
+# formatting configuration (this one) and exactly one linting configuration.
+# Re-adding those four patterns would silently remove the formatting coverage
+# FR-021 requires -- Prettier would report nothing rather than complain.
+#
+# The runner passes an explicit file list computed from .lintignore, so this file
+# governs a by-hand `prettier --check .`. scripts/lint-scope.sh compares the two
+# and fails when they diverge (FR-013b).
+
+.git
+.specify/scripts
+.specify/templates
+.specify/integrations
+.specify/workflows
+.specify/extensions
+.specify/.gitignore
+.specify/init-options.json
+.specify/integration.json
+.specify/memory/.constitution-template.json
+.claude
+LEAN-CTX.md
+.remember
+node_modules
+.venv
+venv
+.ruff_cache
+__pycache__
+.lint-selftest-tmp
