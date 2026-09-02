@@ -260,3 +260,66 @@ T001 to T050 delivered the original spec and are complete. The tasks below cover
 - T058, T059, T060, T062, T063 — five different configuration files, no shared state.
 - T054 with any of Phase A2 — different files.
 - T075, T076, T077 — three independent verifications, all read-only.
+
+## Second amendment 2026-09-02 — Phases B1 to B5, tasks T082 onward
+
+T001 to T081 are complete. The tasks below cover the second amendment only: the change-proposal
+structures (FR-028 to FR-035, FR-037) and the citation-staleness check (FR-036). Numbering continues so
+a task ID identifies one piece of work across the whole feature.
+
+One ordering fact governs the whole set: the templates must be **designed to pass** the checks, not
+excluded from them (FR-037). So the check that verifies them exists before the content it verifies, and
+the content is run through the aggregate check as it is written rather than at the end.
+
+### Phase B1: the citation mechanism — the eighth check
+
+- [x] T082 Write `scripts/lint-citations.sh`: find every `<!-- cite: <path> -->` marker in `.github/`, join the blockquote that follows it to one line stripping `>`, and require that text to appear in the named file after whitespace normalisation on both sides. Exit `1` naming the template, the cited path and the unmatched quotation; a cited file that does not exist is a mismatch with the path named, never a skip. `--fix` reports and rewrites nothing, using `no_automatic_fix` (FR-036, contracts/cli.md)
+- [x] T083 Add `citations` to `CHECKS` in `scripts/lint.sh`, immediately after `scope` — both need no tool, and a stale quotation should fail before a container is pulled (FR-036, FR-004)
+- [x] T084 Verify the whitespace normalisation against the real document rather than a fixture: a citation of the sentence at `.specify/memory/constitution.md:167`, which hard-wraps across two lines there, must match. A naive `grep -F` returns 0 for the same input, which is the failure this task exists to rule out (research.md §23)
+
+### Phase B2: the general structure — the only one applied automatically
+
+- [x] T085 Write `.github/pull_request_template.md` with a level-one heading, then `## What changed`, `## Why`, `## Where to look first`, `## Checks`, `## How this was produced`, `## For the reviewer`. The heading is required by MD041 and is not optional (FR-028, FR-029, research.md §22)
+- [x] T086 Add the pre-review obligation to the `## Checks` section: the author states whether `scripts/lint.sh` was run and passed, with the Development Workflow sentence quoted beneath under a `<!-- cite: .specify/memory/constitution.md -->` marker (FR-030)
+- [x] T087 Add the agent-authorship question to `## How this was produced`: whether a coding agent produced the change, and if so a reference to the session (FR-034)
+- [x] T088 Add the reviewer section: the six principles named, with the Governance sentence quoted under its own `<!-- cite: -->` marker. One section, not a separate reviewer artifact (FR-031, FR-035)
+- [x] T089 Run `scripts/lint-citations.sh` against the general structure. Both citations must match; this is the first real exercise of T082 (FR-036)
+
+### Phase B3: the two specialised structures
+
+- [x] T090 [P] Write `.github/PULL_REQUEST_TEMPLATE/quality-gate.md`: every section the general structure has, repeated verbatim rather than referenced, plus the question only a change to the checking machinery raises — how the change was proven to leave every check still able to fail on bad input, which is `scripts/selftest.sh`'s result (FR-032, FR-033)
+- [x] T091 [P] Write `.github/PULL_REQUEST_TEMPLATE/spec-record.md`: every general section repeated, plus which phase produced the change and whether the existing requirement and criterion numbering was continued rather than restarted (FR-032, FR-033)
+- [x] T092 Verify FR-033 by comparison rather than by reading: `diff` the `^##` headings of each specialised file against the general one and confirm only additions, never a removal (FR-033, SC-019)
+
+### Phase B4: the checks pass, and can fail
+
+- [x] T093 Run the aggregate check with all three templates present and confirm `0` of the six path declarations were changed to admit them — `grep -rn 'github'` across all six must find nothing (FR-037, SC-020)
+- [x] T094 Add a `citations` fixture to `scripts/selftest.sh`: a template whose quotation has been altered, asserted to be rejected and named. Nine standards become ten. Do **not** add a fixture for template prose quality — it has no decidable failure condition (SC-002, FR-006, research.md §23)
+- [x] T095 Run `scripts/selftest.sh` on both the native and `LINT_FORCE_CONTAINER=1` paths. `lint-citations.sh` needs no tool, so both paths exercise the same code — state that rather than implying two resolutions were tested
+
+### Phase B5: the written record and verification
+
+- [x] T096 [P] Update `CLAUDE.md`: seven checks becomes eight, `citations` joins the isolation list, and the `.github/` templates get one line saying they exist and are checked. Additive only, no reformatting; the file is 37 lines against a 200-line target
+- [x] T097 [P] Update `README.md`'s quality-checks table with the `scripts/lint-citations.sh` row, and say the repository has change-proposal templates. Keep the section naming exactly one whole-repository command, which SC-001 counts (FR-014, SC-001)
+- [x] T098 [P] Verify SC-016 and SC-019 against `.github/pull_request_template.md` and `.github/PULL_REQUEST_TEMPLATE/`: exactly 1 structure applied without selection, and 0 obligations appearing only in an opt-in structure
+- [x] T099 [P] Verify SC-017 and SC-018: 2 of 2 governance obligations present with source locations, and 0 quotations contradicting the cited document — the second by running `scripts/lint-citations.sh`, not by reading
+- [x] T100 [P] Verify SC-021 across `.github/pull_request_template.md` and both files in `.github/PULL_REQUEST_TEMPLATE/`: 3 structures, 1 general and 2 additional, and 0 additional structures asking only what the general one already asks
+- [x] T101 Run `scripts/lint.sh` and `scripts/selftest.sh` on both the native and `LINT_FORCE_CONTAINER=1` paths; all four must exit `0`
+- [x] T102 Run quickstart Scenarios 16 to 20 as written and correct any inaccuracy in `quickstart.md` from the actual output, the way T047 and T079 did for the earlier scenarios
+- [x] T103 Resolve the duplication the Phase 4 checklist flagged as CHK015: FR-031 and FR-035 both require the reviewer be pointed at the principles a review must verify. Consolidate in `spec.md` so one requirement governs, or record why both are needed. Resolved by consolidation: FR-031 now defers to FR-035, so one reviewer section quotes the compliance obligation once and names the six principles unquoted. FR-031 was restated rather than deleted, so no identifier was retired. SC-016 was restated in the same pass to enumerate the six required parts, which makes FR-029 and FR-034 countable without adding a criterion
+
+### Second amendment dependencies
+
+- T082 blocks T083, T084, T089 and T094: there is nothing to register, verify or fixture until the check exists.
+- T085 blocks T086, T087 and T088 — they add sections to the file T085 creates.
+- T085 blocks T090 and T091: the specialised files repeat the general one's sections, so the general one must be settled first or they repeat a draft.
+- T090 and T091 block T092 and T100.
+- T086 and T088 block T089 and T099 — the citations must exist before they can be checked.
+- Everything blocks T101 and T102.
+- T103 is independent of every other task here and may run at any point; it is a spec correction, not template work.
+
+### Second amendment parallel opportunities
+
+- T090 with T091 — two different files, no shared state, though both wait on T085.
+- T096 with T097 — different files.
+- T098, T099, T100 — three independent verifications, all read-only.

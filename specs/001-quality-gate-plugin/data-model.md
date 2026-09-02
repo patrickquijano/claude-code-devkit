@@ -198,3 +198,58 @@ One entry in `.specify/extensions.yml` under `hooks.<event>`.
 - Ranks follow the written principle: observe before mutate, commit last (FR-025a).
 
 **State transition worth stating, because it destroys configuration**: installing, reinstalling, updating or `--force`-ing an extension purges its entries for each event and re-adds them from its manifest. Since no extension in this set ships a hook priority, every re-install returns its hooks to 10. The ranks are therefore a committed artifact that must be re-applied after any extension update, and the principle is written beside them so that re-applying does not require re-deriving.
+
+## Proposal structure
+
+The content a change proposal arrives pre-filled with. Three exist, and they are not interchangeable:
+one is applied automatically and two are selected by URL.
+
+| Field        | Value                                                                                                                                                |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identity     | its path. `.github/pull_request_template.md` for the general one; a filename inside `.github/PULL_REQUEST_TEMPLATE/` for each specialised one        |
+| Application  | **automatic** for the general one, **opt-in** for the specialised ones, selected as `?template=<filename>.md`                                        |
+| Content kind | Markdown. Not YAML: issue forms are not supported for pull requests, so there are no typed or required fields                                        |
+| Sections     | a level-one heading, then the author-facing sections, then the reviewer-facing section                                                               |
+| Citations    | zero or more, each a `<!-- cite: <path> -->` marker followed by a blockquote                                                                         |
+| Governed by  | `.prettierrc.json` for formatting, `.markdownlint-cli2.jsonc` for linting, `.editorconfig` for whitespace — one configuration per concern, unchanged |
+| Verified by  | `scripts/lint-citations.sh` for citation fidelity only                                                                                               |
+
+Invariants, each traceable to a requirement:
+
+- Exactly one structure is applied automatically (FR-028). A layout with only specialised structures
+  yields an empty proposal body.
+- No obligation carried by FR-030 or FR-031 appears only in a specialised structure (FR-033, SC-019).
+  This is why the specialised files repeat the general one's sections rather than referring to them.
+- A specialised structure asks at least one question the general one does not (FR-032, SC-021).
+- Every structure opens with a level-one heading (MD041, research.md §22). Not a requirement of the
+  feature — a consequence of the repository's own Markdown standard.
+
+## Governance obligation
+
+A normative requirement in the constitution that applies before or during review. Two exist.
+
+| Field      | Value                                                                                         |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| Source     | a path and a section in `.specify/memory/constitution.md`                                     |
+| Wording    | the sentence as currently written there, which is **hard-wrapped across lines**               |
+| Applies    | before review (the check must have run and passed) or during it (compliance must be verified) |
+| Carried by | the general structure, always. Never only by a specialised one                                |
+
+The two: Development Workflow's pre-review check requirement, and Governance's principle-compliance
+requirement. Both are quoted rather than paraphrased, so that `lint-citations.sh` can compare them.
+
+## Citation
+
+A quotation of a governed document inside a proposal structure, in a form a script can find.
+
+| Field      | Value                                                                                           |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| Marker     | `<!-- cite: <repo-relative path> -->` on its own line                                           |
+| Quotation  | the blockquote lines immediately following, joined to one line with `>` stripped                |
+| Match rule | the quotation must appear in the cited file after both sides are whitespace-normalised          |
+| Failure    | `scripts/lint-citations.sh` exits `1` and names the template, the cited path, and the quotation |
+
+State transitions: a citation is **matching** until the cited document is amended, at which point it
+becomes **stale**. Nothing detects the transition at the moment it happens; the next aggregate check run
+does. There is no third state — a citation whose cited file does not exist is reported as stale with the
+missing path named, not skipped.

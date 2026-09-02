@@ -26,7 +26,11 @@ parse_args "$@"
 # premise the other six rest on -- that .lintignore and the six per-check
 # declarations agree about what is examined (FR-013b). A run that reports six
 # passes over the wrong set of files is worse than one that stops here.
-CHECKS='scope editorconfig format markdown yaml shell python'
+#
+# `citations` follows for the same reason -- it needs no tool either -- and
+# because a governance quotation gone stale should be reported before a
+# container is pulled to check whitespace (FR-036).
+CHECKS='scope citations editorconfig format markdown yaml shell python'
 
 FIX_ARG=''
 if [ "$MODE" = fix ]; then

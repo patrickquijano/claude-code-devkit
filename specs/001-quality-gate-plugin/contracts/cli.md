@@ -118,6 +118,28 @@ Exists because FR-013a distributes the scope declaration across six configuratio
 - Where a tool has no exclusion mechanism at all — the shell check — reports it as unverifiable, on every run, and does not count it as agreeing.
 - Part of the aggregate run, so a divergence fails `scripts/lint.sh` rather than waiting for someone to run it.
 
+## `scripts/lint-citations.sh` — every governance quotation still matches
+
+```text
+scripts/lint-citations.sh
+scripts/lint-citations.sh --fix
+```
+
+Exists because FR-036 requires a stale quotation to be detectable by running something. Needs no tool and no container: it reads committed files and compares them.
+
+**Guarantees**
+
+- Finds every `<!-- cite: <path> -->` marker in the change-proposal templates, joins the blockquote that follows it to one line, and requires that text to appear in the file the marker names.
+- Comparison is **whitespace-normalised on both sides**. The cited documents hard-wrap their prose, so a quotation of one sentence spans two lines there and an exact-string comparison would reject accurate citations.
+- Exit `1` on any mismatch, naming the template, the path it cited, and the quotation that was not found. A marker whose cited file does not exist is a mismatch with the missing path named, never a skip.
+- `--fix` reports and rewrites nothing: which of the two texts is wrong is a judgement. Uses the same no-automatic-fix message as the other checks that cannot rewrite.
+- Part of the aggregate run, so an amended constitution fails `scripts/lint.sh` until the quotations are brought back into line.
+
+**Not guaranteed**
+
+- Nothing about the templates' prose. Clarity, length and usefulness have no decidable failure condition and are not checked. The Phase 4 checklist is where those are reviewed, by a person.
+- Nothing about the truth of what an author states beside a citation. FR-030 records the author's claim that the check passed; verifying that claim would mean running the check when a proposal opens, which is out of scope.
+
 ## `scripts/selftest.sh` — proof the checks can fail
 
 ```text
@@ -145,4 +167,4 @@ No other variable is read. Nothing is written to the environment.
 
 ## Stability
 
-The exit statuses, the two environment variables, and the `--fix` flag are the contract. So is the fact that `lint-format.sh` reports plugin resolution: a caller may rely on an absent add-on being distinguishable from a clean run, though not on the exact wording. The check order in `lint.sh`, the per-line output format, and the image references are implementation detail and may change without notice — a caller that parses the runners' own output rather than reading the exit status is relying on something this contract does not promise.
+The exit statuses, the two environment variables, and the `--fix` flag are the contract. So is the fact that `lint-format.sh` reports plugin resolution: a caller may rely on an absent add-on being distinguishable from a clean run, though not on the exact wording. The `<!-- cite: <path> -->` marker syntax is also contract: a template author may rely on that exact form being recognised, and on the blockquote immediately following it being the quotation. The check order in `lint.sh`, the per-line output format, and the image references are implementation detail and may change without notice — a caller that parses the runners' own output rather than reading the exit status is relying on something this contract does not promise.

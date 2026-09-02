@@ -566,6 +566,173 @@ every other document here. `.lintignore` currently excludes `.specify` wholesale
 has to narrow -- the generated scripts and templates stay excluded, the human-authored artifacts do
 not.
 
+## 20. Change-proposal template mechanics (amendment, FR-028, FR-032, FR-033)
+
+Fetched from GitHub's own documentation rather than recalled, because the whole design turns on one
+behaviour that is easy to get backwards.
+
+**Supported locations.** A single template may live at `pull_request_template.md` in the repository
+root, at `docs/pull_request_template.md`, or at `.github/pull_request_template.md`. Multiple templates
+live in a `PULL_REQUEST_TEMPLATE/` subdirectory of any of those three, which the documentation writes
+in upper case while writing the single file in lower case. Templates take effect only once merged:
+"Templates are available to collaborators when they are merged into the repository's default branch."
+
+**The decisive asymmetry.** Only the single file is applied automatically. The directory form is
+reachable only through a query parameter: "You can create a _PULL_REQUEST_TEMPLATE/_ subdirectory in
+any of the supported folders to contain multiple pull request templates, and use the `template` query
+parameter to specify the template that will fill the pull request body." The parameter takes the
+filename including its `.md` extension, matching the issue-template form documented as
+`?template=issue_template.md`.
+
+**Decision**: `.github/pull_request_template.md` is the general structure; `.github/PULL_REQUEST_TEMPLATE/`
+holds the two specialised ones.
+
+**Rationale**: a repository with only a directory gets an **empty** default proposal body, because
+nothing selects a template on the author's behalf. Everything required has to sit in the single file.
+This is the mechanical fact behind FR-033, and FR-033 exists because the requirement would otherwise be
+satisfiable by a layout that silently drops it.
+
+**Alternatives rejected**: the repository root and `docs/` are both supported and both were rejected --
+`.github/` is where a reader looks for repository metadata, and the root is already carrying eleven
+configuration files. A directory with no single file was rejected on the finding above.
+
+### Issue forms are not available here, and that is documented rather than assumed
+
+**Decision**: Markdown only. No YAML, no structured fields, no required-field validation.
+
+**Rationale**: quoted from GitHub's issue-forms syntax page: "Issue forms are not supported for pull
+requests." The `config.yml` chooser is likewise documented for `.github/ISSUE_TEMPLATE` alone. So the
+form-based features -- typed inputs, a `required: true` flag, a dropdown -- are simply unavailable, and
+every requirement in the amendment had to be designed for prose an author can freely edit or delete.
+That constraint is the reason spec.md's Assumptions section says these structures are advisory in
+enforcement and mandatory in content: it is a platform limit, not a decision.
+
+**Alternatives rejected**: none available. This was checked rather than assumed precisely because a
+design that assumed forms would have produced requirements nothing could satisfy.
+
+## 21. What a proposal description carries: adopted and declined (FR-029, FR-030, FR-031, FR-034)
+
+GitHub's own best-practice guidance for pull requests makes six recommendations. Each was taken as a
+candidate and decided on, rather than adopted wholesale:
+
+| Recommendation                                                                                                                       | Disposition         | Reason                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Provide context and guidance" -- explain "why the change is needed, what changed, and where reviewers should pay special attention" | **adopt**           | This is FR-029 almost verbatim, and the third clause -- where to look -- is worth more than the first two for a reviewer arriving cold                                                                                                                   |
+| "Review your own pull request first", including "making sure relevant builds or tests have run"                                      | **adopt**           | Already an obligation here, at `constitution.md:167`, which is stronger than a recommendation. FR-030 carries it                                                                                                                                         |
+| "Write small pull requests"                                                                                                          | **decline**         | Not a property of the description, so a template cannot record or check it. A checkbox asserting a change is small measures nothing                                                                                                                      |
+| "Link to related issues or projects", with closing keywords                                                                          | **decline for now** | This repository has no issues and no project board. A field nobody can fill is a field that trains authors to skip fields                                                                                                                                |
+| "Highlight the status with labels"                                                                                                   | **decline**         | Labels are routing, and spec.md's Out of Scope excludes routing a proposal                                                                                                                                                                               |
+| "Review for security"                                                                                                                | **partial**         | Not a separate section. The reviewer section names the six principles, and where a change touches the checking machinery the specialised structure asks how it was proven still able to fail -- which is this repository's actual security-adjacent risk |
+
+**Decision on agent authorship (FR-034)**: the general structure asks whether a coding agent produced
+the change and, if so, for a reference to the session.
+
+**Rationale**: this repository's own history is agent-produced, and the commits already carry a
+`Claude-Session:` trailer, so the information exists either way -- but in the commit trailers, where a
+reviewer has to know to look. Surfacing it in the proposal body puts it where the reviewer already is.
+What a reviewer gains is not the authorship label but the ability to see what the author was actually
+asked to do, which the difference itself never shows.
+
+**Alternatives rejected**: asking for the fact without the reference, which leaves the reviewer knowing
+there is context and not where it is; and asking for nothing, on the argument that a diff is reviewed
+on its merits regardless -- true, and it still leaves the reviewer unable to distinguish a deliberate
+choice from an artefact of how the work was requested.
+
+## 22. How the templates survive this repository's own checks (FR-037)
+
+Every finding here is from running the committed configuration against candidate content, not from
+reading the configuration and reasoning about it.
+
+| Concern                                                                             | Result                                                                      | Consequence for the design                                                                                         |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Prettier, on HTML comments, task lists, blockquotes and an em-dash attribution line | **no rewrite**                                                              | The template shapes are stable under formatting; no content had to change                                          |
+| **MD041** `first-line-heading`                                                      | **fails** a template that opens with an HTML comment then `## What changed` | Every template opens with a level-one heading. This is a design change, not a relaxed rule                         |
+| **MD024** `no-duplicate-heading`, configured `siblings_only: true`                  | passes across files, fails within one                                       | The three templates may all use `## What changed`; a single template may not repeat a heading at one level         |
+| `scripts/lint-scope.sh` with `.github/` present                                     | **passes**, five declarations agreeing, shell unverifiable                  | Nothing excludes `.github/`, so the files enter scope with **0 declarations changed**, which is what SC-020 counts |
+| `scripts/lint.sh` end to end with the probe files in place                          | **exit 0**                                                                  | Verified before any template was written                                                                           |
+
+The MD041 finding is worth stating as a trade-off rather than a fix. A level-one heading in a proposal
+body sits under the proposal's own title field, so the title is effectively stated twice. The
+alternative was disabling MD041 for `.github/`, which the amendment forbids: FR-037 says a structure
+that has to be excluded from a check is written in the wrong form. The heading also does useful work --
+it names which of the three structures the author is looking at, which is otherwise invisible once the
+content is in the proposal body.
+
+## 23. Citation-staleness detection (FR-036)
+
+FR-036 required a mismatch to be "detectable by running something", which the Phase 4 checklist flagged
+as unverifiable as written (CHK010, CHK011). Resolved here with a concrete mechanism.
+
+**Decision**: a new check, `scripts/lint-citations.sh`, registered in `scripts/lint.sh`'s `CHECKS`
+immediately after `scope`. It needs no tool and no container. Each citation in a template is marked by
+an HTML comment naming the cited file, followed by a blockquote:
+
+```markdown
+<!-- cite: .specify/memory/constitution.md -->
+
+> Before a change is proposed for review, the aggregate quality check MUST have been run and MUST have passed.
+```
+
+The check extracts each marker's blockquote, joins it to one line, and requires it to appear verbatim in
+the cited file after whitespace normalisation. Exit `0` when every citation matches, `1` naming each
+that does not, with the same statuses as every other check. No `--fix`: which of the two texts is wrong
+is a judgement, so it reports and leaves both alone.
+
+**Rationale**: whitespace normalisation is the load-bearing part, and it was measured rather than
+assumed. `constitution.md` hard-wraps its prose, so the sentence FR-030 quotes is split across
+`constitution.md:167` and `:168`. A naive `grep -F` for the one-line quotation returns **0 matches** --
+the check would fail on a citation that is perfectly accurate. Flattening the cited file with
+`tr '
+' ' '` and collapsing runs of spaces makes both target sentences match, and a negative control --
+the same sentence with `MUST` changed to `SHOULD` -- correctly does not match. All three results were
+run before this was written down.
+
+**Alternatives rejected**: a markdownlint custom rule, which resolves through Node module lookup and
+would work on some machines and not others -- the same reasoning that kept the Prettier preset inline in
+section 16. Folding the comparison into `scripts/lint-scope.sh`, which verifies agreement among the six
+path declarations and would become two unrelated checks under one name. Requiring quotations to be
+single-line in the constitution, which is a worse document to make a checker's life easier.
+
+### Whether a prose artifact can be self-tested, and on what terms
+
+**Decision**: yes, and `scripts/selftest.sh` gains a fixture for it. What is tested is the citation's
+fidelity -- a template whose quotation has been altered must be rejected and named. What is **not**
+tested, and cannot be, is whether the prose is clear, useful, or the right length.
+
+**Rationale**: this is the same line the Phase 4 checklist drew, and it is the reason the checklist
+exists. A requirement about an artifact's content can fail a check; a requirement about its wording
+quality cannot. The citation check is the one part of this feature that has a decidable failure
+condition, so it is the one part that gets a fixture. Claiming a self-test for the rest would be
+claiming a verification that did not happen.
+
+### Why this is not a second linting configuration for Markdown
+
+Worth stating because it is the first thing a reviewer should challenge. The Quality Gate Requirements
+section at v1.2.0 allows one governing configuration per content kind **per concern**, and names the
+concerns as formatting and linting. Markdown already has both: `.prettierrc.json` and
+`.markdownlint-cli2.jsonc`.
+
+`lint-citations.sh` adds neither. It has **no configuration file of its own** and governs no content
+kind; it verifies an invariant between two files. `scripts/lint-scope.sh` set that precedent in the
+first amendment -- it too has no configuration and no content kind, and compares declarations to one
+another. The constitutional limit counts configurations per content kind and concern, and this check
+contributes zero of them.
+
+## 24. What the templates cannot do, recorded so it is not mistaken for a gap
+
+Three limits, each a platform fact rather than a decision:
+
+1. **The proposal that adds the templates cannot use them.** "Templates are available to collaborators
+   when they are merged into the repository's default branch." So the first proposal to carry this
+   structure is the one after it.
+2. **Nothing prevents an author deleting a section.** With issue forms unavailable for pull requests,
+   there is no required field and no validation. The structures are designed so an omission is visible
+   to a reviewer -- a missing answer under a heading that is still there -- rather than impossible.
+3. **The check result FR-030 records is the author's statement, not a verified fact.** Verifying it
+   would mean running the check when a proposal opens, which spec.md's Out of Scope excludes along with
+   continuous integration. FR-030 is deliberately a record, and `lint-citations.sh` verifies the
+   quotation's accuracy, never the claim beside it.
+
 ## Open questions
 
 None. All three spec clarifications were resolved in Phase 3, and every Technical Context field in plan.md is filled.

@@ -301,3 +301,106 @@ The ranks follow the written principle — `superb` 10, `token-budget` 20, `agen
 Do not grep for `priority` unanchored: the file's header comment discusses hook priority in prose, and those lines match first.
 
 Two things to know before trusting a passing run here. `specify extension set-priority` sets **resolution** priority, not hook order — running it and expecting the hooks to reorder produces no change and no error. And `specify extension update` re-registers an extension's hooks from its manifest, which returns them to the default `10`; after any update, re-apply the ranks and re-run this scenario.
+
+## Scenario 16 — the general structure is the one that always fires
+
+Covers FR-028, FR-033, SC-016 and SC-019.
+
+```sh
+ls .github/pull_request_template.md
+ls .github/PULL_REQUEST_TEMPLATE/
+```
+
+**Pass**: one file at the first path, two inside the directory.
+
+The single file is what makes this scenario pass, and its absence is the failure this scenario exists to catch. Only a single template file is applied automatically; a directory alone yields an **empty** proposal body. So confirm the general structure is the one carrying both governance quotations:
+
+```sh
+grep -c 'cite:' .github/pull_request_template.md
+grep -l 'cite:' .github/PULL_REQUEST_TEMPLATE/*.md
+```
+
+**Pass**: `2` from the first command. The second lists the specialised files that also carry citations — which is expected, not a failure: FR-033 requires the obligations reach an author who selected a specialised template too, so they are repeated rather than referenced.
+
+**Fail**, and worth naming: a `2` from the directory files and a `0` from `pull_request_template.md`. That layout satisfies "the obligations are in a template" while delivering them to nobody who did not know to add a query parameter.
+
+## Scenario 17 — a stale governance quotation fails the aggregate check
+
+Covers FR-036, SC-018.
+
+```sh
+scripts/lint-citations.sh
+echo "exit=$?"
+```
+
+**Pass**: exit `0`, every citation matching the document it names.
+
+Then break it deliberately, which is the only way to know the check is doing anything:
+
+```sh
+# change one word inside a quoted blockquote in .github/pull_request_template.md
+scripts/lint-citations.sh
+echo "exit=$?"
+```
+
+**Pass**: exit `1`, naming the template, the cited path, and the quotation that was not found. Undo the edit before continuing.
+
+One property to check rather than assume, because getting it wrong produces a check that fails on correct input: the constitution hard-wraps its prose, so the sentence quoted in the template spans two lines in `.specify/memory/constitution.md`. A run that reports a mismatch on an **unmodified** template means the comparison stopped normalising whitespace, not that the citation is wrong.
+
+## Scenario 18 — the templates pass the repository's own checks, with nothing excluded
+
+Covers FR-037, SC-020.
+
+```sh
+scripts/lint.sh
+scripts/lint-scope.sh
+```
+
+**Pass**: the aggregate exits `0` with the templates present, and `lint-scope.sh` reports five declarations agreeing and the shell check unverifiable — **the same output as before the templates existed**. Nothing was added to any ignore list to make the aggregate pass.
+
+```sh
+grep -rn 'github' .lintignore .prettierignore .markdownlint-cli2.jsonc .yamllint.yml ruff.toml .editorconfig-checker.json
+```
+
+**Pass**: one match, and it is not a path declaration:
+
+```text
+.markdownlint-cli2.jsonc:2:// https://github.com/DavidAnson/markdownlint-cli2
+```
+
+That is the tool's documentation URL in a header comment, present long before these templates existed. What would be a failure is `.github` appearing inside `ignores`, `ignore`, `exclude`, `Exclude`, or as a line in `.lintignore` or `.prettierignore` — a declaration widened to accommodate the templates, which FR-037 forbids: a structure that has to be excluded from a check is written in the wrong form. Read the match, do not just count it.
+
+Two things the templates had to be designed around, both found by running the checks rather than reading their configuration:
+
+- Every template opens with a level-one heading. Without one, MD041 fails a file that starts with an HTML comment.
+- A heading may not repeat at the same level **within** one template. MD024 is configured `siblings_only: true`, so the same `## What changed` in all three files is fine.
+
+## Scenario 19 — the specialised structures ask something the general one does not
+
+Covers FR-032, SC-021.
+
+```sh
+grep -c '^## ' .github/pull_request_template.md
+grep -c '^## ' .github/PULL_REQUEST_TEMPLATE/quality-gate.md
+grep -c '^## ' .github/PULL_REQUEST_TEMPLATE/spec-record.md
+```
+
+**Pass**: each specialised file has **more** sections than the general one, because it repeats the general sections and adds its own.
+
+```sh
+grep '^## ' .github/pull_request_template.md > /tmp/general-headings
+for f in .github/PULL_REQUEST_TEMPLATE/*.md; do
+  printf '== %s\n' "$f"
+  grep '^## ' "$f" | diff /tmp/general-headings -
+done
+```
+
+**Pass**: each diff shows only additions — `6a7` and the added heading, never a `d` or a `<` line. `diff` exits `1` on any difference at all, so the exit status is not the signal here; the direction of the change is. A removal means a specialised structure dropped something the general one requires, which FR-033 forbids and SC-019 counts at zero. An empty diff means a specialised structure asks nothing extra and should not exist (SC-021).
+
+## Scenario 20 — what these templates cannot do
+
+Not a pass/fail scenario. Three limits, each a platform fact, recorded so a reader does not read them as defects.
+
+- **The proposal that adds these templates cannot use them.** Templates take effect once merged to the default branch, so the first proposal to arrive carrying this structure is the one after it.
+- **No field is required.** Issue forms are not supported for pull requests, so there is no validation and nothing stops an author deleting a section. The structures make an omission visible — an empty answer under a heading that is still there — rather than impossible.
+- **The check result in a proposal is the author's statement, not a verified fact.** Verifying it would mean running the check when a proposal opens, which is out of scope along with continuous integration. `scripts/lint-citations.sh` verifies the quotation's accuracy, never the claim beside it.

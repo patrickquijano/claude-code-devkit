@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-02
 
-**Status**: Draft (amended 2026-09-02 -- per-check ignore declarations, formatting scope and defaults policy, spec-tooling capability extensions)
+**Status**: Draft (amended 2026-09-02 -- per-check ignore declarations, formatting scope and defaults policy, spec-tooling capability extensions; amended again 2026-09-02 -- change-proposal structure)
 
 **Input**: User description: "Anyone working in this repository — maintainer, contributor, or coding agent — needs one dependable way to check that the repository's own content meets a consistent, written quality standard, and the repository needs to be usable as a Claude Code plugin so the toolkit it advertises can actually be installed."
 
@@ -21,6 +21,13 @@
 - Q: When a formatting add-on component is absent on the machine running the check, does the check warn and continue, or fail? → A: Neither — that content kind falls back to the container path, where the add-ons are pinned, and the check reports that it did so.
 - Q: What is the declared hook execution order ordered by? → A: An explicit numeric rank in committed configuration, with the numbers assigned by effect: observational and read-only hooks first, hooks that mutate the repository last.
 - Q: Are per-assessment and per-bug artifacts committed as project history, or excluded as working state? → A: Committed, on the same footing as `specs/`.
+
+### Session 2026-09-02 (second amendment)
+
+- Q: Which distinct kinds of change warrant their own proposal structure, and which are served adequately by the general one? → A: Two specialised structures — one for a change to the checking machinery, one for a change to the spec-driven record. Documentation and every other kind are served by the general structure, because they raise no question it does not already ask.
+- Q: Must a change proposal record that it was produced by a coding agent rather than typed by a person, and if so, what must it record? → A: Yes — both the fact and a reference back to the session that produced it.
+- Q: Is a reviewer-facing counterpart required, or is identifying the obligations from within the author's structure sufficient? → A: Sufficient. The author's structure carries a section addressed to the reviewer; no separate reviewer artifact.
+- Q: FR-031 and FR-035 both require the reviewer be pointed at the principles a review must verify — which governs, and does the structure carry one element or two? → A: One. A single reviewer section quotes the compliance obligation once and names the six principles; FR-031 defers to FR-035. Raised as a duplication during analysis, not during clarification.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -86,6 +93,22 @@ A user wants the toolkit this repository advertises. They install the repository
 
 ---
 
+### User Story 5 - Propose a change and have it reviewed (Priority: P2)
+
+A contributor, maintainer or coding agent finishes a change and proposes it for review. They are told, at the moment they write the proposal, what a reviewer will need: what changed, why, and whether the repository's own quality check was run and passed. The reviewer opening it is told which principles they are obliged to verify. Neither of them has to have read the governance document to be held to it.
+
+**Why this priority**: P2 rather than P1 because the checks themselves work without it -- but the governance document already obliges an author to have run the check before proposing, and obliges a reviewer to verify principle compliance, and today nothing carries either obligation to either person. An obligation that lives only in a document nobody opens mid-review is an obligation in name.
+
+**Independent Test**: Can be fully tested by opening a change proposal without having read anything about the repository's conventions, and confirming the proposal arrives already asking for what a reviewer needs, with each governance obligation traceable to where it is written.
+
+**Acceptance Scenarios**:
+
+1. **Given** a contributor who has never read the governance document, **When** they open a change proposal, **Then** the proposal already contains the structure asking what changed, why, and whether the check passed.
+2. **Given** a reviewer opening that proposal, **When** they read it before the diff, **Then** they are pointed at each principle a review is obliged to verify, with its source location.
+3. **Given** a change to the checking machinery, **When** the author selects the structure for that kind, **Then** they are asked how the change was proven to leave every check still able to fail on bad input, in addition to -- never instead of -- everything the general structure asks.
+
+---
+
 ### Edge Cases
 
 - A content type has no files present in the repository yet: the check for that type reports success rather than failing on an empty input set.
@@ -98,6 +121,10 @@ A user wants the toolkit this repository advertises. They install the repository
 - Neither the add-on nor the fallback is reachable: this is FR-011's hard failure, naming both, and the aggregate run stops.
 - The per-check ignore declarations disagree about a file both checks govern: the verification required by FR-013b fails, rather than the disagreement surfacing later as a file nobody checks.
 - A capability extension is installed but disabled: FR-024 is unmet, because it requires the capabilities be enabled and not merely present.
+- A change proposal is opened by selecting a structure for a specific kind of change: the obligations FR-030 and FR-031 carry still reach the author and reviewer, because FR-033 forbids any of them living only in a structure the author has to choose.
+- The governance document is amended and a quotation in the proposal structure goes stale: the verification FR-036 requires fails, rather than a stale quotation continuing to be read as current.
+- An author deletes a section of the structure before submitting: nothing this repository controls can prevent that, so the structure is designed to make the omission visible to a reviewer rather than to rely on enforcement it does not have.
+- A proposed change touches no content any check governs: the obligation to have run the aggregate check still applies, because that check evaluates the repository rather than the proposed difference.
 
 ## Requirements _(mandatory)_
 
@@ -136,6 +163,19 @@ A user wants the toolkit this repository advertises. They install the repository
 - **FR-025a**: Those ranks MUST be assigned on a stated principle rather than arbitrarily: hooks that only observe run before hooks that modify the repository, and the principle MUST be written down where the ranks are, so that the rank for a later extension can be derived rather than guessed.
 - **FR-026**: Any extension obtained from outside the vetted catalog MUST have its provenance recorded in the written record required by FR-014: where it came from, which version was installed, and what it is permitted to change.
 - **FR-027**: The per-item artifacts the assessment and bug-triage extensions write MUST be committed, on the same footing as the feature artifacts under the specification directory, and MUST therefore be in scope for the checks. FR-018's exclusion covers the extensions' machine-local run state, not their output.
+- **FR-028**: The repository MUST provide a written structure that a change proposal arrives pre-filled with, such that a proposal opened by someone who does not know the structure exists still carries it. The structure MUST be applied without the author having to select it.
+- **FR-029**: The structure MUST require the author to state what changed and why it changed, in a form a reviewer can read before opening the proposed difference.
+- **FR-030**: The structure MUST require the author to state whether the aggregate check was run and whether it passed, and MUST quote the governing obligation -- the requirement that the aggregate check have been run and have passed before a change is proposed for review -- with its source location, so a reader can verify that the structure reports the obligation accurately rather than paraphrasing it.
+- **FR-031**: The structure MUST identify, for the reviewer, each governing principle a review is obliged to verify. FR-035 governs where that identification lives and what form it takes; this requirement states only that it is required, so where the two appear to differ, FR-035 governs. The obligation to verify compliance is quoted with its source location on the same terms as FR-030; the principles themselves are named rather than quoted, which is what holds the structures to the 2 quotations SC-017 counts.
+- **FR-032**: The repository MUST provide exactly two additional structures, each for a kind of change that raises a question the general structure does not ask:
+  - a change to the checking machinery itself, which MUST be asked how the change was proven to leave every check still able to fail on bad input;
+  - a change to the spec-driven record, which MUST be asked which phase produced the change and whether the existing requirement and criterion numbering was continued rather than restarted.
+    A kind of change that raises no question beyond the general structure's MUST NOT be given an additional structure: a structure that asks nothing extra is a second place for FR-036's quotations to fall out of date, bought for nothing.
+- **FR-033**: An additional structure MUST be additive to the general one, never a replacement, and no obligation required by FR-030 or FR-031 MAY appear only in an additional structure. The general structure is the only one guaranteed to be applied, so anything required that lives only elsewhere is not required in practice.
+- **FR-034**: The general structure MUST ask whether the change was produced by a coding agent rather than typed by a person, and where it was, MUST ask for a reference back to the session that produced it. A reviewer reading unfamiliar work benefits from being able to see what the author was actually asked to do, and that is not recoverable from the difference itself.
+- **FR-035**: No separate reviewer-facing structure is required. The general structure MUST carry a section addressed to the reviewer, naming what a review is obliged to verify. One artifact means one place FR-036's quotations have to be kept accurate, and the reviewer sees the section without having to know a second artifact exists.
+- **FR-036**: Every quotation of the governance document in these structures MUST match that document's current wording at the location cited, and a mismatch MUST be detectable by running something rather than by a reader happening to notice.
+- **FR-037**: These structures are content this repository owns, so they MUST satisfy every standard FR-001 governs, and no check's declared scope MAY change to accommodate them. A structure that has to be excluded from a check is a structure written in the wrong form.
 
 ### Key Entities
 
@@ -146,6 +186,9 @@ A user wants the toolkit this repository advertises. They install the repository
 - **Concern**: what a check evaluates about a content kind -- its formatting, or its linting. A content kind may have one configuration per concern and no more; the two concerns evaluate disjoint properties, and neither substitutes for the other.
 - **Add-on component**: a unit that extends the formatting tool to a content kind its base does not handle. Has a pinned version, and a resolution state at run time that the check reports.
 - **Capability extension**: a unit that adds commands and lifecycle hooks to the repository's spec-tooling. Has an identifier, a version, a provenance, a declared effect on the repository, and a position in the hook order.
+- **Change proposal**: a request to incorporate a branch's changes, carrying a description a reviewer reads before the difference itself. Created by an author; read by a reviewer.
+- **Proposal structure**: content a change proposal arrives pre-filled with. Exactly one is general -- applied to every proposal without being chosen, and carrying both the author's questions and the section addressed to the reviewer -- and exactly two are additional, applied only when the author selects them.
+- **Governance obligation**: a normative requirement in the governance document that applies before or during review. Has a source location and a current wording, both of which any quotation of it must match.
 
 ## Success Criteria _(mandatory)_
 
@@ -166,6 +209,12 @@ A user wants the toolkit this repository advertises. They install the repository
 - **SC-013**: A machine with the base formatting tool but no add-on components produces the same verdict and violation list as one with all of them: 0 differences, and the output states which content kinds fell back.
 - **SC-014**: The written record names every check whose tool offers no mechanism for declaring skipped paths, and the scope-agreement verification counts 0 of those as agreeing: every such check is reported as unverifiable on every run.
 - **SC-015**: Every extension installed from outside the vetted catalog has its source URL, installed version and declared effect in the written record: 2 of 2.
+- **SC-016**: A change proposal opened by someone with no knowledge of the proposal structure arrives carrying it: 1 general structure, applied without the author selecting it, carrying all 6 of its required parts -- what changed, why it changed, where to look first, whether the check was run and passed, how the change was produced, and what the reviewer is obliged to verify. A structure missing any of the 6 fails this criterion, which is what makes the parts required by FR-029 and FR-034 countable rather than merely asked for.
+- **SC-017**: Every governance obligation that applies before or during review appears in the proposal surface with its source location: 2 of 2 -- the obligation to have run and passed the check before proposing, and the obligation to verify principle compliance when reviewing.
+- **SC-018**: 0 statements in the proposal structures contradict the governance document they cite, verifiable by comparing each quotation against the location it names.
+- **SC-019**: 0 of the obligations counted by SC-017 appear only in a structure the author has to select.
+- **SC-020**: The proposal structures pass the aggregate check, with 0 of the checks' declared scopes changed to admit them.
+- **SC-021**: 3 proposal structures exist -- 1 general and 2 additional -- and 0 additional structures ask only questions the general one already asks.
 
 ## Assumptions
 
@@ -179,6 +228,8 @@ Chosen as reasonable defaults where the feature description did not specify. Eac
 - **Markup-tree documents are governed before any exist.** The repository holds none today. Writing the standard now costs one configuration block and means the first such file added is governed on arrival rather than after someone notices.
 - **The formatting and linting concerns are separated per content kind, not merged into one tool.** Each tool keeps the concern it is good at; the alternative -- one tool taking a content kind wholesale -- would lose checks the other performs and that the first does not replace.
 - **A container runtime is an acceptable fallback dependency.** FR-010 excludes language runtimes and package managers from what a contributor must install, but the fallback mechanism itself is permitted its own single prerequisite.
+- **Exactly one proposal structure is guaranteed to be applied; the rest are opt-in.** This is a property of how hosted review surfaces work rather than a preference, and it is the reason FR-033 exists: anything required has to live in the general structure, because that is the only one an uninformed author cannot miss.
+- **The structures are advisory in enforcement and mandatory in content.** Nothing this repository controls can stop an author deleting a section before submitting. So the design makes an omission visible to a reviewer, and does not claim an enforcement it does not have.
 
 ## Out of Scope
 
@@ -191,3 +242,8 @@ Chosen as reasonable defaults where the feature description did not specify. Eac
 - Adding any content standard beyond the four formatting kinds in FR-021.
 - Changing the tool-resolution order, the behaviour when nothing is available, the exit statuses, or the plugin manifest.
 - Changing which parts of the repository are in scope for checking. Only where that scope is declared changes.
+- Enforcing that a change proposal actually used the structure, or rejecting one that did not.
+- Running the aggregate check when a proposal is opened, or reporting its result into the proposal automatically. FR-030 records what the author states; verifying that statement is a separate concern and remains excluded along with continuous integration.
+- Assigning reviewers, code owners, labels, or any other routing of a proposal.
+- Structures for anything other than a change proposal.
+- Providing these structures for other repositories to adopt. They govern proposals to this repository only.

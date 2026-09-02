@@ -318,6 +318,38 @@ ST=0
 "$SCOPE_ROOT/scripts/lint-scope.sh" > "$OUT" 2>&1 || ST=$?
 verdict scope a-path-no-tool-declares
 
+# --- citations: a quotation the cited document no longer contains -----------
+# The fixture is a copy of the real constitution plus a template that quotes it
+# with one word changed, which is what an amendment does to a quotation nobody
+# updated. Copied rather than invented so the test exercises the same
+# hard-wrapped prose the check has to normalise.
+#
+# There is deliberately no fixture for template prose quality. Clarity, length
+# and usefulness have no decidable failure condition, so a check for them could
+# not be made to fail on demand and the assertion would be theatre.
+
+CITE_ROOT="$WORK/cite-fixture"
+mkdir -p "$CITE_ROOT/scripts/lib" "$CITE_ROOT/.specify/memory" "$CITE_ROOT/.github"
+cp "$SCRIPT_DIR/lint-citations.sh" "$CITE_ROOT/scripts/lint-citations.sh"
+cp "$SCRIPT_DIR/lib/common.sh" "$CITE_ROOT/scripts/lib/common.sh"
+cp "$REPO_ROOT/.specify/memory/constitution.md" "$CITE_ROOT/.specify/memory/constitution.md"
+
+# MUST became SHOULD. One word, and the quotation now misreports the obligation
+# it exists to carry -- the exact drift FR-036 requires be detectable.
+cat > "$CITE_ROOT/.github/stale-quotation.md" << 'FIXTURE'
+# Stale citation fixture
+
+<!-- cite: .specify/memory/constitution.md -->
+
+> Before a change is proposed for review, the aggregate quality check SHOULD have been run and MUST
+> have passed. A change that has not been checked is not ready for review.
+FIXTURE
+
+OUT="$WORK/citations.out"
+ST=0
+"$CITE_ROOT/scripts/lint-citations.sh" > "$OUT" 2>&1 || ST=$?
+verdict citations .github/stale-quotation.md
+
 # --- editorconfig: trailing whitespace and no final newline -----------------
 # The fixture needs an .editorconfig of its own: the repository's declares
 # root=true, and the fixture is outside the repository in any case.
