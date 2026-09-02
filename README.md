@@ -2,6 +2,22 @@
 
 A Claude Code plugin and developer toolkit for building custom agents, commands, skills, and MCPs. Includes templates, patterns, examples, and workflows to accelerate AI-powered automation, tool integration, context engineering, and scalable developer productivity.
 
+## The skills
+
+Installing the plugin gives you five skills. There is nothing further to copy, symlink, or add to `plugin.json` — `skills/<name>/SKILL.md` is auto-discovered, and each one resolves as `claude-code-devkit:<name>`.
+
+| Skill              | What it does                                                                                        |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| `speckit-run`      | Drives the eight Spec Kit phases from one task description, then verifies and ships the result      |
+| `auto-branch-push` | Creates a branch off a chosen base and pushes it, with the branch name and collisions settled first |
+| `auto-commit-push` | Commits the working tree — message convention, how the change splits, whether to push               |
+| `auto-github-pr`   | Opens a GitHub pull request: base, assignee, reviewers, draft, auto-merge                           |
+| `auto-gitlab-mr`   | Opens a GitLab merge request: target, assignee, reviewers, squash, delete-source-branch             |
+
+`speckit-run` is the entry point and dispatches the other four at its Step 6; each of the four is equally usable on its own. Which forge skill runs is decided from `origin`, never from what the task description happens to call it.
+
+Each skill carries its own scenario document (`evaluations.md`) stating what a correct run looks like and which regressions to check for after editing it. `specs/002-vendor-plugin-skills/` records how they came to be distributed and what changed in the process.
+
 ## Quality checks
 
 One command checks everything this repository holds:

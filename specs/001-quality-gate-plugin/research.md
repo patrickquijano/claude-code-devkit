@@ -209,11 +209,17 @@ Option 3 keeps both halves of Principle III's guarantee, in two places instead o
 
 **Decision**: commit `.claude-plugin/plugin.json` with `name`, `displayName`, `description`, `version`, `author`, `homepage`, `repository`, `license`, `keywords`. Declare **no** component-path fields and create **no** component directories.
 
+> **Amended by feature 002 (2026-09-02).** The clause about component directories was **scoped to this feature**, not a standing prohibition, and the sentence did not say so. This feature's own [spec.md](./spec.md) already recorded the limit — "none are invented for this feature; the plugin becomes installable, and its contents grow later" (`spec.md:226`) — so the decision was always about what feature 001 would add, not about what the plugin may ever hold.
+>
+> Feature 002 creates a top-level `skills/` directory holding five authored skills. The half of this decision that still stands unchanged is the other half: **no component-path field was added to `plugin.json`**, because `skills/<name>/SKILL.md` is auto-discovered and, as the paragraph above records, a `skills` field _adds_ to the default directory rather than replacing it — so declaring it would be redundant under one reading and a duplicate-registration hazard under the other. See [specs/002-vendor-plugin-skills/research.md](../002-vendor-plugin-skills/research.md) §3 and §10.
+
 **Rationale**: the repository ships no commands, agents, skills, hooks or MCP servers of its own, and the spec's Out of Scope section says none are to be invented for this feature. A declared path to an empty directory is worse than no declaration: auto-discovery already handles the directories once they exist, and a `commands` field pointing at nothing replaces the default rather than extending it.
 
 **`marketplace.json` is a different file** with a different purpose — it lives in a marketplace entry, carries a `source` describing how to fetch the plugin, and overrides `plugin.json` values for that one marketplace. Out of scope per the spec.
 
-**The `.claude/` collision, and why there is none**: this repository's `.claude/` directory holds _consumer_ state — `settings.local.json`, hook logs, the Spec Kit skills generated in Step 0 of this run. The plugin's own content would live in top-level `skills/`, `commands/`, `agents/`. The two do not overlap, and `.claude/skills/speckit-*` must not be vendored into the plugin: it is Spec Kit's generated output, not this repository's authored content.
+**The `.claude/` collision, and why there is none**: this repository's `.claude/` directory holds _consumer_ state — `settings.local.json`, hook logs, the Spec Kit skills generated in Step 0 of this run. The plugin's own content would live in top-level `skills/`, `commands/`, `agents/`. The two do not overlap, and Spec Kit's **generated** output must not be vendored into the plugin: `.claude/skills/` holds 36 phase skills that `specify init` wrote, and regenerating them is Spec Kit's job, not this repository's.
+
+> **Amended by feature 002 (2026-09-02).** The prohibition above originally read "`.claude/skills/speckit-*` must not be vendored", which stated the rule as a **name pattern** when the reason for it is **provenance**. The two come apart: `speckit-run` is an authored skill — a hand-written orchestrator of the eight phases — and it is not among the 36 generated `speckit-*` skills in `.claude/skills/`. Feature 002 distributes it, correctly, under the rule as it is now written. Nothing generated is vendored, then or now. A rule keyed on the name would have forbidden the right thing for the wrong reason and the wrong thing for no reason at all.
 
 ## 11. Working effectively with Claude Code
 

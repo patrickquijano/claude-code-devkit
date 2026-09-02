@@ -4,7 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-`claude-code-devkit` is a Claude Code plugin and developer toolkit for building custom agents, commands, skills, and MCP servers. The quality gate and the plugin manifests described below are on disk and working; the commands, agents and MCP servers the toolkit advertises are not built yet.
+`claude-code-devkit` is a Claude Code plugin and developer toolkit for building custom agents, commands, skills, and MCP servers. The quality gate, the plugin manifests described below, and five skills under `skills/` are on disk and working; the commands, agents and MCP servers the toolkit advertises are not built yet.
+
+## The distributed skills
+
+`skills/` holds the plugin's own authored skills, auto-discovered by installing the plugin — `plugin.json` declares no `skills` path and must not, because that field adds to the default directory rather than replacing it. Installed, they resolve as `claude-code-devkit:<name>`.
+
+`speckit-run` is the entry point: it drives the eight Spec Kit phases from one task description and ships the result. `auto-branch-push`, `auto-commit-push`, `auto-github-pr` and `auto-gitlab-mr` are the git and forge skills it dispatches at its Step 6, and each is usable on its own.
+
+Three things about them are load-bearing and easy to undo by tidying:
+
+- Cross-skill dispatch uses the **namespaced** name. A bare name resolves to whatever the session decides when a personal copy is also installed.
+- `branch-options.sh` exists **once**, in `auto-branch-push`, reached by all four consumers through `${CLAUDE_PLUGIN_ROOT}`. Its header comment records the three defects of the fork that was rejected.
+- Only `speckit-run` carries `disable-model-invocation`. Adding it to the other four breaks Step 6's dispatch silently. `skills/speckit-run/SKILL.md`'s authoring note says why the strict reading binds.
+
+Their own history is in `specs/002-vendor-plugin-skills/`.
 
 ## Agent instructions
 
