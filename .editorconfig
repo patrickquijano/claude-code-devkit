@@ -1,0 +1,44 @@
+# EditorConfig: whitespace and line endings, repository-wide.
+# https://spec.editorconfig.org/
+
+# Stops the search here, so a contributor's home-directory .editorconfig cannot
+# change this repository's answer. Same reasoning as constitution Principle V.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# PEP 8 mandates spaces for Python, and Ruff's formatter emits them.
+[*.{py,pyi}]
+indent_size = 4
+
+# Shell scripts indent with tabs. This is not a preference: `<<-` heredocs strip
+# leading TABS and nothing else, so a space-indented script cannot indent a
+# heredoc body at all. It is also shfmt's default, so a contributor running that
+# formatter will not fight this file. Discovered the hard way -- the first
+# .editorconfig here said spaces, and the whitespace check caught the
+# disagreement with the scripts on its first run.
+[*.sh]
+indent_style = tab
+indent_size = 4
+
+# Two trailing spaces is Markdown's hard line break. Trimming it silently
+# changes rendered output, so this is off deliberately -- not an oversight.
+#
+# indent_size is unset because Markdown's meaningful indentation does not follow
+# one multiple: nested lists step by the parent marker's width, fenced blocks
+# carry whatever the enclosed language uses, and aligned ASCII diagrams line up
+# on content rather than on a grid. A fixed indent_size here reports all three
+# as violations.
+[*.md]
+trim_trailing_whitespace = false
+indent_size = unset
+
+# Make requires literal tabs. This is not a style choice.
+[Makefile]
+indent_style = tab

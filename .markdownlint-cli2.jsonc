@@ -1,0 +1,107 @@
+// markdownlint-cli2 configuration.
+// https://github.com/DavidAnson/markdownlint-cli2
+//
+// The runner passes an explicit file list computed from .lintignore, so the
+// "ignores" array below does not affect a `scripts/lint-markdown.sh` run. It is
+// there for the by-hand case FR-013a is about: `markdownlint-cli2 '**/*.md'`
+// invoked directly must skip what the repository excludes. scripts/lint-scope.sh
+// compares this array against .lintignore and fails when they diverge (FR-013b).
+//
+// Note also that `markdownlint-cli2 .` silently means "*.{md,markdown} in this
+// directory only" -- another reason the runner supplies paths rather than
+// trusting globs.
+{
+  // Progress output is noise in a check whose only useful output is violations.
+  "noProgress": true,
+
+  // FR-013a: this check's own declaration of what it does not examine.
+  // Mirrors .lintignore, one entry per line in the same order, with `/**`
+  // appended to directories because these are globs matched against file paths
+  // -- a bare directory name would match no file inside it.
+  "ignores": [
+    ".git/**",
+    ".specify/scripts/**",
+    ".specify/templates/**",
+    ".specify/integrations/**",
+    ".specify/workflows/**",
+    ".specify/extensions/**",
+    ".specify/.gitignore",
+    ".specify/init-options.json",
+    ".specify/integration.json",
+    ".specify/memory/.constitution-template.json",
+    ".claude/**",
+    "LEAN-CTX.md",
+    ".remember/**",
+    "node_modules/**",
+    ".venv/**",
+    "venv/**",
+    ".ruff_cache/**",
+    "__pycache__/**",
+    ".lint-selftest-tmp/**"
+  ],
+
+  "config": {
+    // MD013 line-length: OFF.
+    // This repository's instruction and spec files are written one line per
+    // paragraph on purpose. A line-length rule would fail every one of them.
+    "MD013": false,
+
+    // MD024 no-duplicate-heading: scoped to siblings.
+    // Spec documents legitimately repeat headings such as "Acceptance
+    // Scenarios" under different user stories. Sibling scoping still catches
+    // real duplicates without punishing that structure.
+    "MD024": {
+      "siblings_only": true
+    },
+
+    // The 22 rules below are disabled because Prettier now formats Markdown
+    // (FR-022). They are not a judgement of ours: this is the exact list from
+    // markdownlint's own `markdownlint/style/prettier.json`, whose comment
+    // reads "Disables rules that may conflict with Prettier". Each one governs
+    // something Prettier rewrites, so leaving it on would mean two checks
+    // rewriting one file, where the result depends on which ran last.
+    //
+    // Inlined rather than "extends": "markdownlint/style/prettier" on purpose.
+    // `extends` resolves through Node's module lookup from this file's
+    // directory, and this repository has no node_modules -- it would work
+    // wherever markdownlint-cli2 happens to be a local dependency and fail
+    // everywhere else, which is the machine-dependent behaviour Principle V
+    // exists to forbid.
+    //
+    // Rules upstream does NOT disable are deliberately still on: ul-style,
+    // single-trailing-newline, code-block-style and the table rules. MD060
+    // table-column-style caught a real inconsistency in plan.md during the
+    // first implementation run (research.md section 12).
+    "blanks-around-fences": false,
+    "blanks-around-headings": false,
+    "blanks-around-lists": false,
+    "code-fence-style": false,
+    "emphasis-style": false,
+    "heading-start-left": false,
+    "heading-style": false,
+    "hr-style": false,
+    "list-indent": false,
+    "list-marker-space": false,
+    "no-blanks-blockquote": false,
+    "no-hard-tabs": false,
+    "no-missing-space-atx": false,
+    "no-missing-space-closed-atx": false,
+    "no-multiple-blanks": false,
+    "no-multiple-space-atx": false,
+    "no-multiple-space-blockquote": false,
+    "no-multiple-space-closed-atx": false,
+    "no-trailing-spaces": false,
+    "ol-prefix": false,
+    "strong-style": false,
+    "ul-indent": false,
+    // line-length is the 23rd; it is already off above under its own rule id
+    // MD013, for its own reason, and is now over-determined.
+
+    // MD036 no-emphasis-as-heading: OFF.
+    // Spec documents use bold inline labels -- **Guarantees**, **Validation
+    // rules**, **Rationale** -- to mark parts of a subsection. Promoting each
+    // to a real heading would pollute the document outline with entries nobody
+    // navigates to; leaving the rule on would fail every spec document.
+    "MD036": false
+  }
+}

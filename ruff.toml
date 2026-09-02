@@ -1,0 +1,66 @@
+# Ruff configuration.
+# https://docs.astral.sh/ruff/configuration/
+#
+# This repository holds no Python yet. That is precisely why this file is
+# committed now: the first Python file that lands is governed from its first
+# commit, rather than from whenever someone remembers.
+#
+# FR-013a: this check's own declaration of what it does not examine, mirroring
+# .lintignore. The runner still passes an explicit file list, so this governs a
+# contributor's by-hand `ruff check .`; scripts/lint-scope.sh compares the two
+# and fails when they diverge (FR-013b).
+#
+# Ruff's own default excludes are REPLACED, not extended, by this key -- so the
+# list restates the build-artifact directories Ruff would have skipped anyway.
+exclude = [
+  ".git",
+  ".specify/scripts",
+  ".specify/templates",
+  ".specify/integrations",
+  ".specify/workflows",
+  ".specify/extensions",
+  ".specify/.gitignore",
+  ".specify/init-options.json",
+  ".specify/integration.json",
+  ".specify/memory/.constitution-template.json",
+  ".claude",
+  "LEAN-CTX.md",
+  ".remember",
+  "node_modules",
+  ".venv",
+  "venv",
+  ".ruff_cache",
+  "__pycache__",
+  ".lint-selftest-tmp",
+]
+
+# Agrees with Prettier's printWidth. One number for the repository beats two
+# defensible numbers. Ruff's own default is 88.
+line-length = 100
+
+# Ruff defaults to py310. Nothing here needs 3.10 syntax, and the lower floor
+# keeps any future helper runnable on the interpreters still shipped by
+# long-term-support distributions.
+target-version = "py39"
+
+[lint]
+# Named explicitly rather than relying on the default set. Ruff's default
+# selection is documented as changing between releases; naming the categories
+# makes an upgrade a visible diff instead of a silent behaviour change.
+#
+# E, F, B, UP, RUF are the documented default categories. The rest are added:
+#   I    isort              -- import order is otherwise unenforced
+#   SIM  flake8-simplify    -- catches the constructs that most often make a
+#   PTH  flake8-use-pathlib     small script hard to read
+#   S    flake8-bandit      -- this repository's Python, if any, will be tooling
+#                              that runs commands
+select = ["E", "F", "B", "UP", "RUF", "I", "SIM", "PTH", "S"]
+
+[format]
+# Ruff defaults to "auto", which infers per file. Explicit lf agrees with
+# .editorconfig and Prettier, and makes the setting checkable.
+line-ending = "lf"
+
+# On, because this is a toolkit repository: example code in docstrings is
+# likely, and unformatted examples in a formatting toolkit read badly.
+docstring-code-format = true

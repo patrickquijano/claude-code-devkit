@@ -1,0 +1,14 @@
+{
+  "name": "claude-code-devkit",
+  "owner": {
+    "name": "Patrick Quijano",
+    "url": "https://github.com/patrickquijano"
+  },
+  "plugins": [
+    {
+      "name": "claude-code-devkit",
+      "source": "./",
+      "description": "A developer toolkit for building custom agents, commands, skills, and MCP servers, with templates, patterns, and workflows for AI-powered automation and context engineering."
+    }
+  ]
+}

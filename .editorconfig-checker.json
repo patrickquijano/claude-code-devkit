@@ -1,0 +1,33 @@
+{
+  "_comment": [
+    "FR-013a: this check's own declaration of what it does not examine.",
+    "Exclude holds REGEXES, not globs -- different syntax from every other",
+    "declaration in this repository, which is why the dots are escaped and the",
+    "directory patterns anchored with ^. A glob written here would silently",
+    "match nothing rather than error.",
+    "The runner passes an explicit file list computed from .lintignore; these",
+    "excludes are applied on top of it, so the two compose rather than fight.",
+    "scripts/lint-scope.sh compares them and fails when they diverge (FR-013b)."
+  ],
+  "Exclude": [
+    "^\\.git/",
+    "^\\.specify/scripts/",
+    "^\\.specify/templates/",
+    "^\\.specify/integrations/",
+    "^\\.specify/workflows/",
+    "^\\.specify/extensions/",
+    "^\\.specify/\\.gitignore$",
+    "^\\.specify/init-options\\.json$",
+    "^\\.specify/integration\\.json$",
+    "^\\.specify/memory/\\.constitution-template\\.json$",
+    "^\\.claude/",
+    "^LEAN-CTX\\.md$",
+    "^\\.remember/",
+    "^node_modules/",
+    "^\\.venv/",
+    "^venv/",
+    "^\\.ruff_cache/",
+    "^__pycache__/",
+    "^\\.lint-selftest-tmp/"
+  ]
+}
