@@ -2,6 +2,8 @@
 
 **Feature**: [../spec.md](../spec.md) | **Research**: [../research.md](../research.md) §6
 
+> **Superseded** by [`specs/003-ccd-skill-rename/contracts/branch-options.md`](../../003-ccd-skill-rename/contracts/branch-options.md), which moved the helper to `skills/ccd-branch-push/scripts/branch-options.sh` without changing the script. The path below is a true record of what shipped under this feature and is no longer current.
+
 The one shared helper, distributed once and consumed by four skills. This file states the contract the four rely on, because until this feature they relied on four separate implementations of it and one of them did not honour it.
 
 ## Location and invocation

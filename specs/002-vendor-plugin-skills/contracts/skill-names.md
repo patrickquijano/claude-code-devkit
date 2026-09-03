@@ -2,6 +2,8 @@
 
 **Feature**: [../spec.md](../spec.md) | **Plan**: [../plan.md](../plan.md) | **Research**: [../research.md](../research.md) §4
 
+> **Superseded** by [`specs/003-ccd-skill-rename/contracts/skill-names.md`](../../003-ccd-skill-rename/contracts/skill-names.md), which renamed all five skills to a `ccd-` prefix. The names below are a true record of what shipped under this feature and are no longer current.
+
 The interface this feature exposes is a set of names. A consumer who installs the plugin addresses the five skills by them; three of the five are addressed by a fourth as well. This file states those names and what a caller may rely on.
 
 ## The five names
