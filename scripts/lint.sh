@@ -22,15 +22,15 @@ parse_args "$@"
 # tree fail at the same place (FR-007). Cheapest and most universal checks
 # first: a whitespace failure should not wait behind a container pull.
 #
-# `scope` leads because it needs no tool at all and because it checks the
-# premise the other six rest on -- that .lintignore and the six per-check
-# declarations agree about what is examined (FR-013b). A run that reports six
-# passes over the wrong set of files is worse than one that stops here.
+# `citations` leads because it needs no tool at all, and because a governance
+# quotation gone stale should be reported before a container is pulled to check
+# whitespace (FR-036).
 #
-# `citations` follows for the same reason -- it needs no tool either -- and
-# because a governance quotation gone stale should be reported before a
-# container is pulled to check whitespace (FR-036).
-CHECKS='scope citations editorconfig format markdown yaml shell python'
+# `scope` used to lead, checking that one central list and five per-check
+# mirrors of it still agreed. With one declaration per check there is no second
+# copy to disagree with, so the check has nothing to compare and is gone; see
+# specs/004-format-hook-scope/contracts/exclusion-declaration.md.
+CHECKS='citations editorconfig format markdown yaml shell python'
 
 FIX_ARG=''
 if [ "$MODE" = fix ]; then

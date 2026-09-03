@@ -1,11 +1,13 @@
 // markdownlint-cli2 configuration.
 // https://github.com/DavidAnson/markdownlint-cli2
 //
-// The runner passes an explicit file list computed from .lintignore, so the
-// "ignores" array below does not affect a `scripts/lint-markdown.sh` run. It is
-// there for the by-hand case FR-013a is about: `markdownlint-cli2 '**/*.md'`
-// invoked directly must skip what the repository excludes. scripts/lint-scope.sh
-// compares this array against .lintignore and fails when they diverge (FR-013b).
+// The "ignores" array below IS the markdown check's declaration of what it
+// does not examine, not a mirror of one. The runner reads it --
+// extract_markdownlint in scripts/lib/scope.sh -- and turns each entry into a
+// git pathspec exclusion, and markdownlint-cli2 reads it too, so a by-hand
+// `markdownlint-cli2 '**/*.md'` applies the same exclusions. There is no second
+// copy and no check policing the agreement.
+// See specs/004-format-hook-scope/contracts/exclusion-declaration.md.
 //
 // Note also that `markdownlint-cli2 .` silently means "*.{md,markdown} in this
 // directory only" -- another reason the runner supplies paths rather than
@@ -14,10 +16,10 @@
   // Progress output is noise in a check whose only useful output is violations.
   "noProgress": true,
 
-  // FR-013a: this check's own declaration of what it does not examine.
-  // Mirrors .lintignore, one entry per line in the same order, with `/**`
-  // appended to directories because these are globs matched against file paths
-  // -- a bare directory name would match no file inside it.
+  // This check's own declaration of what it does not examine. One entry per
+  // line, with `/**` appended to directories because these are globs matched
+  // against file paths -- a bare directory name would match no file inside it.
+  // The runner strips that suffix when it reads them.
   "ignores": [
     ".git/**",
     ".specify/scripts/**",

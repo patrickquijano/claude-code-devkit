@@ -1,4 +1,4 @@
-# FR-013a: this check's own declaration of what it does not examine.
+# The format check's declaration of what it does not examine.
 #
 # Until 2026-09-02 this file also listed *.md, *.markdown, *.yml and *.yaml, on
 # the ground that markdownlint owned Markdown and yamllint owned YAML. FR-022
@@ -8,9 +8,12 @@
 # Re-adding those four patterns would silently remove the formatting coverage
 # FR-021 requires -- Prettier would report nothing rather than complain.
 #
-# The runner passes an explicit file list computed from .lintignore, so this file
-# governs a by-hand `prettier --check .`. scripts/lint-scope.sh compares the two
-# and fails when they diverge (FR-013b).
+# This file IS the declaration, not a mirror of one. The runner reads it --
+# extract_prettier in scripts/lib/scope.sh -- and turns each line into a git
+# pathspec exclusion; Prettier reads it too, so a by-hand `prettier --check .`
+# applies exactly the same exclusions. There is no second copy to keep in step
+# and no check policing the agreement, because there is nothing to disagree.
+# See specs/004-format-hook-scope/contracts/exclusion-declaration.md.
 
 .git
 .specify/scripts

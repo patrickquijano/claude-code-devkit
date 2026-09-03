@@ -2,21 +2,22 @@
 # yamllint configuration.
 # https://yamllint.readthedocs.io/en/stable/configuration.html
 #
-# The runner passes an explicit file list computed from .lintignore, so the
-# `ignore` block below does not affect a `scripts/lint-yaml.sh` run. It is there
-# for the by-hand case FR-013a is about: `yamllint .` invoked directly must skip
-# what the repository excludes. scripts/lint-scope.sh compares the two and fails
-# when they diverge (FR-013b).
+# The `ignore` block below IS the yaml check's declaration of what it does
+# not examine, not a mirror of one. The runner reads it -- extract_yamllint
+# in scripts/lib/scope.sh -- and turns each line into a git pathspec
+# exclusion, and yamllint reads it too, so a by-hand `yamllint .` applies the
+# same exclusions. There is no second copy to keep in step.
+# See specs/004-format-hook-scope/contracts/exclusion-declaration.md.
 #
-# `ignore` and `ignore-from-file` may not be used together, so this is `ignore`
-# alone -- .lintignore is not in yamllint's syntax and cannot be pointed at.
+# `ignore` and `ignore-from-file` may not be used together, so this is
+# `ignore` alone, written in yamllint's own block-scalar syntax.
 
 # The strict preset. `relaxed` was rejected: it disables the rules most likely
 # to catch a real mistake.
 extends: default
 
-# FR-013a: this check's own declaration of what it does not examine. Mirrors
-# .lintignore, in gitignore-style patterns.
+# This check's own declaration of what it does not examine, in
+# gitignore-style patterns.
 ignore: |
   .git
   .specify/scripts

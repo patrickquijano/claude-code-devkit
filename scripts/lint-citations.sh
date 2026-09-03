@@ -28,7 +28,7 @@
 # This check needs no tool and no container -- it reads committed files. It also
 # declares no skipped paths, because it has none to declare: it examines one
 # fixed directory rather than a filtered file list, so it takes no part in the
-# scope agreement lint-scope.sh verifies (FR-013a, FR-013b).
+# scope each check declares in its own configuration file.
 #
 # Exit statuses are documented in
 # specs/001-quality-gate-plugin/contracts/cli.md and are part of the contract.

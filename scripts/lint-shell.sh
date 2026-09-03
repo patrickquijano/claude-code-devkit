@@ -15,7 +15,7 @@ REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
 parse_args "$@"
 init_runner
 
-collect '*.sh'
+collect shell '*.sh'
 
 if [ "$MODE" = fix ]; then
 	no_automatic_fix shell

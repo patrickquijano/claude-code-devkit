@@ -5,10 +5,12 @@
 # committed now: the first Python file that lands is governed from its first
 # commit, rather than from whenever someone remembers.
 #
-# FR-013a: this check's own declaration of what it does not examine, mirroring
-# .lintignore. The runner still passes an explicit file list, so this governs a
-# contributor's by-hand `ruff check .`; scripts/lint-scope.sh compares the two
-# and fails when they diverge (FR-013b).
+# The `exclude` key below IS the python check's declaration of what it does not
+# examine, not a mirror of one. The runner reads it -- extract_ruff in
+# scripts/lib/scope.sh -- and turns each entry into a git pathspec exclusion,
+# and Ruff reads it too, so a by-hand `ruff check .` applies the same
+# exclusions. There is no second copy to keep in step.
+# See specs/004-format-hook-scope/contracts/exclusion-declaration.md.
 #
 # Ruff's own default excludes are REPLACED, not extended, by this key -- so the
 # list restates the build-artifact directories Ruff would have skipped anyway.

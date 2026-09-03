@@ -35,9 +35,11 @@ enable=check-set-e-suppressed
 # `command -v` is POSIX; `which` is not, and its exit status is unreliable.
 enable=deprecate-which
 
-# FR-013c. The other five checks each declare their own excluded paths in their
-# own configuration file. ShellCheck cannot, and this is the record of that
-# rather than a gap nobody wrote down.
+# --- The shell check's excluded paths ----------------------------------------
+#
+# Every other check declares its excluded paths in the configuration file that
+# drives it. ShellCheck has no such mechanism, and the block below is this
+# repository's answer to that -- not a gap nobody wrote down.
 #
 # .shellcheckrc accepts shell, severity, source-path, external-sources, enable
 # and disable. Every one is a directive about rules or interpretation; none is
@@ -45,12 +47,45 @@ enable=deprecate-which
 # not paths -- a reader who assumes otherwise from the name gets silent
 # under-checking rather than an error. See research.md section 13.
 #
-# Consequence: a contributor running `shellcheck` by hand over a directory may
-# check files this repository excludes. The runner is unaffected, because
-# scripts/lint-shell.sh passes the .lintignore-derived file list.
-# scripts/lint-scope.sh reports this check as UNVERIFIABLE on every run rather
-# than counting it as agreeing, so the gap stays visible (FR-013b).
+# So the paths are declared here as a marked comment block. ShellCheck ignores
+# comments, which makes the block inert to the tool and authoritative for the
+# runner: `extract_shellcheck` in scripts/lib/scope.sh reads it and
+# scripts/lint-shell.sh excludes what it names. Declaring them in a committed
+# configuration file at a documented path is what Principle V requires; a list
+# inside lint-shell.sh would not be one, and was rejected on that ground
+# (research.md section 12).
 #
-# Filtering ShellCheck's input from the wrapper was considered and rejected:
-# that puts scope logic in a script with no configuration file behind it, which
-# is the second source of truth FR-013b exists to detect.
+# KNOWN LIMITATION, and it cannot be fixed from here: a contributor running
+# `shellcheck` by hand does NOT get these exclusions, because the tool has no
+# way to read them. Every other check's declaration is read by the tool itself
+# and so applies to a hand invocation too. This one applies to the runner only.
+# That was equally true before the exclusions were written down here.
+#
+# scripts/ MUST NOT appear below. The constitution requires every script under
+# the script directory to be subject to the shell check, and the format hook
+# lives there.
+#
+# The markers are literal and are matched anchored. Editing a marker line
+# breaks the extraction loudly rather than silently -- scope.sh refuses to run
+# with no exclusions rather than widening the check's scope in silence.
+# lint-exclude-begin
+# .git
+# .specify/scripts
+# .specify/templates
+# .specify/integrations
+# .specify/workflows
+# .specify/extensions
+# .specify/.gitignore
+# .specify/init-options.json
+# .specify/integration.json
+# .specify/memory/.constitution-template.json
+# .claude
+# LEAN-CTX.md
+# .remember
+# node_modules
+# .venv
+# venv
+# .ruff_cache
+# __pycache__
+# .lint-selftest-tmp
+# lint-exclude-end

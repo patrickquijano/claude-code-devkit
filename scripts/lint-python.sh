@@ -15,7 +15,7 @@ REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
 parse_args "$@"
 init_runner
 
-collect '*.py' '*.pyi'
+collect python '*.py' '*.pyi'
 
 if [ "$MODE" = fix ]; then
 	run_files "$LIST" ruff "$IMAGE_PYTHON_TOOL" check --fix --

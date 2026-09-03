@@ -15,7 +15,7 @@ REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
 parse_args "$@"
 init_runner
 
-collect '*.yml' '*.yaml'
+collect yaml '*.yml' '*.yaml'
 
 if [ "$MODE" = fix ]; then
 	no_automatic_fix yaml

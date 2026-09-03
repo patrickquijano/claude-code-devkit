@@ -36,18 +36,19 @@ The repository is initialized for GitHub Spec Kit (`.specify/`), with the phase 
 There is no build step and no separate test runner. The checks are the tests.
 
 ```sh
-scripts/lint.sh       # all eight checks; exits non-zero at the first failure
+scripts/lint.sh       # all seven checks; exits non-zero at the first failure
 scripts/lint.sh --fix # rewrite what can be rewritten
 scripts/selftest.sh   # prove each check still rejects bad input
 ```
 
-Run one check in isolation with `scripts/lint-<standard>.sh`, where `<standard>` is one of `scope`, `citations`, `editorconfig`, `format`, `markdown`, `yaml`, `shell`, `python`. `scope` and `citations` run first and need no tool at all: `scope` compares the five per-check path declarations against `.lintignore`, and `citations` checks that every governance quotation in `.github/` still matches the document it cites.
+Run one check in isolation with `scripts/lint-<standard>.sh`, where `<standard>` is one of `citations`, `editorconfig`, `format`, `markdown`, `yaml`, `shell`, `python`. `citations` runs first and needs no tool at all: it checks that every governance quotation in `.github/` still matches the document it cites.
 
 Non-obvious things about these:
 
 - Each check prefers the native tool and otherwise runs a digest-pinned container. `LINT_FORCE_CONTAINER=1` skips the native path, which is how you verify both give the same verdict.
 - Check mode mounts the repository **read-only**, so a run without `--fix` cannot modify the tree even if a tool tried to.
-- `.lintignore` drives the runner's file list, and each check **also** declares its own skipped paths in its own configuration — `ignores` in `.markdownlint-cli2.jsonc`, `ignore` in `.yamllint.yml`, `exclude` in `ruff.toml`, `.prettierignore`, and `Exclude` (regexes, not globs) in `.editorconfig-checker.json`. Those declarations govern a contributor invoking a tool by hand, not the runner. Keep them in step with `.lintignore`: `scripts/lint-scope.sh` compares all five on every aggregate run and fails on divergence. ShellCheck has no such mechanism and is reported unverifiable rather than passing.
+- Each check declares its excluded paths in **one** place: the configuration file that already drives it — `.prettierignore`, `ignores` in `.markdownlint-cli2.jsonc`, `ignore` in `.yamllint.yml`, `exclude` in `ruff.toml`, `Exclude` (regexes, not globs) in `.editorconfig-checker.json`, and a marked comment block in `.shellcheckrc` for the one tool with no exclusion mechanism of its own. The runner reads that same declaration to build the file list, so a contributor invoking a tool by hand gets the exclusions the runner applies. There is no central list and no check comparing copies; feature 004 deleted both. Adding an excluded path means editing the declaration of each check that should skip it, and two checks legitimately differing is now expressible rather than a build failure.
+- **Your own edits are reformatted under you.** `.claude/settings.json` registers a committed `PostToolUse` hook, `scripts/format-file.sh`, which runs after `Edit`, `Write`, `MultiEdit` and `NotebookEdit` and rewrites the edited file through the three checks that can rewrite — `format`, then `markdown`, then `python`, in that order. A file no check governs is left untouched and reports nothing. Re-read a file after editing it if the exact bytes matter; a formatting failure arrives on stderr naming the file and the check, and never undoes the edit. Details: `specs/004-format-hook-scope/contracts/format-file-cli.md`.
 - `.github/pull_request_template.md` and `.github/PULL_REQUEST_TEMPLATE/` are change-proposal templates that quote the constitution; nothing excludes `.github/`, so they are formatted and linted like any other Markdown, and `scripts/lint-citations.sh` fails when a quotation goes stale. The specialised two repeat every section of the general one rather than referring to it, because only the general one is applied automatically.
 - Shell scripts are POSIX `sh`, checked with `shell=sh`. No bashisms: no `[[ ]]`, no arrays, no `<<<`, no `set -o pipefail`. They indent with tabs, because `<<-` heredocs strip leading tabs and nothing else.
 - Every setting that departs from its tool's default has a written reason in `specs/001-quality-gate-plugin/research.md`. Check there before "fixing" one.
