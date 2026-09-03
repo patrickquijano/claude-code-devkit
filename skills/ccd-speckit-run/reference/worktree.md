@@ -110,7 +110,7 @@ Toplevel is not the worktree path → the session did not move. Stop and say so.
 Then take the dirty snapshot as normal, in the new directory:
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/speckit-run/scripts/dirty-diff.sh" snapshot .specify/.speckit-dirty-snapshot
+sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run/scripts/dirty-diff.sh" snapshot .specify/.speckit-dirty-snapshot
 ```
 
 It will record close to nothing, which is the point — a fresh worktree has no pre-existing dirt, so everything 6a later finds is unambiguously this run's.
@@ -122,7 +122,7 @@ It will record close to nothing, which is the point — a fresh worktree has no 
 Copy them across right after Verify, while `orig_dir` from the Create step still points at the tree that has them:
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/speckit-run/scripts/copy-env-files.sh" "$orig_dir" "<path>"
+sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run/scripts/copy-env-files.sh" "$orig_dir" "<path>"
 ```
 
 Recognized patterns: `.env` / `.env.*`, `appsettings*.json`, `local.settings.json`, `secrets.yml` / `secrets.*.yml`, `master.key`. The script skips anything git already tracks in `$orig_dir` — a tracked file is already in the worktree via checkout, and overwriting it risks clobbering a version the feature branch legitimately differs on. No output at all means no matching untracked files existed, which is the common case and not a failure.

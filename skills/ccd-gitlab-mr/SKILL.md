@@ -1,5 +1,5 @@
 ---
-name: auto-gitlab-mr
+name: ccd-gitlab-mr
 description: Use when the user wants a GitLab merge request created end-to-end — e.g. "open an MR for this branch", "create a merge request", "push this and make a GitLab MR to main". Not for a plain branch push with no merge request.
 ---
 
@@ -9,9 +9,9 @@ Pushes the current branch if needed, gathers ranked branch and member candidates
 
 ## When NOT to use
 
-- User just wants a branch pushed with no MR — use `claude-code-devkit:auto-branch-push` instead.
+- User just wants a branch pushed with no MR — use `claude-code-devkit:ccd-branch-push` instead.
 - User already has an open MR and wants to edit it — this skill only creates MRs, it doesn't update existing ones.
-- Target is a GitHub repository — use `claude-code-devkit:auto-github-pr` instead. Step 1 detects this from the remote host and stops.
+- Target is a GitHub repository — use `claude-code-devkit:ccd-github-pr` instead. Step 1 detects this from the remote host and stops.
 
 ## Asking the user
 
@@ -26,7 +26,7 @@ Every question in this skill goes through `AskUserQuestion`. Never ask in prose,
 
 **Two calls on a clean run.** Step 4 batches all four selections into one call; Step 8 is the approval gate. A rebase conflict at Step 5 or a convention conflict at Step 6 each add a call if triggered. The source branch is never asked — it is the current branch, established in Step 1.
 
-Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/auto-gitlab-mr/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
+Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-gitlab-mr/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
 
 ## Workflow
 
@@ -55,7 +55,7 @@ Order matters: `command -v glab` and `glab auth status` come **before** any `gla
 
 Stop and say why when: not inside a git work tree; detached HEAD (no source branch exists); the remote is not GitLab (name the right skill instead); `glab` missing, or present but unauthenticated; or `glab mr list` returns an **open MR for this branch** — report its URL, since this skill only creates MRs and a second create would just error.
 
-**A GitHub remote stops the run here**, before any `glab` call: `glab` against `github.com` fails with an error about GitLab hosts that says nothing about the actual problem. Name `claude-code-devkit:auto-github-pr` as the skill for that repo and stop. A self-hosted host that `glab auth status` lists is a GitLab remote whatever its hostname looks like; one it does not list, and that is not a `gitlab.*` domain, is not this skill's to guess at.
+**A GitHub remote stops the run here**, before any `glab` call: `glab` against `github.com` fails with an error about GitLab hosts that says nothing about the actual problem. Name `claude-code-devkit:ccd-github-pr` as the skill for that repo and stop. A self-hosted host that `glab auth status` lists is a GitLab remote whatever its hostname looks like; one it does not list, and that is not a `gitlab.*` domain, is not this skill's to guess at.
 
 **Worktree.** `--git-dir` and `--git-common-dir` differing means this is a linked worktree, not the main checkout. That changes nothing this skill does — every command it runs is worktree-local, and the branch it reads is this tree's branch — but it changes what the user needs told. Record the worktree's path and report it in Step 8's summary, so an MR raised from one of several parallel trees says which tree it came from. Never switch branch, never `cd` to the main checkout, never act on a branch this tree does not have checked out.
 
@@ -64,7 +64,7 @@ Branch absent from the remote → push it: `git push -u origin <branch>`.
 **Step 2 — Rank the target-branch candidates.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/auto-branch-push/scripts/branch-options.sh"
+sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
 ```
 
 Tab separated, repo default branch first then newest commit first: `<branch>  local|remote|both  <YYYY-MM-DD>  <tags>`. Drop the source branch from the output, then take the top four.
@@ -72,7 +72,7 @@ Tab separated, repo default branch first then newest commit first: `<branch>  lo
 **Step 3 — Rank the project members.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/auto-gitlab-mr/scripts/member-options.sh"
+sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-gitlab-mr/scripts/member-options.sh"
 glab api user --output ndjson # the current user, for the assignee default
 ```
 
@@ -169,7 +169,7 @@ Hard rules, no deviation:
 | Fetch target           | `git fetch origin <target>`                                                                       |
 | Rebase onto target     | `git rebase origin/<target>`                                                                      |
 | Push rebased branch    | `git push --force-with-lease origin <source>`                                                     |
-| Target candidates      | `sh ${CLAUDE_PLUGIN_ROOT}/skills/auto-branch-push/scripts/branch-options.sh`                      |
+| Target candidates      | `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh`                       |
 | Member candidates      | `sh <skill-dir>/scripts/member-options.sh` (wraps `glab api projects/:id/members/all --paginate`) |
 | Current user           | `glab api user`                                                                                   |
 | Create MR              | `glab mr create` (see Step 9)                                                                     |
@@ -181,4 +181,4 @@ Neither `glab` nor the GitLab MCP server available → the same operations map t
 
 Regression scenarios for this skill live in [evaluations.md](evaluations.md). Not part of a run — read it only when changing this skill.
 
-**Never add `disable-model-invocation: true` to this skill's frontmatter.** That field blocks the `Skill` tool, not merely automatic loading. `speckit-run` dispatches this skill at its Step 6b through exactly that tool — on a GitLab remote; a GitHub one gets `claude-code-devkit:auto-github-pr` — so setting the field breaks that handoff silently, and only at the very end of a full eight-phase pipeline run. The same applies to `user-invocable: false`, which would take away the `/auto-gitlab-mr` invocation this skill is designed around.
+**Never add `disable-model-invocation: true` to this skill's frontmatter.** That field blocks the `Skill` tool, not merely automatic loading. `ccd-speckit-run` dispatches this skill at its Step 6b through exactly that tool — on a GitLab remote; a GitHub one gets `claude-code-devkit:ccd-github-pr` — so setting the field breaks that handoff silently, and only at the very end of a full eight-phase pipeline run. The same applies to `user-invocable: false`, which would take away the `/ccd-gitlab-mr` invocation this skill is designed around.

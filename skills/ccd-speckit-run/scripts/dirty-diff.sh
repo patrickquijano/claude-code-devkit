@@ -1,5 +1,5 @@
 #!/bin/sh
-# speckit-run — tell this run's output apart from pre-existing uncommitted work.
+# ccd-speckit-run — tell this run's output apart from pre-existing uncommitted work.
 #
 # Usage:
 #   dirty-diff.sh snapshot <file>   Step 1: record the paths dirty before the run.

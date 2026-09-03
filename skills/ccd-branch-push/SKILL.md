@@ -1,5 +1,5 @@
 ---
-name: auto-branch-push
+name: ccd-branch-push
 description: Use when the user wants a new branch created from a chosen remote branch, named from the current changes, and pushed to the remote — e.g. "create a branch for this", "branch off main and push", "make a new branch from develop for these changes". Not for committing changes, and not for opening a merge request.
 ---
 
@@ -9,7 +9,7 @@ Creates a conventionally-named branch off a user-chosen base branch, checks it o
 
 ## When NOT to use
 
-- User wants to commit on the _current_ branch — use `claude-code-devkit:auto-commit-push` instead.
+- User wants to commit on the _current_ branch — use `claude-code-devkit:ccd-commit-push` instead.
 - User already gave the exact branch name and base and just wants a one-shot `git checkout -b` / `git push` — this skill's overhead (base selection, naming inference, approval gate) isn't needed.
 
 ## Asking the user
@@ -25,7 +25,7 @@ Every question in this skill goes through `AskUserQuestion`. Never ask in prose,
 
 Two calls is the target for a clean run: one for the base branch (Step 3), one for the approval gate (Step 6). A named base the script confirms drops the first. A convention conflict at Step 4, a name collision at Step 5b, or a repo with no `origin` each add one — all three are conditional, and none of them fires on a clean run.
 
-Bundled `scripts/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/auto-branch-push/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
+Bundled `scripts/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
 
 ## Workflow
 
@@ -49,7 +49,7 @@ git rev-parse --git-dir --git-common-dir # these differ inside a worktree
 
 Stop and say why, rather than proceeding, when any of these holds:
 
-- Not inside a git work tree (`sh ${CLAUDE_PLUGIN_ROOT}/skills/auto-branch-push/scripts/branch-options.sh` exits 1 and says so).
+- Not inside a git work tree (`sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh` exits 1 and says so).
 - No remote configured — the Step 7 push has nowhere to go.
 - **No remote named `origin`.** Step 7 pushes to `origin` by name, so a repo whose only remote is `upstream` or `fork` passes a bare "is there a remote" check and then dies at the push, after the approval gate. Name the remotes that do exist and ask with `AskUserQuestion` which to push to, or stop. Never assume the single remote is `origin` — use the name the user picked everywhere Step 7 says `origin`.
 
@@ -68,7 +68,7 @@ git diff --cached
 **Step 3 — Pick the base branch.** Run the bundled ranking script and take the **top four** lines as the option set:
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/auto-branch-push/scripts/branch-options.sh"
+sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
 ```
 
 Output is tab separated, repo default branch first then newest commit first: `<branch>  local|remote|both  <YYYY-MM-DD>  <tags>`, where `<tags>` is a comma-joined subset of `default` and `current`, or `-`.
@@ -138,7 +138,7 @@ Hard rules, no deviation:
 
 Native `git` is the default. Check the live tool list for an active `mcp__git__*` server first — some repos configure one, most don't — and prefer it for the read-only status and diff calls when present (`git_status`, `git_diff_unstaged`, `git_diff_staged`, `git_create_branch`, `git_checkout`).
 
-Branch listing and pushing have no MCP equivalent on the reference git server, so they always use native git: `sh ${CLAUDE_PLUGIN_ROOT}/skills/auto-branch-push/scripts/branch-options.sh` and `git push -u origin <name>`. Step 5b's collision probe is native git too — `git show-ref`, `git ls-remote`, `git worktree list` have no MCP counterparts, and `git_create_branch` reports its own failure too late to be a probe.
+Branch listing and pushing have no MCP equivalent on the reference git server, so they always use native git: `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh` and `git push -u origin <name>`. Step 5b's collision probe is native git too — `git show-ref`, `git ls-remote`, `git worktree list` have no MCP counterparts, and `git_create_branch` reports its own failure too late to be a probe.
 
 A custom `git-commit-server` MCP exists in some projects. It only exposes commit-message drafting, nothing relevant to branching.
 
@@ -146,4 +146,4 @@ A custom `git-commit-server` MCP exists in some projects. It only exposes commit
 
 Regression scenarios for this skill live in [evaluations.md](evaluations.md). Not part of a run — read it only when changing this skill.
 
-**Never add `disable-model-invocation: true` to this skill's frontmatter.** That field blocks the `Skill` tool, not merely automatic loading. Nothing dispatches this skill today, but `auto-gitlab-mr` names it as the alternative for a push with no merge request, so a future handoff through that tool is the expected direction — and the field would break it silently, at dispatch time rather than at install time. `user-invocable: false` is wrong for the opposite reason: it would remove the `/auto-branch-push` invocation this skill is built around.
+**Never add `disable-model-invocation: true` to this skill's frontmatter.** That field blocks the `Skill` tool, not merely automatic loading. Nothing dispatches this skill today, but `ccd-gitlab-mr` names it as the alternative for a push with no merge request, so a future handoff through that tool is the expected direction — and the field would break it silently, at dispatch time rather than at install time. `user-invocable: false` is wrong for the opposite reason: it would remove the `/ccd-branch-push` invocation this skill is built around.

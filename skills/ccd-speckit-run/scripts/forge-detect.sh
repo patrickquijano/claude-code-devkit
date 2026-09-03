@@ -1,5 +1,5 @@
 #!/bin/sh
-# speckit-run Step 0 / Step 6b — decide which forge this repo ships to.
+# ccd-speckit-run Step 0 / Step 6b — decide which forge this repo ships to.
 #
 # Usage: forge-detect.sh
 #
@@ -8,7 +8,7 @@
 #   origin        <url>|absent          the `origin` URL as configured
 #   host          <host>|-              host parsed out of that URL
 #   forge         gitlab|github|other|none
-#   review-skill  auto-gitlab-mr|auto-github-pr|-
+#   review-skill  ccd-gitlab-mr|ccd-github-pr|-
 #   cli           glab|gh|-
 #   cli-status    ready|unauthenticated|absent|n-a
 #   evidence      <how the forge was decided>
@@ -101,11 +101,11 @@ printf 'forge\t%s\n' "$forge"
 
 case $forge in
 	gitlab)
-		skill=claude-code-devkit:auto-gitlab-mr
+		skill=claude-code-devkit:ccd-gitlab-mr
 		cli=glab
 		;;
 	github)
-		skill=claude-code-devkit:auto-github-pr
+		skill=claude-code-devkit:ccd-github-pr
 		cli=gh
 		;;
 	*)

@@ -1,4 +1,4 @@
-# Evaluations — auto-commit-push
+# Evaluations — ccd-commit-push
 
 Three scenarios exercising what fails first. Run against a scratch repo before trusting a change to the skill. Each states setup, invocation, and correct behavior — catching a regression, not scoring prose.
 
@@ -13,7 +13,7 @@ Three scenarios exercising what fails first. Run against a scratch repo before t
 
 **Setup**: work tree with five changed files across two unrelated concerns. The user has already run `git add` on two of them (one concern). Index non-empty.
 
-**Invoke**: `/auto-commit-push commit and push my changes`
+**Invoke**: `/ccd-commit-push commit and push my changes`
 
 **Expect**:
 
@@ -28,7 +28,7 @@ Three scenarios exercising what fails first. Run against a scratch repo before t
 
 **Setup**: repo with no changes at all. `git status --porcelain=v1` empty.
 
-**Invoke**: `/auto-commit-push commit and push my changes`
+**Invoke**: `/ccd-commit-push commit and push my changes`
 
 **Expect**:
 
@@ -40,7 +40,7 @@ Three scenarios exercising what fails first. Run against a scratch repo before t
 
 **Setup**: repo checked out on `main`, which is `origin/HEAD`. Three changed files spanning a feature and a docs fix.
 
-**Invoke**: `/auto-commit-push group these into commits and push`
+**Invoke**: `/ccd-commit-push group these into commits and push`
 
 **Expect**:
 

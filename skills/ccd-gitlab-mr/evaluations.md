@@ -1,4 +1,4 @@
-# Evaluations — auto-gitlab-mr
+# Evaluations — ccd-gitlab-mr
 
 Four scenarios exercising what fails first. Run against a scratch repo and a scratch GitLab project before trusting a change to the skill. Each states setup, invocation, and correct behavior — catching a regression, not scoring prose.
 
@@ -15,7 +15,7 @@ Four scenarios exercising what fails first. Run against a scratch repo and a scr
 
 **Setup**: GitLab project with 20 members at mixed access levels, 15 branches, `origin/HEAD` → `main`. Current branch `feat/audit-pagination` pushed, several commits, two of the project members appear as commit authors on it.
 
-**Invoke**: `/auto-gitlab-mr open an MR for this branch`
+**Invoke**: `/ccd-gitlab-mr open an MR for this branch`
 
 **Expect**:
 
@@ -35,7 +35,7 @@ Four scenarios exercising what fails first. Run against a scratch repo and a scr
 
 **Setup**: same project. `feat/audit-pagination` already has MR `!42` open against `main`.
 
-**Invoke**: `/auto-gitlab-mr create a merge request`
+**Invoke**: `/ccd-gitlab-mr create a merge request`
 
 **Expect**:
 
@@ -47,7 +47,7 @@ Four scenarios exercising what fails first. Run against a scratch repo and a scr
 
 **Setup**: same project, `glab` not on `PATH`. GitLab MCP server active.
 
-**Invoke**: `/auto-gitlab-mr push this and make an MR to main`
+**Invoke**: `/ccd-gitlab-mr push this and make an MR to main`
 
 **Expect**:
 
@@ -57,9 +57,9 @@ Four scenarios exercising what fails first. Run against a scratch repo and a scr
 
 ## E4 — Invoked from inside a git worktree
 
-**Setup**: same project. The main checkout has `main` out with uncommitted edits. A linked worktree at `.claude/worktrees/audit` has `feat/audit-pagination` checked out and pushed, several commits over `main`. **Invoke from inside the worktree** — this is how `speckit-run` reaches this skill in worktree mode.
+**Setup**: same project. The main checkout has `main` out with uncommitted edits. A linked worktree at `.claude/worktrees/audit` has `feat/audit-pagination` checked out and pushed, several commits over `main`. **Invoke from inside the worktree** — this is how `ccd-speckit-run` reaches this skill in worktree mode.
 
-**Invoke**: `/auto-gitlab-mr open an MR for this branch`
+**Invoke**: `/ccd-gitlab-mr open an MR for this branch`
 
 **Expect**:
 
@@ -77,27 +77,27 @@ Four scenarios exercising what fails first. Run against a scratch repo and a scr
 
 **Setup**: a repo whose `origin` is `git@github.com:org/repo.git`, branch `feat/x` pushed, `gh` and `glab` both installed and authenticated.
 
-**Invoke**: `/auto-gitlab-mr open an MR for this branch`
+**Invoke**: `/ccd-gitlab-mr open an MR for this branch`
 
 **Expect**:
 
-- Step 1 reads `git remote get-url origin`, sees a GitHub host, and **stops before any `glab` call**. It names `auto-github-pr` as the skill for this repo.
+- Step 1 reads `git remote get-url origin`, sees a GitHub host, and **stops before any `glab` call**. It names `ccd-github-pr` as the skill for this repo.
 - No `glab mr list`, no `glab mr create`, no push, no rebase. Nothing is created and nothing is force-pushed.
 - The reason given is the remote host, not a `glab` error. A run that lets `glab` fail on its own and reports that output has technically stopped, but the user is left reading a message about GitLab hosts that never mentions the actual problem or the actual fix.
 - **Variant — self-hosted GitLab.** `origin` at `git@git.acme.internal:org/repo.git`, `glab auth status` listing `git.acme.internal`. The run proceeds normally: a hostname without `gitlab` in it is not evidence of anything, and a CLI configured for that host is. With **neither** CLI configured for it, the run stops and says the forge could not be established rather than guessing.
 
-**The regression this catches**: a skill invoked on the wrong forge. `speckit-run` routes by remote before dispatching, but a user typing `/auto-gitlab-mr` in a GitHub repo does not, and the guard has to live here. Its absence costs a rebase and a force-push before anything reveals that the MR was never possible.
+**The regression this catches**: a skill invoked on the wrong forge. `ccd-speckit-run` routes by remote before dispatching, but a user typing `/ccd-gitlab-mr` in a GitHub repo does not, and the guard has to live here. Its absence costs a rebase and a force-push before anything reveals that the MR was never possible.
 
 ## Re-test after editing the skill
 
-`branch-options.sh` is not this skill's file. It exists **once**, in `auto-branch-push`, and this skill reaches it through `${CLAUDE_PLUGIN_ROOT}`. There is nothing to compare, so the check is that the single implementation is still single and that this skill's reference still resolves to it:
+`branch-options.sh` is not this skill's file. It exists **once**, in `ccd-branch-push`, and this skill reaches it through `${CLAUDE_PLUGIN_ROOT}`. There is nothing to compare, so the check is that the single implementation is still single and that this skill's reference still resolves to it:
 
 ```bash
 test "$(find skills -name branch-options.sh | wc -l)" -eq 1 || echo "MORE THAN ONE IMPLEMENTATION"
-grep -c 'auto-branch-push/scripts/branch-options\.sh' skills/auto-gitlab-mr/SKILL.md # expect 2
+grep -c 'ccd-branch-push/scripts/branch-options\.sh' skills/ccd-gitlab-mr/SKILL.md # expect 2
 ```
 
-Editing it means editing `auto-branch-push`'s copy, and its contract — the four columns and the ordering — is in that skill's own header comment. A copy reappearing under this skill is the regression to catch.
+Editing it means editing `ccd-branch-push`'s copy, and its contract — the four columns and the ordering — is in that skill's own header comment. A copy reappearing under this skill is the regression to catch.
 
 After any edit to `SKILL.md`: walk E1–E5 against the changed text. Any edit touching Step 1's remote check or the forge guard: walk E5 including its self-hosted variant — the GitHub half fails loudly, the self-hosted half fails by refusing a repo it should have accepted. Any edit touching Step 1's probes, the script invocation paths, or the Boundaries tree rules: walk E4 specifically, from inside a real worktree. Assert the Step 4 call is still one call of four questions, and that every option set is still bounded at four.
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# speckit-run Step 6c — print a delete/keep verdict for every local branch.
+# ccd-speckit-run Step 6c — print a delete/keep verdict for every local branch.
 #
 # Usage: cleanup-plan.sh [protected-branch]
 #   protected-branch defaults to the currently checked-out branch.

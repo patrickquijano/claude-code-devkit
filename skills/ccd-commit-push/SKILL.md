@@ -1,5 +1,5 @@
 ---
-name: auto-commit-push
+name: ccd-commit-push
 description: Use when the user wants uncommitted repo changes grouped into logical commits, written with conventional-commit messages, and pushed to the remote — e.g. "commit and push my changes", "clean up and commit this", "group these changes into commits and push". Not for creating a new branch first.
 ---
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# speckit-run Step 0 — report whether a run is already in progress.
+# ccd-speckit-run Step 0 — report whether a run is already in progress.
 #
 # Usage: resume-state.sh [spec-root]      spec-root defaults to ./specs
 #

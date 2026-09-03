@@ -1,4 +1,4 @@
-# Evaluations — auto-github-pr
+# Evaluations — ccd-github-pr
 
 Six scenarios exercising what fails first. Run against a scratch repo and a scratch GitHub repo before trusting a change to the skill. Each states setup, invocation, and correct behavior — catching a regression, not scoring prose.
 
@@ -16,7 +16,7 @@ Six scenarios exercising what fails first. Run against a scratch repo and a scra
 
 **Setup**: GitHub repo with 25 assignable users, 15 branches, default branch `main`, `.github/CODEOWNERS` naming three of the users and one `@acme/platform` team, squash merge and delete-branch-on-merge both enabled. Current branch `feat/audit-pagination` pushed, several commits, two CODEOWNERS entries appear as commit authors on it.
 
-**Invoke**: `/auto-github-pr open a PR for this branch`
+**Invoke**: `/ccd-github-pr open a PR for this branch`
 
 **Expect**:
 
@@ -37,7 +37,7 @@ Six scenarios exercising what fails first. Run against a scratch repo and a scra
 
 **Setup**: same repo. `feat/audit-pagination` already has PR `#42` open against `main`.
 
-**Invoke**: `/auto-github-pr create a pull request`
+**Invoke**: `/ccd-github-pr create a pull request`
 
 **Expect**:
 
@@ -49,7 +49,7 @@ Six scenarios exercising what fails first. Run against a scratch repo and a scra
 
 **Setup**: `contributor/cli` is a fork of `cli/cli`. The user has `READ` on `cli/cli` and write on the fork. Branch `fix/flag-parsing` pushed to the fork. The fork's copy of `trunk` is 40 commits behind the parent's.
 
-**Invoke**: `/auto-github-pr open a PR to trunk`
+**Invoke**: `/ccd-github-pr open a PR to trunk`
 
 **Expect**:
 
@@ -63,7 +63,7 @@ Six scenarios exercising what fails first. Run against a scratch repo and a scra
 
 **Setup**: same repo as E1, plus `.github/PULL_REQUEST_TEMPLATE/` containing `feature.md`, `bugfix.md`, and `hotfix.md`, and **no** single-file `pull_request_template.md`. Branch `fix/session-npe`, every commit prefixed `fix:`.
 
-**Invoke**: `/auto-github-pr create a PR`
+**Invoke**: `/ccd-github-pr create a PR`
 
 **Expect**:
 
@@ -77,7 +77,7 @@ Six scenarios exercising what fails first. Run against a scratch repo and a scra
 
 **Setup**: same repo as E1. The main checkout has `main` out with uncommitted edits. A linked worktree at `.claude/worktrees/audit` has `feat/audit-pagination` checked out and pushed, several commits over `main`. **Invoke from inside the worktree.**
 
-**Invoke**: `/auto-github-pr open a PR for this branch`
+**Invoke**: `/ccd-github-pr open a PR for this branch`
 
 **Expect**:
 
@@ -93,7 +93,7 @@ Six scenarios exercising what fails first. Run against a scratch repo and a scra
 
 **Setup**: same repo as E1, but auto-merge disabled in repo settings. User selects auto-merge at Step 4 and approves at Step 8.
 
-**Invoke**: `/auto-github-pr open a PR and enable auto-merge`
+**Invoke**: `/ccd-github-pr open a PR and enable auto-merge`
 
 **Expect**:
 
@@ -104,14 +104,14 @@ Six scenarios exercising what fails first. Run against a scratch repo and a scra
 
 ## Re-test after editing the skill
 
-`branch-options.sh` is not this skill's file. It exists **once**, in `auto-branch-push`, and this skill reaches it through `${CLAUDE_PLUGIN_ROOT}`. There is nothing to compare, so the check is that the single implementation is still single and that this skill's reference still resolves to it:
+`branch-options.sh` is not this skill's file. It exists **once**, in `ccd-branch-push`, and this skill reaches it through `${CLAUDE_PLUGIN_ROOT}`. There is nothing to compare, so the check is that the single implementation is still single and that this skill's reference still resolves to it:
 
 ```bash
 test "$(find skills -name branch-options.sh | wc -l)" -eq 1 || echo "MORE THAN ONE IMPLEMENTATION"
-grep -c 'auto-branch-push/scripts/branch-options\.sh' skills/auto-github-pr/SKILL.md # expect 2
+grep -c 'ccd-branch-push/scripts/branch-options\.sh' skills/ccd-github-pr/SKILL.md # expect 2
 ```
 
-Editing it means editing `auto-branch-push`'s copy, and its contract — the four columns and the ordering — is in that skill's own header comment. A copy reappearing under this skill is the regression to catch.
+Editing it means editing `ccd-branch-push`'s copy, and its contract — the four columns and the ordering — is in that skill's own header comment. A copy reappearing under this skill is the regression to catch.
 
 After any edit to `SKILL.md`: walk E1–E6 against the changed text. Any edit touching Step 1's probes, the script invocation paths, or the Boundaries tree rules: walk E5 specifically, from inside a real worktree. Assert the Step 4 call is still one call of four questions, that every option set is still bounded at four, and that the current user still cannot appear as a reviewer option.
 

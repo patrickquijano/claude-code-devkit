@@ -1,5 +1,5 @@
 #!/bin/sh
-# speckit-run — carry untracked local config into a fresh worktree.
+# ccd-speckit-run — carry untracked local config into a fresh worktree.
 #
 # git worktree add only checks out tracked history. Files like .env and
 # appsettings.Development.json are untracked (usually gitignored) and never

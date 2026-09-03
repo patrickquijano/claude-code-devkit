@@ -15,17 +15,17 @@
 # Exit 1: not a git repository. Exit 0 otherwise, including a repo with no
 # commits or no remotes (possibly empty listing).
 #
-# THE ONLY COPY. Four skills consume this script -- auto-branch-push,
-# auto-github-pr, auto-gitlab-mr and speckit-run -- and all four invoke this
+# THE ONLY COPY. Four skills consume this script -- ccd-branch-push,
+# ccd-github-pr, ccd-gitlab-mr and ccd-speckit-run -- and all four invoke this
 # one file at
-#   ${CLAUDE_PLUGIN_ROOT}/skills/auto-branch-push/scripts/branch-options.sh
+#   ${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh
 # Do not copy it into a consuming skill to make that skill self-contained.
 # Self-containment is what produced four copies, and comparing copies is how
 # the divergence below survived: the three drift checks that existed compared
 # three of the four and never the fourth.
 #
 # WHAT WAS REJECTED, and why it must not be reintroduced as a simplification.
-# speckit-run carried a 48-line fork of this script. It was shorter, and three
+# ccd-speckit-run carried a 48-line fork of this script. It was shorter, and three
 # of its behaviours were wrong:
 #
 #   1. It emitted refs/remotes/<remote>/HEAD as a branch. Git's short form

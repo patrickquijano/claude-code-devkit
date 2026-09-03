@@ -13,12 +13,12 @@ State precondition: `steps.0` is `done`. In checkout mode this step moves the us
 Never enumerate branches by hand. Run:
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/auto-branch-push/scripts/branch-options.sh"
+sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
 ```
 
 Columns: branch, `local` / `remote` / `both`, last commit date, and a fourth column carrying `default`, `current`, both comma-joined in that order, or `-` when neither applies. Order: the repository's default branch first, then by commit date descending, then by name. The script fetches every configured remote, strips the remote prefix, dedupes, and excludes `refs/remotes/<remote>/HEAD` — whose git short form is a bare remote name indistinguishable from a branch called `origin`.
 
-The script is not this skill's file. It ships once, in `auto-branch-push`, and all four consumers invoke that one copy — which is why the fourth column and the ordering described above differ from what this file said before: the single surviving implementation is the 88-line one the three `auto-*` skills shared, and the 48-line copy this skill used to carry is gone. It emitted a `current`-or-`-` fourth column, ordered by commit date alone, and printed `origin/HEAD` as a branch named `origin`. FR-011 is the requirement that forced the reconciliation; the three defects it removed are recorded in the script's own header comment.
+The script is not this skill's file. It ships once, in `ccd-branch-push`, and all four consumers invoke that one copy — which is why the fourth column and the ordering described above differ from what this file said before: the single surviving implementation is the 88-line one the three `auto-*` skills shared, and the 48-line copy this skill used to carry is gone. It emitted a `current`-or-`-` fourth column, ordered by commit date alone, and printed `origin/HEAD` as a branch named `origin`. FR-011 is the requirement that forced the reconciliation; the three defects it removed are recorded in the script's own header comment.
 
 No remote configured → local names only, and the script says so. Failed fetch — offline, auth — goes to stderr and the listing continues from refs already on disk. Neither stops the run; both get reported at the gate.
 
@@ -41,7 +41,7 @@ Write `workspace` to state as soon as the answer returns, before 1c runs. 1c and
 Before switching, record what was already dirty, so Step 6 can keep pre-existing edits out of the feature's merge request:
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/speckit-run/scripts/dirty-diff.sh" snapshot .specify/.speckit-dirty-snapshot
+sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run/scripts/dirty-diff.sh" snapshot .specify/.speckit-dirty-snapshot
 ```
 
 Both modes take it. Checkout mode needs it to tell the user's dirt from the run's output. Worktree mode takes it **after** the worktree is entered, where it records close to nothing — and that near-empty snapshot is itself the evidence 6a's partition can be trusted, so it is not skipped for being boring.

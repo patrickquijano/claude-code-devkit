@@ -4,7 +4,7 @@ Verify every command exists before executing anything. Nothing runs, nothing wri
 
 ## Resolve the skill directory
 
-`scripts/` is relative to this skill's own directory, not the repo being worked on. Resolve the absolute path once — the directory holding `SKILL.md`, which for this plugin is `${CLAUDE_PLUGIN_ROOT}/skills/speckit-run` — and record it as `skill_dir`. Every later step invokes `sh <skill_dir>/scripts/<name>.sh` and reads the path from state rather than re-deriving it.
+`scripts/` is relative to this skill's own directory, not the repo being worked on. Resolve the absolute path once — the directory holding `SKILL.md`, which for this plugin is `${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run` — and record it as `skill_dir`. Every later step invokes `sh <skill_dir>/scripts/<name>.sh` and reads the path from state rather than re-deriving it.
 
 ## Resolve the naming form
 
@@ -29,7 +29,7 @@ Same step. Record under `tooling`:
 - **The forge this repo ships to, and the review skill that matches it.** Step 6b raises a merge request on GitLab and a pull request on GitHub, through two different sub-skills. Which one — if either — is decided here, from the remote, never from the task description or from what the last repo used:
 
   ```bash
-  sh "${CLAUDE_PLUGIN_ROOT}/skills/speckit-run/scripts/forge-detect.sh"
+  sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run/scripts/forge-detect.sh"
   ```
 
   Record its `forge`, `host`, `review-skill`, `cli`, `cli-status` and `verdict` lines as `tooling.forge`, `tooling.forge_host`, `tooling.review_skill`, `tooling.forge_cli`, `tooling.forge_cli_status` and `tooling.forge_verdict`. `github` and `gitlab` each name their sub-skill; `other` and `none` name none, and both are ordinary results — a Bitbucket remote, a local bare origin, or no remote at all means this run has no review-request step and nothing else changes. Never re-derive the host in prose: that script handles scp-like URLs, embedded credentials, ports, and the self-hosted case where the hostname says nothing and a configured `glab` or `gh` is the only evidence.
@@ -42,16 +42,16 @@ Same step. Record under `tooling`:
 
   ```bash
   # corroboration only; an empty result is "cannot determine", not "missing"
-  ls "${CLAUDE_PLUGIN_ROOT}/skills/auto-gitlab-mr/SKILL.md" 2> /dev/null   # 6b, GitLab remote
-  ls "${CLAUDE_PLUGIN_ROOT}/skills/auto-github-pr/SKILL.md" 2> /dev/null   # 6b, GitHub remote
-  ls "${CLAUDE_PLUGIN_ROOT}/skills/auto-commit-push/SKILL.md" 2> /dev/null # 6a's commit option dispatches this
+  ls "${CLAUDE_PLUGIN_ROOT}/skills/ccd-gitlab-mr/SKILL.md" 2> /dev/null   # 6b, GitLab remote
+  ls "${CLAUDE_PLUGIN_ROOT}/skills/ccd-github-pr/SKILL.md" 2> /dev/null   # 6b, GitHub remote
+  ls "${CLAUDE_PLUGIN_ROOT}/skills/ccd-commit-push/SKILL.md" 2> /dev/null # 6a's commit option dispatches this
   ```
 
   These three companions ship in the same plugin as this skill, so `${CLAUDE_PLUGIN_ROOT}` reaches them without naming an install location. **Do not substitute a hard-coded personal path**: writing one in makes the probe answer "missing" for every install form but that one, and a companion wrongly recorded as missing is not a loud failure — it silently drops 6a's commit option and skips 6b, so the run reports success having produced neither a commit nor a review request. Where neither the listing nor this corroboration can settle it, record the companion as **undetermined** and treat it as present: a dispatch that fails is visible, and a probe that guessed absence is not.
 
   Record each as found or missing under `tooling`, together with the name form that resolved.
 
-  **Why the namespaced form, and why that settles the ambiguous case.** A plugin's skills are addressed as `<plugin-name>:<skill-name>`, so `claude-code-devkit:auto-commit-push` names exactly one skill: the one this plugin ships. A bare `auto-commit-push` names whatever the session resolves that word to, and on a machine that has both a personal copy and the plugin installed, which one wins is not something this skill can determine or should depend on. Dispatching the namespaced name makes Step 6 deterministic under either install form and under both at once. Bare companion names still appear in the prose below where they describe a skill rather than address one; the namespaced form is what is dispatched and what `tooling.review_skill` holds. The **matching** skill missing → 6b is skipped with that reason; the other one's absence is irrelevant and is not reported as a problem. Missing `auto-commit-push` → 6a's question drops its commit option and offers only "open anyway" or "stop", and says why.
+  **Why the namespaced form, and why that settles the ambiguous case.** A plugin's skills are addressed as `<plugin-name>:<skill-name>`, so `claude-code-devkit:ccd-commit-push` names exactly one skill: the one this plugin ships. A bare `ccd-commit-push` names whatever the session resolves that word to, and on a machine that has both a personal copy and the plugin installed, which one wins is not something this skill can determine or should depend on. Dispatching the namespaced name makes Step 6 deterministic under either install form and under both at once. Bare companion names still appear in the prose below where they describe a skill rather than address one; the namespaced form is what is dispatched and what `tooling.review_skill` holds. The **matching** skill missing → 6b is skipped with that reason; the other one's absence is irrelevant and is not reported as a problem. Missing `ccd-commit-push` → 6a's question drops its commit option and offers only "open anyway" or "stop", and says why.
 
 - **`/init`, and whether a project `CLAUDE.md` already exists** — Step 2b needs both. `/init` is a built-in reached through the `Skill` tool, so confirm it in the session's own command listing rather than assuming it; record as `tooling.init`. Unavailable only matters on Step 2b's Branch A, and it degrades that branch to a reported skip, never to a hand-written substitute.
 
@@ -74,7 +74,7 @@ Twin of the failure above: silently redoing four phases of finished work.
 `resume-state.sh` exits 1 with `not-a-git-repo` outside a work tree, and a run outside one is supported — Step 1 skips itself rather than stopping. So probe git first, and when the working directory is not a repo, record `resume: skipped: not a git repo`, treat the run as fresh, and continue to the state file. That exit is a condition to branch on, never a preflight failure.
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/speckit-run/scripts/resume-state.sh"
+sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run/scripts/resume-state.sh"
 ```
 
 Reports whether this tree is a worktree, whether `.specify/.speckit-run-state.json` exists here, **whether one exists in a sibling worktree**, the current spec directory, which of `spec.md` / `plan.md` / `tasks.md` / `checklists/` exist, checked-off task count, suggested resume point.

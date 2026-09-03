@@ -13,7 +13,7 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
   "version": 2,
   "task": "one-line restatement of the task description",
   "command_form": "slash | skills",
-  "skill_dir": "${CLAUDE_PLUGIN_ROOT}/skills/speckit-run",
+  "skill_dir": "${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run",
   "tooling": {
     "lean_ctx": true,
     "graphify": false,
@@ -22,7 +22,7 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
     "forge_cli": "glab | gh | none",
     "forge_cli_status": "ready | unauthenticated | absent | n-a",
     "forge_verdict": "ready | skip: <reason>",
-    "review_skill": "claude-code-devkit:auto-gitlab-mr | claude-code-devkit:auto-github-pr | none",
+    "review_skill": "claude-code-devkit:ccd-gitlab-mr | claude-code-devkit:ccd-github-pr | none",
     "commit_skill": true,
     "init": true,
     "subagent": "<agent type name> | none"
@@ -135,7 +135,7 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
 - Update as each step or phase finishes, before asking anything it needs to ask — an interrupted run then leaves accurate state behind.
 - A value here always beats a recollection from earlier in the conversation. Base branch, command form, skill directory: read them, never remember them.
 - Never write a phase `done` on the assumption it worked. `done` means its artifacts were seen on disk.
-- `ship.subskill_calls` records whether Step 6 actually dispatched each sub-skill through the `Skill` tool. `6a` is `auto-commit-push`, and is `skipped: <reason>` on every run where the user did not choose to commit — that is the ordinary value, not a failure. `6b` is whichever skill `tooling.review_skill` named, `skipped: <reason>` covering an unsupported forge, a missing CLI, or that skill not being installed. In both cases `invoked` is written only after the tool call returned. A run that opened a review request, or produced commits, with no entry here did the work inline, which means the sub-skill's rules were never loaded — treat it as unfinished, not as done.
+- `ship.subskill_calls` records whether Step 6 actually dispatched each sub-skill through the `Skill` tool. `6a` is `ccd-commit-push`, and is `skipped: <reason>` on every run where the user did not choose to commit — that is the ordinary value, not a failure. `6b` is whichever skill `tooling.review_skill` named, `skipped: <reason>` covering an unsupported forge, a missing CLI, or that skill not being installed. In both cases `invoked` is written only after the tool call returned. A run that opened a review request, or produced commits, with no entry here did the work inline, which means the sub-skill's rules were never loaded — treat it as unfinished, not as done.
 - `tooling.forge` decides which sub-skill 6b may dispatch, and `tooling.review_skill` names it. Read them; never re-run the detection at Step 6 and never infer a forge from the task description or from a remembered remote. `other` and `none` are ordinary values meaning this run has no review-request step, not that detection failed — `tooling.forge_verdict` carries the reason verbatim, which is what `ship.subskill_calls.6b` records when 6b is skipped.
 - `ship.review_request` holds the outcome of 6b: the forge it went to, whether that forge calls the result a merge request or a pull request, and the URL. `url` stays null when 6b was skipped — the reason lives in `subskill_calls.6b`, not here. Step 7 reports `kind` verbatim so a summary never calls a pull request a merge request.
 - **A `version: 1` state file predates forge detection.** Read `ship.mr` as `ship.review_request.url`, `tooling.glab`/`tooling.gitlab_remote` as evidence that the forge was GitLab, then re-run `<skill-dir>/scripts/forge-detect.sh` once and write the `version: 2` fields before Step 6 acts on them. Never carry a `version: 1` file into 6b unmigrated: `tooling.review_skill` is absent there, and an absent skill name is exactly what a guess fills in.

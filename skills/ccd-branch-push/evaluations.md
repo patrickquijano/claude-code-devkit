@@ -1,4 +1,4 @@
-# Evaluations — auto-branch-push
+# Evaluations — ccd-branch-push
 
 Five scenarios exercising what fails first. Run against a scratch repo before trusting a change to the skill. Each states setup, invocation, and correct behavior — catching a regression, not scoring prose.
 
@@ -15,7 +15,7 @@ Five scenarios exercising what fails first. Run against a scratch repo before tr
 
 **Setup**: clone with 13 branches at staggered commit dates, `origin/HEAD` → `main`, current branch is a local-only branch, two files edited but uncommitted.
 
-**Invoke**: `/auto-branch-push create a branch for these changes`
+**Invoke**: `/ccd-branch-push create a branch for these changes`
 
 **Expect**:
 
@@ -31,7 +31,7 @@ Five scenarios exercising what fails first. Run against a scratch repo before tr
 
 **Setup**: same clone. No branch named `staging` locally or on the remote.
 
-**Invoke**: `/auto-branch-push branch off staging for this work`
+**Invoke**: `/ccd-branch-push branch off staging for this work`
 
 **Expect**:
 
@@ -43,7 +43,7 @@ Five scenarios exercising what fails first. Run against a scratch repo before tr
 
 **Setup**: same clone plus `CONTRIBUTING.md` mandating `users/<name>/<jira-id>-<long-description>`, a pattern whose realistic instances exceed the 72-character cap. Existing remote branches already follow it.
 
-**Invoke**: `/auto-branch-push make a branch for the audit-log pagination work`
+**Invoke**: `/ccd-branch-push make a branch for the audit-log pagination work`
 
 **Expect**:
 
@@ -56,7 +56,7 @@ Five scenarios exercising what fails first. Run against a scratch repo before tr
 
 **Setup**: same clone. Three variants, run each separately. (a) A local branch `feat/audit-log-pagination` already exists, not checked out anywhere. (b) That branch does not exist locally but does on the remote. (c) It exists locally **and is checked out in a second worktree** at `../hotfix`.
 
-**Invoke**: `/auto-branch-push make a branch for the audit-log pagination work` — phrased so Step 5 derives that exact name.
+**Invoke**: `/ccd-branch-push make a branch for the audit-log pagination work` — phrased so Step 5 derives that exact name.
 
 **Expect, all three**:
 
@@ -79,7 +79,7 @@ Five scenarios exercising what fails first. Run against a scratch repo before tr
 
 **Setup**: main checkout on `main`; a second worktree at `../feature-b` with `dev` checked out and two files edited. **Invoke from inside `../feature-b`.**
 
-**Invoke**: `/auto-branch-push create a branch for these changes`
+**Invoke**: `/ccd-branch-push create a branch for these changes`
 
 **Expect**:
 
@@ -102,10 +102,10 @@ Five scenarios exercising what fails first. Run against a scratch repo before tr
 
 ```bash
 test "$(find skills -name branch-options.sh | wc -l)" -eq 1 || echo "MORE THAN ONE IMPLEMENTATION"
-find skills -name branch-options.sh                                              # expect skills/auto-branch-push/scripts/branch-options.sh
-grep -rl 'auto-branch-push/scripts/branch-options\.sh' skills/*/SKILL.md | wc -l # expect 4
+find skills -name branch-options.sh                                             # expect skills/ccd-branch-push/scripts/branch-options.sh
+grep -rl 'ccd-branch-push/scripts/branch-options\.sh' skills/*/SKILL.md | wc -l # expect 4
 ```
 
-A second copy appearing anywhere under `skills/` is the regression this replaces the old `cmp` check with. The old check compared three of the four copies that used to exist and never the fourth, which is how a divergent fork survived in `speckit-run` unnoticed; a count cannot miss a copy the way a comparison can.
+A second copy appearing anywhere under `skills/` is the regression this replaces the old `cmp` check with. The old check compared three of the four copies that used to exist and never the fourth, which is how a divergent fork survived in `ccd-speckit-run` unnoticed; a count cannot miss a copy the way a comparison can.
 
 After any edit to `SKILL.md`: walk E1–E5 against the changed text and confirm each still prescribes the stated behavior. Any edit touching Step 5b, Step 7's create command, or the Boundaries name rules: walk E4, all three variants. Any edit touching Step 1's probes, the remote handling, or the worktree rules: walk E5, both halves, from inside a real worktree. After any edit to `scripts/branch-options.sh`: `sh -n` it, then run it in a work tree, in a repo with no commits (expect silent exit 0), in a detached-HEAD checkout (expect no `current` tag), and outside a git repo (expect exit 1 with a message). Re-read the diff for rules softened from imperative into description. Test on the models that will run it — terse enough for Opus can be too terse for a smaller model.

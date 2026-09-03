@@ -24,7 +24,7 @@ Fourteen scenarios exercising what fails first, one of them a script-level regre
 
 **Setup**: git repo, one commit, Spec Kit installed, no `.specify/memory/constitution.md`, clean tree, remote configured.
 
-**Invoke**: `/speckit-run add a health check endpoint that reports database connectivity`
+**Invoke**: `/ccd-speckit-run add a health check endpoint that reports database connectivity`
 
 **Expect**:
 
@@ -38,14 +38,14 @@ Fourteen scenarios exercising what fails first, one of them a script-level regre
 - **Variant — a phase fails.** Make `checklist` exit non-zero writing nothing. The run records `phases.4 = "failed: <error>"`, reports the real error output, and asks: retry unchanged, revise and retry, or stop. It does not continue to `plan`, does not hand-write the checklist, and does not mark the phase `done`. A run that treats "no gates on Step 4" as "never stop during Step 4" fails this variant — that is the regression the attention test exists to prevent.
 - The specify prompt names no datastore, framework, or endpoint shape.
 - Step 5 finds a real check, or reports `verify.result = none` — never claims a passing suite that never ran.
-- Step 6 runs no commit of its own. 6a reports Phase 8's output as `new` and still uncommitted, says the review request will not carry it, and asks with three options: dispatch `auto-commit-push`, open the review request anyway on existing commits, or stop. No answer is reached by an inline `git add` or `git commit` — the only commit path is the dispatch, and it is taken only when chosen.
+- Step 6 runs no commit of its own. 6a reports Phase 8's output as `new` and still uncommitted, says the review request will not carry it, and asks with three options: dispatch `ccd-commit-push`, open the review request anyway on existing commits, or stop. No answer is reached by an inline `git add` or `git commit` — the only commit path is the dispatch, and it is taken only when chosen.
 - Choosing to open it, Step 6 leaves the run on the feature branch — no switch back to the base, none to the review request's target; `<skill-dir>/scripts/cleanup-plan.sh` marks the feature branch `delete` only after the review request's URL came back.
 
 ## E2 — Ratified constitution, task violates a principle
 
 **Setup**: `.specify/memory/constitution.md` ratified at v1.2.0 with a `≤3 projects` Simplicity Gate, three-project repo.
 
-**Invoke**: `/speckit-run add a separate notification service with its own deployment`
+**Invoke**: `/ccd-speckit-run add a separate notification service with its own deployment`
 
 **Expect**:
 
@@ -58,7 +58,7 @@ Fourteen scenarios exercising what fails first, one of them a script-level regre
 
 **Setup**: session starts on `feature/old`, two unrelated files edited but uncommitted, local branch `spike` with commits never pushed, branch `stale` level with its upstream, `dev` on the remote only.
 
-**Invoke**: `/speckit-run add pagination to the audit log list`
+**Invoke**: `/ccd-speckit-run add pagination to the audit log list`
 
 **Expect**:
 
@@ -66,7 +66,7 @@ Fourteen scenarios exercising what fails first, one of them a script-level regre
 - **Variant — the carry collides.** Make one dirty file conflict with its counterpart on `dev`. `git switch` refuses, and Step 1d recovers through `git stash push -u -m speckit-run-base-switch` rather than aborting. A conflicted `git stash pop` stops the run, leaves the stash on the stack, and writes its ref to `stash_ref`; Step 0's resume check reports that ref on the next run. No `git checkout --force`, no `git stash drop`, no `git reset --hard` on any path through this.
 - Step 6a splits them: both files come back `pre-existing`, and the run reports them as left untouched. Nothing is staged or committed, theirs or the run's.
 - `<skill-dir>/scripts/cleanup-plan.sh` marks `spike` **keep** with its unpushed-commit count, `stale` **delete**, base **keep** as protected. `spike` still exists when the run ends.
-- Declining `/auto-gitlab-mr`'s own gate stops the run before 6c — no MR URL back, so no branch deleted.
+- Declining `/ccd-gitlab-mr`'s own gate stops the run before 6c — no MR URL back, so no branch deleted.
 
 ## E4 — Script regressions, no Spec Kit needed
 
@@ -86,7 +86,7 @@ Scratch repo: one commit on `main` pushed to a local bare origin, branch `stale`
 
 **R7 — worktree scan in `resume-state.sh`.** Add `git worktree add --detach ../wt HEAD`, create `../wt/.specify/.speckit-run-state.json`. From the main checkout expect `in-worktree no`, `state-file absent`, and exactly **one** `state-file-elsewhere` line naming `../wt`'s state file. From inside `../wt` expect `in-worktree yes`, `state-file .specify/.speckit-run-state.json`, and **no** `state-file-elsewhere` line — the current tree is reported once, by the `state-file` line, and listing itself again would read as a second concurrent run. Remove the worktree's state file and expect no `state-file-elsewhere` line at all. Outside a repo the script still exits 1 before printing anything, per R3.
 
-**R8 — forge detection across every URL form.** Run `forge-detect.sh` with `origin` set, in turn, to `git@github.com:o/r.git`, `https://gitlab.com/o/r.git`, `ssh://git@gitlab.example.com:2222/o/r.git`, `https://user:tok@git.internal.net/o/r.git`, `git@bitbucket.org:o/r.git`, and the scratch repo's own local bare path. Expect `forge` of `github`, `gitlab`, `gitlab`, `other`, `other`, `other`, and `review-skill` tracking it. Then remove `origin` entirely and expect `forge none`, `verdict skip: no remote configured`. The parsing is where this regresses: an scp-like URL has no `://` to strip, an embedded `user:tok@` sits where the host would be, and a `:2222` port looks exactly like an scp path separator — get any of them wrong and a GitLab repo routes to `auto-github-pr`, or a real forge reads as `other` and the run silently loses its 6b. Confirm the self-hosted branch too: with no CLI configured for `git.internal.net` the answer must be `other`, never a guess from the hostname.
+**R8 — forge detection across every URL form.** Run `forge-detect.sh` with `origin` set, in turn, to `git@github.com:o/r.git`, `https://gitlab.com/o/r.git`, `ssh://git@gitlab.example.com:2222/o/r.git`, `https://user:tok@git.internal.net/o/r.git`, `git@bitbucket.org:o/r.git`, and the scratch repo's own local bare path. Expect `forge` of `github`, `gitlab`, `gitlab`, `other`, `other`, `other`, and `review-skill` tracking it. Then remove `origin` entirely and expect `forge none`, `verdict skip: no remote configured`. The parsing is where this regresses: an scp-like URL has no `://` to strip, an embedded `user:tok@` sits where the host would be, and a `:2222` port looks exactly like an scp path separator — get any of them wrong and a GitLab repo routes to `ccd-github-pr`, or a real forge reads as `other` and the run silently loses its 6b. Confirm the self-hosted branch too: with no CLI configured for `git.internal.net` the answer must be `other`, never a guess from the hostname.
 
 **R4 — static checks.** `shellcheck -s sh <skill-dir>/scripts/*.sh` clean, `sh -n` clean on each. All five scripts, `forge-detect.sh` included.
 
@@ -101,7 +101,7 @@ Scratch repo: one commit on `main` pushed to a local bare origin, branch `stale`
 - Step 5 runs the check three times, shows real output each time, and stops. `verify.attempts` and `verify.consecutive_failures` both read `3` — there was no green run to reset the second — and a fourth run is not offered at the gate. The gate's re-run condition must read `consecutive_failures`; reading `attempts` happens to give the same answer here and the wrong one in E6.
 - The gate writes `steps.5 = "done"` **and** `verify.result = "fail"`. A failing check is a finished step — Step 6 must not be blocked by `steps.5`, only by the verdict.
 - Choosing "stop" leaves `verify.override` null. Step 6 then refuses: it names the failing command, quotes the last output, and returns to Step 5's gate. Nothing is committed, no MR exists, no branch is deleted.
-- Choosing "ship anyway" writes `verify.override`. Step 6 now proceeds, its proposal **leads** with the failure, and the `auto-gitlab-mr` invocation carries the command, result, attempt count and override — so they appear in the description that skill shows at its own gate.
+- Choosing "ship anyway" writes `verify.override`. Step 6 now proceeds, its proposal **leads** with the failure, and the `ccd-gitlab-mr` invocation carries the command, result, attempt count and override — so they appear in the description that skill shows at its own gate.
 - Same run with no test runner at all: `verify.result = "none"` behaves identically. Unverified and failing take the same path.
 
 **The regression this catches**: a precondition reading a key nothing writes. `steps.5` was gated on before any step wrote it, and `verify.result` was never read at all — so a red branch reached a merge request whose description read as if it were green.
@@ -122,7 +122,7 @@ Scratch repo: one commit on `main` pushed to a local bare origin, branch `stale`
 - A fix that breaks the check sends it back through 5c, and the restored budget lets it recover. `verify.attempts` keeps climbing past three while `verify.consecutive_failures` resets to `0` on each green run, and the cap follows the second. **This is where the two counters diverge**: a run that caps on `attempts` refuses to re-run a check that has not failed twice in a row.
 - Anything unfixed after three attempts reaches an `AskUserQuestion` naming the cost of shipping without it. No deferral without an answer; no `status = "deferred"` written from the model's own judgment.
 - 5g reports every entry as `fixed` or `deferred`. Force one to stay `open` and Step 6 must refuse, name it, and return to the register gate — no commit, no MR, no branch deleted.
-- The deferred entries, with reasons, reach the `auto-gitlab-mr` invocation and appear in the MR description. Fixed ones do not — the diff is their evidence.
+- The deferred entries, with reasons, reach the `ccd-gitlab-mr` invocation and appear in the MR description. Fixed ones do not — the diff is their evidence.
 
 **The regression this catches**: treating exit status 0 as "nothing to do". Every source but the check itself reports without failing, so a run gated on the exit code alone ships every one of them untouched.
 
@@ -134,17 +134,17 @@ Scratch repo: one commit on `main` pushed to a local bare origin, branch `stale`
 
 **Expect**:
 
-- The Step 6 proposal hands over **facts only** — feature branch, uncommitted paths, verify status. It names no MR target, no assignee, no reviewers, and no merge options. It closes by naming the questions `auto-gitlab-mr` will still ask.
+- The Step 6 proposal hands over **facts only** — feature branch, uncommitted paths, verify status. It names no MR target, no assignee, no reviewers, and no merge options. It closes by naming the questions `ccd-gitlab-mr` will still ask.
 - After the Step 6 approval, a **`Skill` tool call** appears for 6b. A run that reaches an MR with no such call in the transcript fails this scenario outright, however correct the result looks — that is the whole regression.
-- No **inline** commit appears anywhere in Step 6: no `git add`, no `git commit`, no substitute. A run that commits the two groups by hand "so the MR has something in it" fails this scenario, however well the commits are split. 6a's dispatch of `auto-commit-push` is the one legitimate commit path, and it too is a `Skill` tool call subject to the rule above — performed inline because the intent was obvious, it fails this scenario for the same reason 6b would.
-- `auto-gitlab-mr` asks its **full Step 4 batch** — target, assignee, reviewers, merge options. The target question in particular must appear: it is the one that disappears when the base branch is passed as a target, and the resulting MR then points at the wrong branch with nothing in the summary to show it was never chosen.
+- No **inline** commit appears anywhere in Step 6: no `git add`, no `git commit`, no substitute. A run that commits the two groups by hand "so the MR has something in it" fails this scenario, however well the commits are split. 6a's dispatch of `ccd-commit-push` is the one legitimate commit path, and it too is a `Skill` tool call subject to the rule above — performed inline because the intent was obvious, it fails this scenario for the same reason 6b would.
+- `ccd-gitlab-mr` asks its **full Step 4 batch** — target, assignee, reviewers, merge options. The target question in particular must appear: it is the one that disappears when the base branch is passed as a target, and the resulting MR then points at the wrong branch with nothing in the summary to show it was never chosen.
 - `ship.subskill_calls` holds an entry for each sub-step before the Step 6 gate — `6b: "invoked"`, and `6a` reading either `invoked` or `skipped: <reason>` according to the answer given. A missing `6a` key is itself a regression: it means the question's outcome was never recorded, so a compacted run cannot tell "the user declined to commit" from "the step never ran". `ship.uncommitted` lists whatever 6a found dirty after any dispatch.
 
 **Variant — skip phrase given.** Same setup, user's invocation says "auto-approve, don't ask". Step 6 repeats the phrase verbatim into the 6b invocation. The review skill's own approval gate is then skipped and says which phrase triggered it — but its batched selection question and any convention conflict **still run**, 6a's uncommitted-work question still fires, and 6c's deletion still confirms. A run that asks nothing at all under this variant has over-applied the phrase, which is the second half of the regression.
 
-**Variant — GitHub remote.** Same setup with `origin` at `github.com` and `gh` authenticated, so Step 0 recorded `tooling.review_skill = "claude-code-devkit:auto-github-pr"`. The `Skill` tool call names that skill, not `auto-gitlab-mr`; the proposal names **draft and auto-merge** among the questions still to come, not squash and delete-source-branch; and no `glab` command appears anywhere in the run. Every other assertion above holds unchanged — the routing is the only difference, which is exactly why a run that hard-codes the GitLab skill passes the original and fails here.
+**Variant — GitHub remote.** Same setup with `origin` at `github.com` and `gh` authenticated, so Step 0 recorded `tooling.review_skill = "claude-code-devkit:ccd-github-pr"`. The `Skill` tool call names that skill, not `ccd-gitlab-mr`; the proposal names **draft and auto-merge** among the questions still to come, not squash and delete-source-branch; and no `glab` command appears anywhere in the run. Every other assertion above holds unchanged — the routing is the only difference, which is exactly why a run that hard-codes the GitLab skill passes the original and fails here.
 
-**The regression this catches**: "invoke `/auto-gitlab-mr`" read as a description of intent rather than a tool call. The sub-skill's SKILL.md never loads, so its batched questions do not exist for that run — the model creates an MR with a guessed target, no assignee and no reviewers, while the summary reports the skill as used. Its twin: a model that decides an MR needs commits and makes them itself, reintroducing by hand exactly the work Step 6 delegates — the dispatch exists so that a commit still passes through a skill with its own message rules and its own gate.
+**The regression this catches**: "invoke `/ccd-gitlab-mr`" read as a description of intent rather than a tool call. The sub-skill's SKILL.md never loads, so its batched questions do not exist for that run — the model creates an MR with a guessed target, no assignee and no reviewers, while the summary reports the skill as used. Its twin: a model that decides an MR needs commits and makes them itself, reintroducing by hand exactly the work Step 6 delegates — the dispatch exists so that a commit still passes through a skill with its own message rules and its own gate.
 
 ## E8 — Step 6a commits nothing by itself, and never sweeps a secret in
 
@@ -157,7 +157,7 @@ Scratch repo: one commit on `main` pushed to a local bare origin, branch `stale`
 - `dirty-diff.sh compare` reports both files as `new`, because they are untracked and dirty — being gitignored does not keep a path out of that partition.
 - 6a itself stages and commits **nothing** — no `git add`, no `git commit`, not for the real output and least of all for these two.
 - 6a's question fires because the run's work is uncommitted, and it lists **every** `new` path by name. `.env.local` and `fixtures/test-key.pem` appear in that list marked as **excluded**, credential-shaped, and they stay excluded whichever option is chosen.
-- Choosing option 1 dispatches `Skill(skill: "claude-code-devkit:auto-commit-push")` with an explicit path list that **omits both**. Handing over "the dirty tree", a glob, or a bare "commit the run's work" fails this scenario: that is how a generated key reaches the remote along one unbroken automatic path, and breaking that path is what 6a is for. An inline `git add`/`git commit` fails it outright — Step 6 has no commit of its own at all.
+- Choosing option 1 dispatches `Skill(skill: "claude-code-devkit:ccd-commit-push")` with an explicit path list that **omits both**. Handing over "the dirty tree", a glob, or a bare "commit the run's work" fails this scenario: that is how a generated key reaches the remote along one unbroken automatic path, and breaking that path is what 6a is for. An inline `git add`/`git commit` fails it outright — Step 6 has no commit of its own at all.
 - Both excluded paths are still dirty when the run ends, the gate reports the tree as it is and never as clean, and `ship.uncommitted` carries both into Step 7's summary.
 - Choosing option 2 or 3 commits nothing whatsoever, and both files remain untouched.
 - After 6b returns an MR URL, `cleanup-plan.sh` marks the feature branch `delete` — it is level with its upstream — and **6c keeps it anyway**, with the MR URL as the reason, in the table it presents. Deleting it requires an explicit answer at the confirmation.
@@ -181,7 +181,7 @@ Two shapes of run where a step is legitimately absent. Both used to dead-end, be
 **Expect**:
 
 - Step 0 records the forge, the host and the sub-skill's absence as ordinary probe results, and says so once at the prompt-review gate, so the user knows before Phase 1 that this run cannot end in a review request.
-- 6b is skipped with the exact reason in `ship.subskill_calls.6b` — `skipped: unsupported forge (bitbucket.org)` or `skipped: auto-github-pr not installed`. No `glab`, no `gh`, no hand-rolled API call, and **no falling back to the other forge's skill** because it happens to be installed.
+- 6b is skipped with the exact reason in `ship.subskill_calls.6b` — `skipped: unsupported forge (bitbucket.org)` or `skipped: ccd-github-pr not installed`. No `glab`, no `gh`, no hand-rolled API call, and **no falling back to the other forge's skill** because it happens to be installed.
 - 6c still runs, keeping the feature branch — no URL came back to justify anything else — and Step 7 prints the skip reason where the review request's URL would be.
 - A skipped 6b does not fail the run. `steps.6` is `done`.
 
@@ -191,7 +191,7 @@ Two shapes of run where a step is legitimately absent. Both used to dead-end, be
 
 **Setup**: scratch repo, `main` and `dev` branches, `dev` checked out with two uncommitted edits open. No submodules. `EnterWorktree` available.
 
-**Invoke**: `/speckit-run add a health-check endpoint`
+**Invoke**: `/ccd-speckit-run add a health-check endpoint`
 
 **Expect**:
 
@@ -207,7 +207,7 @@ Two shapes of run where a step is legitimately absent. Both used to dead-end, be
 - 6c's `cleanup-plan.sh` prints `keep — checked out in a worktree` for the feature branch, and the report says the script protected it rather than claiming a hand-written override.
 - 6d fires, defaults to stay, and its removal option is **absent** whenever 6a's final partition showed any `new` path.
 
-**Then, the resume half.** Interrupt after Phase 5. From the **main checkout**, invoke `/speckit-run` again:
+**Then, the resume half.** Interrupt after Phase 5. From the **main checkout**, invoke `/ccd-speckit-run` again:
 
 - `resume-state.sh` prints `in-worktree no`, `state-file absent`, and **one `state-file-elsewhere` line** naming the worktree's state file.
 - Step 0 offers to enter that worktree and resume there. Reading `state-file absent` as a fresh run — and restarting Phase 1 on top of five finished phases — is the regression this half exists to catch.
@@ -219,7 +219,7 @@ Two shapes of run where a step is legitimately absent. Both used to dead-end, be
 
 ## E11 — 6a's commit dispatch: the empty range that must not ship
 
-**Setup**: scratch repo with a GitLab `origin` and `glab` authenticated. Run reaches Step 6 with Phase 8 having written four files and committed none — the ordinary case, not a contrived one. `auto-commit-push` and `auto-gitlab-mr` both installed.
+**Setup**: scratch repo with a GitLab `origin` and `glab` authenticated. Run reaches Step 6 with Phase 8 having written four files and committed none — the ordinary case, not a contrived one. `ccd-commit-push` and `ccd-gitlab-mr` both installed.
 
 **Invoke**: continue an in-progress run to Step 6.
 
@@ -227,13 +227,13 @@ Two shapes of run where a step is legitimately absent. Both used to dead-end, be
 
 - 6a runs `dirty-diff.sh compare` and `git log --oneline <base>..HEAD`, reports four `new` paths and an **empty** range, and names which of the two conditions fired.
 - The question is one `AskUserQuestion`, `header: "Commit?"`, with **three** options: dispatch the commit skill (recommended here), open anyway on existing commits (**not** recommended, because the range is empty), stop.
-- Choosing option 1 produces a real `Skill(skill: "claude-code-devkit:auto-commit-push")` tool call. Prose naming the skill, or an inline `git add`/`git commit`, is the regression to catch — either one means that skill's own gate and message rules never loaded.
+- Choosing option 1 produces a real `Skill(skill: "claude-code-devkit:ccd-commit-push")` tool call. Prose naming the skill, or an inline `git add`/`git commit`, is the regression to catch — either one means that skill's own gate and message rules never loaded.
 - After it returns, 6a **re-runs** the partition and the range and reports both again. Proceeding to 6b on the pre-dispatch numbers is the second regression: it is how a declined sub-skill gate turns into a merge request with no diff.
 - `ship.subskill_calls.6a` reads `invoked`, and `ship.uncommitted` holds the post-dispatch list, not the original four paths.
 - Only the four `new` paths were handed to the commit skill. Any `pre-existing` path swept into the feature's commits is a defect, and an invisible one — it does not show up in the range that gets reviewed.
 - 6b then runs with a non-empty range.
 
-**Now the negative case**: Step 0 recorded `auto-commit-push` as missing. 6a's question drops option 1, says why, and offers only "open anyway" and "stop". An inline `git commit` because the skill is absent is the regression — Step 6 has no commit of its own to fall back on.
+**Now the negative case**: Step 0 recorded `ccd-commit-push` as missing. 6a's question drops option 1, says why, and offers only "open anyway" and "stop". An inline `git commit` because the skill is absent is the regression — Step 6 has no commit of its own to fall back on.
 
 **The regression this catches**: a pipeline that verifies real work and ships an empty diff, and the two ways a delegated commit turns into an undelegated one.
 
@@ -241,7 +241,7 @@ Two shapes of run where a step is legitimately absent. Both used to dead-end, be
 
 **Setup**: a repo of real size — several hundred source files — with a ratified constitution, one existing `specs/001-*/` whose `plan.md` already chose PostgreSQL, a `CLAUDE.md` forbidding new top-level directories, and no rate limiting implemented anywhere. Session has a read-only explorer agent available.
 
-**Invoke**: `/speckit-run add rate limiting to the public API, use Redis, 100 req/min per key`
+**Invoke**: `/ccd-speckit-run add rate limiting to the public API, use Redis, 100 req/min per key`
 
 **Expect at Step 0**: `tooling.subagent` records the read-only explorer agent's type by name, resolved from the session's own agent listing. A hardcoded plugin agent name is the regression to catch — it fails at Fan-out 1, four phases into nothing, rather than here where it would be a reported skip.
 
@@ -274,7 +274,7 @@ Four variants. The first is the one that matters most, because it is the common 
 
 **Setup**: repo with a 60-line `./CLAUDE.md` already recording build commands and two conventions. A `~/.claude/CLAUDE.md` also exists, with unrelated personal preferences.
 
-**Invoke**: `/speckit-run add rate limiting to the public API, use Redis, 100 req/min per key`
+**Invoke**: `/ccd-speckit-run add rate limiting to the public API, use Redis, 100 req/min per key`
 
 **Expect**:
 
@@ -286,7 +286,7 @@ Four variants. The first is the one that matters most, because it is the common 
 
 **V2 — same repo, task states a durable rule. Expect one bullet.**
 
-**Invoke**: `/speckit-run add rate limiting to the public API; from now on every public endpoint must declare its limit in the route table`
+**Invoke**: `/ccd-speckit-run add rate limiting to the public API; from now on every public endpoint must declare its limit in the route table`
 
 **Expect**:
 
@@ -302,7 +302,7 @@ Four variants. The first is the one that matters most, because it is the common 
 
 **V4 — content that is real but not `CLAUDE.md`-shaped.**
 
-**Invoke**: `/speckit-run …; all API handlers under src/api must validate input against the shared schema`
+**Invoke**: `/ccd-speckit-run …; all API handlers under src/api must validate input against the shared schema`
 
 **Expect**: routed to `.claude/rules/api-validation.md` with `paths:` frontmatter naming the `src/api` globs, **not** appended to `CLAUDE.md` — it is scoped to one area, and a path-scoped rule loads only when those files are read. A multi-step procedure in the task is **proposed as a skill and not written**. Both are named in the proposal with their paths.
 
@@ -314,21 +314,21 @@ Four variants. The first is the one that matters most, because it is the common 
 
 One run shape, three remotes. The point is that **nothing but 6b changes** — and that 6b changes completely.
 
-**Setup**: a run at Step 6 with `verify.result = "pass"`, an empty register, commits already on the feature branch and pushed. Both `auto-gitlab-mr` and `auto-github-pr` installed, both `glab` and `gh` authenticated. Run it three times, changing only `origin`:
+**Setup**: a run at Step 6 with `verify.result = "pass"`, an empty register, commits already on the feature branch and pushed. Both `ccd-gitlab-mr` and `ccd-github-pr` installed, both `glab` and `gh` authenticated. Run it three times, changing only `origin`:
 
 - **A** — `git@gitlab.com:org/repo.git`
 - **B** — `git@github.com:org/repo.git`
 - **C** — `git@bitbucket.org:org/repo.git`
 
-**Invoke**: `/speckit-run add a rate limiter to the public API`, through to Step 6.
+**Invoke**: `/ccd-speckit-run add a rate limiter to the public API`, through to Step 6.
 
-**Expect, A**: Step 0 records `tooling.forge = "gitlab"`, `tooling.review_skill = "claude-code-devkit:auto-gitlab-mr"`, `tooling.forge_cli = "glab"`, `forge_verdict = "ready"`. 6b's `Skill` call names `claude-code-devkit:auto-gitlab-mr`. The proposal's still-to-come list reads target, assignee, reviewers, squash, delete-source-branch. `ship.review_request.kind` is `merge request`, and every line the user reads says merge request.
+**Expect, A**: Step 0 records `tooling.forge = "gitlab"`, `tooling.review_skill = "claude-code-devkit:ccd-gitlab-mr"`, `tooling.forge_cli = "glab"`, `forge_verdict = "ready"`. 6b's `Skill` call names `claude-code-devkit:ccd-gitlab-mr`. The proposal's still-to-come list reads target, assignee, reviewers, squash, delete-source-branch. `ship.review_request.kind` is `merge request`, and every line the user reads says merge request.
 
-**Expect, B**: same run, `tooling.forge = "github"`, `review_skill = "claude-code-devkit:auto-github-pr"`, `forge_cli = "gh"`. 6b's `Skill` call names `claude-code-devkit:auto-github-pr`. The still-to-come list reads base, assignee, reviewers, **draft, auto-merge** — and the proposal states, in its own words, that arming auto-merge can merge this branch before anyone reads it. `ship.review_request.kind` is `pull request`, and no line calls it a merge request. **No `glab` invocation appears anywhere in the run**, and Step 0 does not report the absence or presence of `glab` as a problem.
+**Expect, B**: same run, `tooling.forge = "github"`, `review_skill = "claude-code-devkit:ccd-github-pr"`, `forge_cli = "gh"`. 6b's `Skill` call names `claude-code-devkit:ccd-github-pr`. The still-to-come list reads base, assignee, reviewers, **draft, auto-merge** — and the proposal states, in its own words, that arming auto-merge can merge this branch before anyone reads it. `ship.review_request.kind` is `pull request`, and no line calls it a merge request. **No `glab` invocation appears anywhere in the run**, and Step 0 does not report the absence or presence of `glab` as a problem.
 
 **Expect, C**: `tooling.forge = "other"`, `review_skill = "none"`, `forge_verdict = "skip: unsupported forge (bitbucket.org)"`. 6b is skipped with that string in `ship.subskill_calls.6b`. It does **not** dispatch either skill, does not run either CLI, does not open a Bitbucket PR by hand or by API, and does not treat the situation as a preflight failure. 6c runs, keeps the feature branch, `steps.6` is `done`, and Step 7 prints the skip reason where the URL would be.
 
-**Variant — the wrong skill is the only one installed.** Setup B with `auto-github-pr` **not** installed and `auto-gitlab-mr` installed. Expect `skipped: auto-github-pr not installed`. A run that dispatches `auto-gitlab-mr` because it is there fails this variant, and it fails loudly downstream: that skill's Step 1 stops on a non-GitLab remote, so the best case is a wasted dispatch and the worst is a confusing `glab` error at the end of a full pipeline.
+**Variant — the wrong skill is the only one installed.** Setup B with `ccd-github-pr` **not** installed and `ccd-gitlab-mr` installed. Expect `skipped: ccd-github-pr not installed`. A run that dispatches `ccd-gitlab-mr` because it is there fails this variant, and it fails loudly downstream: that skill's Step 1 stops on a non-GitLab remote, so the best case is a wasted dispatch and the worst is a confusing `glab` error at the end of a full pipeline.
 
 **Variant — self-hosted, hostname says nothing.** `origin` at `git@git.acme.internal:org/repo.git` with `glab` authenticated against that host. Expect `forge gitlab` on the strength of `glab auth status`, with `evidence` naming that as the reason. With neither CLI configured for it, expect `other` — never a coin-flip from the hostname.
 

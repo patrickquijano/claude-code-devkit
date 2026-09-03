@@ -1,5 +1,5 @@
 ---
-name: auto-github-pr
+name: ccd-github-pr
 description: Use when the user wants a GitHub pull request created end-to-end — e.g. "open a PR for this branch", "create a pull request", "push this and make a GitHub PR to main". Not for a plain branch push with no pull request.
 ---
 
@@ -9,9 +9,9 @@ Pushes the current branch if needed, gathers ranked base-branch and reviewer can
 
 ## When NOT to use
 
-- User just wants a branch pushed with no PR — use `claude-code-devkit:auto-branch-push` instead.
+- User just wants a branch pushed with no PR — use `claude-code-devkit:ccd-branch-push` instead.
 - User already has an open PR and wants to edit it — this skill only creates PRs, it doesn't update existing ones.
-- Target is a GitLab project — use `claude-code-devkit:auto-gitlab-mr` instead. Step 1 detects this from the remote host and stops.
+- Target is a GitLab project — use `claude-code-devkit:ccd-gitlab-mr` instead. Step 1 detects this from the remote host and stops.
 
 ## Asking the user
 
@@ -26,7 +26,7 @@ Every question in this skill goes through `AskUserQuestion`. Never ask in prose,
 
 **Two calls on a clean run.** Step 4 batches all four selections into one call; Step 8 is the approval gate. Each of these adds a call only when triggered: multiple repo PR templates at Step 6, a rebase conflict at Step 5, a title-convention conflict at Step 6. The head branch is never asked — it is the current branch, established in Step 1.
 
-Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/auto-github-pr/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
+Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-github-pr/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
 
 ## Workflow
 
@@ -65,7 +65,7 @@ Branch absent from the remote → push it: `git push -u origin <branch>`.
 **Step 2 — Rank the base-branch candidates.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/auto-branch-push/scripts/branch-options.sh"
+sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
 ```
 
 Tab separated, repo default branch first then newest commit first: `<branch>  local|remote|both  <YYYY-MM-DD>  <tags>`. Drop the head branch from the output, then take the top four.
@@ -73,7 +73,7 @@ Tab separated, repo default branch first then newest commit first: `<branch>  lo
 **Step 3 — Rank the reviewer and assignee candidates.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/auto-github-pr/scripts/reviewer-options.sh"
+sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-github-pr/scripts/reviewer-options.sh"
 gh api user --jq '.login' # the current user, for the assignee default
 ```
 
@@ -198,7 +198,7 @@ GitHub's squash merge takes the commit subject from the PR title and the commit 
 | Fetch base                             | `git fetch origin <base>` (fork: `git fetch upstream <base>`)                                                              |
 | Rebase onto base                       | `git rebase origin/<base>`                                                                                                 |
 | Push rebased branch                    | `git push --force-with-lease origin <head>`                                                                                |
-| Base candidates                        | `sh ${CLAUDE_PLUGIN_ROOT}/skills/auto-branch-push/scripts/branch-options.sh`                                               |
+| Base candidates                        | `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh`                                                |
 | Reviewer candidates                    | `sh <skill-dir>/scripts/reviewer-options.sh` (wraps `gh repo view --json assignableUsers` plus `CODEOWNERS`)               |
 | Current user                           | `gh api user --jq '.login'`                                                                                                |
 | Create PR                              | `gh pr create` (see Step 9)                                                                                                |
@@ -228,6 +228,6 @@ Installing either is a **separate, explicitly requested** action, not part of a 
 
 Regression scenarios for this skill live in [evaluations.md](evaluations.md). Not part of a run — read it only when changing this skill.
 
-`branch-options.sh` is **not** this skill's file and no longer exists in it. It ships once, in `auto-branch-push`, and this skill invokes that copy through `${CLAUDE_PLUGIN_ROOT}`. There is nothing left to keep in step: the four consumers see identical candidates by construction rather than by comparison. Adding a copy back here is the regression — see evaluations.md for the check.
+`branch-options.sh` is **not** this skill's file and no longer exists in it. It ships once, in `ccd-branch-push`, and this skill invokes that copy through `${CLAUDE_PLUGIN_ROOT}`. There is nothing left to keep in step: the four consumers see identical candidates by construction rather than by comparison. Adding a copy back here is the regression — see evaluations.md for the check.
 
-**Never add `disable-model-invocation: true` to this skill's frontmatter.** That field blocks the `Skill` tool, not merely automatic loading, so any skill or pipeline dispatching this one through that tool breaks silently. `speckit-run` dispatches this skill at its Step 6b on a GitHub remote — a GitLab one gets `claude-code-devkit:auto-gitlab-mr` — so setting the field breaks that handoff at the very end of a full eight-phase pipeline run. The same applies to `user-invocable: false`, which would take away the `/auto-github-pr` invocation this skill is designed around.
+**Never add `disable-model-invocation: true` to this skill's frontmatter.** That field blocks the `Skill` tool, not merely automatic loading, so any skill or pipeline dispatching this one through that tool breaks silently. `ccd-speckit-run` dispatches this skill at its Step 6b on a GitHub remote — a GitLab one gets `claude-code-devkit:ccd-gitlab-mr` — so setting the field breaks that handoff at the very end of a full eight-phase pipeline run. The same applies to `user-invocable: false`, which would take away the `/ccd-github-pr` invocation this skill is designed around.
