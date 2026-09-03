@@ -10,15 +10,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `skills/` holds the plugin's own authored skills, auto-discovered by installing the plugin — `plugin.json` declares no `skills` path and must not, because that field adds to the default directory rather than replacing it. Installed, they resolve as `claude-code-devkit:<name>`.
 
-`speckit-run` is the entry point: it drives the eight Spec Kit phases from one task description and ships the result. `auto-branch-push`, `auto-commit-push`, `auto-github-pr` and `auto-gitlab-mr` are the git and forge skills it dispatches at its Step 6, and each is usable on its own.
+`ccd-speckit-run` is the entry point: it drives the eight Spec Kit phases from one task description and ships the result. `ccd-branch-push`, `ccd-commit-push`, `ccd-github-pr` and `ccd-gitlab-mr` are the git and forge skills it dispatches at its Step 6, and each is usable on its own.
 
-Three things about them are load-bearing and easy to undo by tidying:
+Four things about them are load-bearing and easy to undo by tidying:
 
+- Every distributed skill carries the `ccd-` prefix in its directory name and its frontmatter `name`. The prefix looks redundant under the `claude-code-devkit:` namespace and is not — it is what makes the **bare** name unambiguous when a personal copy of the same skill is also installed.
 - Cross-skill dispatch uses the **namespaced** name. A bare name resolves to whatever the session decides when a personal copy is also installed.
-- `branch-options.sh` exists **once**, in `auto-branch-push`, reached by all four consumers through `${CLAUDE_PLUGIN_ROOT}`. Its header comment records the three defects of the fork that was rejected.
-- Only `speckit-run` carries `disable-model-invocation`. Adding it to the other four breaks Step 6's dispatch silently. `skills/speckit-run/SKILL.md`'s authoring note says why the strict reading binds.
+- `branch-options.sh` exists **once**, in `ccd-branch-push`, reached by all four consumers through `${CLAUDE_PLUGIN_ROOT}`. Its header comment records the three defects of the fork that was rejected.
+- Only `ccd-speckit-run` carries `disable-model-invocation`. Adding it to the other four breaks Step 6's dispatch silently. `skills/ccd-speckit-run/SKILL.md`'s authoring note says why the strict reading binds.
 
-Their own history is in `specs/002-vendor-plugin-skills/`.
+Their own history is in `specs/002-vendor-plugin-skills/`, which distributed them, and `specs/003-ccd-skill-rename/`, which gave them the `ccd-` prefix and supersedes 002's two interface contracts.
 
 ## Agent instructions
 
