@@ -42,6 +42,21 @@ RUN_USER="$RUN_UID:$RUN_GID"
 MODE=check
 NATIVE_ARGS=''
 
+# A newline, for the pattern matches below. POSIX sh has no $'\n'.
+LF='
+'
+
+# Set by parse_args from a trailing `-- PATH...`: the paths the caller named,
+# one per line, empty when none were named. Every invocation that existed
+# before this was added leaves it empty, and empty means "no narrowing", so
+# those invocations are unaffected (FR-017).
+#
+# Newline-separated rather than NUL-separated because a shell variable cannot
+# hold a NUL byte -- which is also why lib/scope.sh streams its pathspecs
+# instead of accumulating them. A path containing a newline is refused in
+# parse_args rather than mis-parsed here.
+REQUESTED_PATHS=''
+
 # Some images set no ENTRYPOINT (their binary is the Cmd), so passing arguments
 # replaces the command and docker tries to exec the first file as a program.
 # A runner facing such an image sets CONTAINER_CMD to the binary name; it is
@@ -81,19 +96,23 @@ say() {
 # that failed it would be the wrong trade.
 usage() {
 	cat << USAGE
-Usage: $1 [--fix]
+Usage: $1 [--fix] [-- PATH...]
 
 no arguments  Report violations. Modifies no file.
 --fix         Rewrite files into conformance where the tool supports it.
+-- PATH...    Narrow this run to the named paths. Never widens it.
 -h, --help    This message.
 
 Exit: 0 pass, 1 violations, 2 usage, 3 no tool and no container, 4 not a git tree.
 USAGE
 }
 
-# parse_args "$@" -> sets MODE.
+# parse_args "$@" -> sets MODE and REQUESTED_PATHS.
 # Anything but --fix, -h, --help is a usage error: a runner that silently
-# ignores an argument is a runner that silently did something else.
+# ignores an argument is a runner that silently did something else. That rule
+# now applies to the arguments before `--` only; after it, every argument is a
+# path and none is interpreted, which is what keeps a path beginning with `-`
+# from being read as a flag.
 parse_args() {
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
@@ -103,6 +122,24 @@ parse_args() {
 			-h | --help)
 				usage "$PROG"
 				exit 0
+				;;
+			--)
+				# Bare `--` with nothing after it names no paths and so
+				# narrows nothing, the same reading git gives it.
+				shift
+				while [ "$#" -gt 0 ]; do
+					case "$1" in
+						*"$LF"*)
+							die "$PROG: path contains a newline: $1" 2
+							;;
+						*)
+							# A path with no newline needs no handling.
+							;;
+					esac
+					REQUESTED_PATHS="$REQUESTED_PATHS$1$LF"
+					shift
+				done
+				return 0
 				;;
 			*)
 				usage "$PROG" >&2
@@ -136,13 +173,88 @@ normalise_status() {
 # bashism, TERM is POSIX.
 init_runner() {
 	LIST=$(mktemp)
-	trap 'rm -f "$LIST"' EXIT INT TERM
+	trap 'rm -f "$LIST" "$LIST.req" "$LIST.raw" "$LIST.out"' EXIT INT TERM
 }
 
-# collect GLOB... -- fills LIST. Empty list reports success and says so, rather
-# than failing on an empty input set or staying silent.
+# repo_relative PATH -- prints PATH relative to the repository root, or nothing
+# at all when it does not resolve to something under it.
+#
+# No `realpath` and no `readlink -f`: neither is POSIX, and the readlink macOS
+# ships has no -f. `cd` plus `pwd -P` is the portable resolution, and it
+# resolves the directory part, which is the part a symlink can use to point
+# outside the tree while still looking like a path inside it.
+repo_relative() {
+	rr_dir=$(dirname -- "$1")
+	rr_base=$(basename -- "$1")
+	rr_abs_dir=$(CDPATH='' cd -- "$rr_dir" 2> /dev/null && pwd -P) || return 0
+	[ -n "$rr_abs_dir" ] || return 0
+	# REPO_ROOT is resolved the same way before comparing, so a symlinked
+	# checkout does not make every path look external.
+	rr_root=$(CDPATH='' cd -- "$REPO_ROOT" && pwd -P)
+	# Strip the prefix from the whole path, not from the directory part. For a
+	# file at the repository root the directory part IS the root, with no
+	# trailing slash to match, so stripping there leaves the path absolute.
+	rr_abs="$rr_abs_dir/$rr_base"
+	case "$rr_abs" in
+		"$rr_root"/*)
+			printf '%s\n' "${rr_abs#"$rr_root"/}"
+			;;
+		*)
+			# Outside the repository. Printing nothing drops it from the
+			# filter, so it matches no file and the run reports an empty
+			# scope -- FR-005's refusal, reached without a special case.
+			;;
+	esac
+}
+
+# filter_list -- narrows LIST to REQUESTED_PATHS.
+#
+# It filters the list the check already computed; it never treats a requested
+# path as a file to examine. Passing requested paths through would let a caller
+# reach a file outside the check's globs or excluded by its own configuration,
+# which is exactly what FR-006 and FR-007 forbid.
+filter_list() {
+	printf '%s' "$REQUESTED_PATHS" > "$LIST.raw"
+	: > "$LIST.req"
+	while IFS= read -r fl_path; do
+		fl_rel=$(repo_relative "$fl_path")
+		if [ -n "$fl_rel" ]; then
+			printf '%s\n' "$fl_rel" >> "$LIST.req"
+		fi
+	done < "$LIST.raw"
+
+	# The comparison below is line-oriented, so a file name containing a
+	# newline would match the wrong record. `git ls-files -z` emits names
+	# literally, so detect that rather than mis-handle it: the NUL count and
+	# the line count after translation must agree (Principle II).
+	fl_nuls=$(tr -dc '\0' < "$LIST" | wc -c | tr -d ' ')
+	fl_lines=$(tr '\0' '\n' < "$LIST" | wc -l | tr -d ' ')
+	if [ "$fl_nuls" -ne "$fl_lines" ]; then
+		die "$PROG: a file name contains a newline; refusing to filter" 1
+	fi
+
+	# grep exits 1 when nothing matches, which is a legitimate outcome here
+	# (a path list matching nothing is exit 0 with "no files in scope"), so
+	# the status is consumed rather than allowed to end the run under set -e.
+	if tr '\0' '\n' < "$LIST" | grep -x -F -f "$LIST.req" > "$LIST.out"; then
+		tr '\n' '\0' < "$LIST.out" > "$LIST"
+	else
+		: > "$LIST"
+	fi
+}
+
+# collect CHECK GLOB... -- fills LIST. Empty list reports success and says so,
+# rather than failing on an empty input set or staying silent.
+#
+# CHECK names the check whose exclusion declaration governs this list; see
+# exclusions_for() in lib/scope.sh. The arguments are forwarded to file_list
+# unchanged, so the check's own call site is the single place its scope is
+# stated: `collect markdown '*.md' '*.markdown'`.
 collect() {
 	file_list "$@" > "$LIST"
+	if [ -n "$REQUESTED_PATHS" ]; then
+		filter_list
+	fi
 	if [ ! -s "$LIST" ]; then
 		say "$PROG: no files in scope"
 		exit 0

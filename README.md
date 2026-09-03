@@ -4,7 +4,7 @@
 
 Installing the plugin gives you five skills. `ccd-speckit-run` drives the eight [GitHub Spec Kit](https://github.com/github/spec-kit) phases from a single task description and ships the result; the other four handle the git and forge work it hands off, and each is equally usable on its own.
 
-The repository also carries its own quality gate — one command, eight checks, no tool to install first.
+The repository also carries its own quality gate — one command, seven checks, no tool to install first.
 
 ## Table of Contents
 
@@ -13,6 +13,7 @@ The repository also carries its own quality gate — one command, eight checks, 
   - [The five skills](#the-five-skills)
   - [Running the pipeline](#running-the-pipeline)
   - [Running the quality checks](#running-the-quality-checks)
+  - [Formatting on edit](#formatting-on-edit)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -93,7 +94,6 @@ Individual checks, for re-running one in isolation:
 
 | Command                        | Governs                                        | Configuration                                 |
 | ------------------------------ | ---------------------------------------------- | --------------------------------------------- |
-| `scripts/lint-scope.sh`        | that the checks agree on what is in scope      | `.lintignore` and the five files below        |
 | `scripts/lint-citations.sh`    | that governance quotations still match source  | none; it reads the cited documents            |
 | `scripts/lint-editorconfig.sh` | whitespace, line endings                       | `.editorconfig`, `.editorconfig-checker.json` |
 | `scripts/lint-format.sh`       | formatting of JSON, Markdown, YAML, XML, shell | `.prettierrc.json`, `.prettierignore`         |
@@ -106,6 +106,45 @@ Formatting and linting are separate concerns, so a content kind may be governed 
 
 `scripts/selftest.sh` proves the checks can actually fail: it runs each one against a deliberately broken fixture and succeeds only if every check rejects it.
 
+### Formatting on edit
+
+Editing a file in Claude Code formats it. `.claude/settings.json` is committed and registers a `PostToolUse` hook, [`scripts/format-file.sh`](scripts/format-file.sh), so this applies to anyone who opens the repository — there is nothing to install or switch on.
+
+**What it does.** After a successful `Edit`, `Write`, `MultiEdit` or `NotebookEdit`, the hook takes the one file that tool wrote and runs the three checks that can rewrite, in the aggregate's own order: `lint-format.sh`, then `lint-markdown.sh`, then `lint-python.sh`, each with `--fix` restricted to that file. It reports one line per check that examined the file:
+
+```text
+==> format-file.sh: README.md (lint-format.sh)
+==> format-file.sh: README.md (lint-markdown.sh)
+```
+
+The order is not arbitrary. Markdown is governed by two of the three — Prettier formats it and markdownlint lints what Prettier does not rewrite — so running them the other way round would not settle.
+
+**Dependencies: none beyond the checks themselves.** The hook shells out to the same check scripts you would run by hand, so each one prefers the tool on your `PATH` and otherwise runs its digest-pinned container. If a check can run neither way it says so, naming the missing tool and the image, and the edit stands:
+
+```text
+==> format-file.sh: notes.md - lint-format.sh skipped: ... Neither the native command "prettier" nor "docker" ... is available.
+```
+
+That is a visible skip, not a failure. Requiring a container runtime before you could edit a Markdown file would be worse than formatting nothing.
+
+**Which files.** Whatever those three checks govern, and nothing else — the hook carries no list of its own. Today that is JSON, JSONC, Markdown, YAML, XML and shell through Prettier, Markdown through markdownlint, and Python through Ruff. A file no check governs is left alone and reports nothing, so most edits produce no output at all.
+
+It also does nothing, silently, for a path that is outside the repository, deleted, a directory, a symlink, or binary. Those are ordinary outcomes rather than errors, and none of them writes anything.
+
+**When formatting fails.** The hook exits 2 and puts the file, the check, its exit status and the check's own unmodified output on stderr, where Claude Code shows it to the session — enough to diagnose and retry. It never blocks or reverts the edit: `PostToolUse` runs after the tool has already written, so the edit stands and the report tells you what still needs fixing.
+
+**Extending it to a new file kind.** There is no mapping table in the hook to edit, which is the point of its design. Either add the extension to an existing check's globs in that check's `collect` call, or add another rewriting check to the three calls at the bottom of `scripts/format-file.sh`. A new check needs to follow the existing convention: exit 0 with `no files in scope` when the file is not its business, since that is how the hook knows to stay quiet.
+
+**One thing it cannot promise.** It is not necessarily the only formatter running. A formatter configured outside this repository — in your user-level Claude Code settings, say — can match the same event, and hooks for one event run in parallel, so two of them may write the same file at once. The repository cannot detect that from inside and must not edit configuration outside its own root. If you have such a hook, stand it down for this repository by adding one line near its top:
+
+```sh
+[ -x "$CLAUDE_PROJECT_DIR/scripts/format-file.sh" ] && exit 0
+```
+
+Put it before that script picks a tool. If it already resolves the workspace root into a variable of its own, test that instead of `$CLAUDE_PROJECT_DIR`. Until such a line is applied, both formatters do run — this repository can neither detect that nor fix it from inside, which is why it is documented here rather than enforced.
+
+The reasoning is in [`specs/004-format-hook-scope/research.md`](specs/004-format-hook-scope/research.md); the full contract, including the path rules and the exit statuses, is in [`specs/004-format-hook-scope/contracts/format-file-cli.md`](specs/004-format-hook-scope/contracts/format-file-cli.md).
+
 ## Contributing
 
 Open a pull request and it arrives pre-filled from [`.github/pull_request_template.md`](.github/pull_request_template.md): what changed, why, where to look first, whether the checks were run and passed, whether an agent produced it, and what the reviewer is obliged to verify. The last two sections quote [`.specify/memory/constitution.md`](.specify/memory/constitution.md) directly rather than summarising it, and `scripts/lint-citations.sh` fails the aggregate check when an amendment leaves one of those quotations behind.
@@ -116,7 +155,8 @@ Before proposing a change, run `scripts/lint.sh` and make sure it passes. The co
 
 Two things worth knowing before you edit:
 
-- `.lintignore` declares what the runner examines. Each check **also** declares its own skipped paths in its own configuration, for the contributor who runs a tool by hand; `scripts/lint-scope.sh` compares them and fails when they diverge. ShellCheck offers no such mechanism and is reported unverifiable rather than passing.
+- Each check declares its excluded paths in **one** place: the configuration file that already drives it. The runner reads that same declaration to build the file list, so running a tool by hand applies the exclusions the runner applies. ShellCheck has no exclusion mechanism of its own, so its declaration is a marked comment block in `.shellcheckrc` — read by the runner, invisible to the tool, which is a limitation stated in that file.
+- Your edits are reformatted as you make them. `.claude/settings.json` registers a committed Claude Code hook, `scripts/format-file.sh`, which runs the rewriting checks over each file the session edits. It never blocks or undoes an edit; a failure is reported with the file and the check named.
 - Every setting that departs from its tool's default has a written reason in [`specs/001-quality-gate-plugin/research.md`](specs/001-quality-gate-plugin/research.md), as does every default relied on without being restated. Check there before "fixing" one.
 
 Feature work runs through Spec Kit and leaves its record under `specs/NNN-slug/`. The rules the repository holds itself to are in [`.specify/memory/constitution.md`](.specify/memory/constitution.md).

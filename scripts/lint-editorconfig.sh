@@ -16,7 +16,7 @@ parse_args "$@"
 init_runner
 
 # Every in-scope file: whitespace and line endings are not file-type specific.
-collect '*'
+collect editorconfig '*'
 
 if [ "$MODE" = fix ]; then
 	no_automatic_fix editorconfig

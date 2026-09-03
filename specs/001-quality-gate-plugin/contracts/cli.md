@@ -9,12 +9,12 @@ This repository's external interface is a set of shell commands. This file is th
 Every command below:
 
 - is executable, and is invoked as `scripts/<name>.sh` from the **repository root**;
-- accepts at most one argument, `--fix`, and `-h` / `--help`;
-- reads its scope from `.lintignore` and nothing else;
+- accepts `--fix`, `-h` / `--help`, and an optional trailing path list introduced by `--` (amended by [004's check-cli.md](../../004-format-hook-scope/contracts/check-cli.md));
+- reads its scope from its own exclusion declaration — the configuration file that already drives it — and nothing else (amended by [004's exclusion-declaration.md](../../004-format-hook-scope/contracts/exclusion-declaration.md));
 - writes violations to **stdout**, diagnostics about its own operation to **stderr**;
 - exits `0` on pass and non-zero on fail.
 
-Any other argument is a usage error: exit `2`, usage on stderr.
+Any other argument is a usage error: exit `2`, usage on stderr. That rule applies to the arguments **before** `--`; after it, every argument is a path and none is interpreted.
 
 ## Exit statuses
 
@@ -34,7 +34,9 @@ A caller may treat any non-zero status as failure. The distinct codes exist so t
 scripts/lint.sh [--fix]
 ```
 
-Runs every check in this fixed order: `editorconfig`, `format`, `markdown`, `yaml`, `shell`, `python`.
+Runs every check in this fixed order: `citations`, `editorconfig`, `format`, `markdown`, `yaml`, `shell`, `python`.
+
+Seven. This line named six for as long as the code ran eight — it omitted `citations` and `scope`, both added after it was written. `scope` is now gone (superseded, see below) and `citations` is named, so the list matches `scripts/lint.sh`'s `CHECKS` again.
 
 **Guarantees**
 
@@ -66,7 +68,7 @@ scripts/lint-shell.sh         [--fix]
 scripts/lint-python.sh        [--fix]
 scripts/lint-format.sh        [--fix]
 scripts/lint-editorconfig.sh  [--fix]
-scripts/lint-scope.sh
+scripts/lint-citations.sh
 ```
 
 **Guarantees, every one of them**
@@ -77,7 +79,7 @@ scripts/lint-scope.sh
 - Names the file — and the line, where the tool reports lines — of every violation (FR-006).
 - With no arguments, modifies no file. In container mode this is enforced by a read-only mount, not by trusting the tool.
 - Empty file list → exit `0` and print `no files in scope`.
-- Declares its own skipped paths in its own configuration, so a by-hand invocation of the underlying tool sees the same scope (FR-013a). The exception is `lint-shell.sh`: ShellCheck has no path-exclusion directive, and `lint-scope.sh` reports that on every run rather than counting it as agreement (FR-013c).
+- Declares its own skipped paths in its own configuration, which is also what the runner reads to build the file list, so a by-hand invocation of the underlying tool sees the same scope. The exception is `lint-shell.sh`: ShellCheck has no path-exclusion directive, so its declaration is a marked comment block in `.shellcheckrc` that the runner reads and the tool cannot. See [004's exclusion-declaration.md](../../004-format-hook-scope/contracts/exclusion-declaration.md).
 
 **`--fix` behaviour, per standard**
 
@@ -92,7 +94,7 @@ scripts/lint-scope.sh
 
 A `--fix` invocation that rewrites files and leaves nothing unresolved exits `0`.
 
-`lint-scope.sh` takes **no** `--fix`: there is nothing it could rewrite that would not be a guess about which of two declarations is right. Invoked with `--fix` it reports that and exits `0` if the comparison passes, exactly as the three checks with no automatic fix do.
+`lint-citations.sh` takes **no** `--fix`: there is nothing it could rewrite that would not be a guess about whether the quotation or the cited document is the one that moved. Invoked with `--fix` it reports that and exits `0` if the comparison passes, exactly as the checks with no automatic fix do.
 
 **Add-on components on the format check.** `lint-format.sh` prints one line naming each declared plugin and how it resolved:
 
@@ -103,20 +105,15 @@ A `--fix` invocation that rewrites files and leaves nothing unresolved exits `0`
 
 The guarantee is that a resolved component and an absent one never produce the same output. An absent component sends its content kind to the container path, where the plugin is pinned — not a warning, and not a failure (FR-023). Absent _and_ no container reachable is FR-011's hard failure, naming both, and the aggregate stops.
 
-## `scripts/lint-scope.sh` — the six declarations agree
+## `scripts/lint-scope.sh` — removed
 
-```text
-scripts/lint-scope.sh
-```
+> **Superseded** by [`specs/004-format-hook-scope/contracts/exclusion-declaration.md`](../../004-format-hook-scope/contracts/exclusion-declaration.md). The script is **deleted**, and so is `.lintignore`.
 
-Exists because FR-013a distributes the scope declaration across six configurations and FR-013b requires they nonetheless agree. Under the previous single declaration this script would have had nothing to compare.
+It existed because FR-013a distributed the scope declaration across six configurations and FR-013b required they nonetheless agree; its whole job was to compare the six and fail naming any divergence. Feature 004 deleted the sixth copy — the central `.lintignore` — and made each check's own configuration the source of its file list, so there is no second declaration to disagree with and nothing left to compare.
 
-**Guarantees**
+Its six extraction functions were not deleted. They were promoted into `scripts/lib/scope.sh`, where they now build each check's file list rather than cross-checking copies of one.
 
-- For each check, compares the files `.lintignore` puts in scope for that content kind against the files the tool itself reports it would visit. Exit `1` and name the differing paths on any mismatch.
-- Where a tool can be asked what it would visit, it is asked. Where it cannot, the declaration is compared textually against `.lintignore` and the weaker guarantee is stated in the output.
-- Where a tool has no exclusion mechanism at all — the shell check — reports it as unverifiable, on every run, and does not count it as agreeing.
-- Part of the aggregate run, so a divergence fails `scripts/lint.sh` rather than waiting for someone to run it.
+A caller that invokes it gets the shell's own "No such file or directory" and a non-zero status. There is no shim and no deprecation period: this repository was its only caller.
 
 ## `scripts/lint-citations.sh` — every governance quotation still matches
 

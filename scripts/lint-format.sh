@@ -22,7 +22,7 @@ REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
 parse_args "$@"
 init_runner
 
-collect '*.json' '*.jsonc' '*.md' '*.markdown' '*.yml' '*.yaml' '*.xml' '*.sh'
+collect format '*.json' '*.jsonc' '*.md' '*.markdown' '*.yml' '*.yaml' '*.xml' '*.sh'
 
 # Which add-on plugins can the native Prettier actually load?
 #

@@ -15,7 +15,7 @@ REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
 parse_args "$@"
 init_runner
 
-collect '*.md' '*.markdown'
+collect markdown '*.md' '*.markdown'
 
 if [ "$MODE" = fix ]; then
 	run_files "$LIST" markdownlint-cli2 "$IMAGE_MARKDOWN" --fix
