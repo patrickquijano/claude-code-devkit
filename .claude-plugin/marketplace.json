@@ -1,5 +1,6 @@
 {
   "name": "claude-code-devkit",
+  "description": "Spec-driven development and git workflow skills for Claude Code, plus the quality gate that checks them.",
   "owner": {
     "name": "Patrick Quijano",
     "url": "https://github.com/patrickquijano"
