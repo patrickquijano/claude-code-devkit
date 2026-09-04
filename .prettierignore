@@ -25,7 +25,8 @@
 .specify/init-options.json
 .specify/integration.json
 .specify/memory/.constitution-template.json
-.claude
+.claude/settings.json
+.claude/skills
 LEAN-CTX.md
 .remember
 node_modules
