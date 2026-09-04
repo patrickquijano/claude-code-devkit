@@ -2,6 +2,8 @@
 
 **Feature**: [003-ccd-skill-rename](../spec.md) | **Date**: 2026-09-03
 
+> **Superseded** by [`specs/005-merge-conflict-resolution/contracts/skill-names.md`](../../005-merge-conflict-resolution/contracts/skill-names.md), which added a sixth skill, `ccd-conflict-resolve`. The five names below are a true record of what shipped under this feature and remain correct; the count of five, and the statement that exactly one of five carries `disable-model-invocation`, are no longer current.
+
 **Supersedes** [`specs/002-vendor-plugin-skills/contracts/skill-names.md`](../../002-vendor-plugin-skills/contracts/skill-names.md). That contract fixed the five names without a `ccd-` prefix and remains a true record of what shipped under feature 002; this one replaces it from feature 003 onward.
 
 ## What this contract covers
