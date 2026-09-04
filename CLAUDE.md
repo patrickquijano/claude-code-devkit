@@ -10,14 +10,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `skills/` holds the plugin's own authored skills, auto-discovered by installing the plugin — `plugin.json` declares no `skills` path and must not, because that field adds to the default directory rather than replacing it. Installed, they resolve as `claude-code-devkit:<name>`.
 
-`ccd-speckit-run` is the entry point: it drives the eight Spec Kit phases from one task description and ships the result. `ccd-branch-push`, `ccd-commit-push`, `ccd-github-pr` and `ccd-gitlab-mr` are the git and forge skills it dispatches at its Step 6, and each is usable on its own. `ccd-conflict-resolve` is dispatched by nothing — it walks a user through an already-conflicted working tree, one approved resolution at a time.
+`ccd-speckit-run` is the entry point: it drives the eight Spec Kit phases from one task description and ships the result. `ccd-branch-push`, `ccd-commit-push`, `ccd-github-pr` and `ccd-gitlab-mr` are the git and forge skills it dispatches at its Step 6, and each is usable on its own. `ccd-conflict-resolve` walks a user through an already-conflicted working tree, one approved resolution at a time; `ccd-speckit-run` dispatches it at every step and phase boundary, but only when its boundary check finds the tree actually conflicted.
 
 Four things about them are load-bearing and easy to undo by tidying:
 
 - Every distributed skill carries the `ccd-` prefix in its directory name and its frontmatter `name`. The prefix looks redundant under the `claude-code-devkit:` namespace and is not — it is what makes the **bare** name unambiguous when a personal copy of the same skill is also installed.
 - Cross-skill dispatch uses the **namespaced** name. A bare name resolves to whatever the session decides when a personal copy is also installed.
 - `branch-options.sh` exists **once**, in `ccd-branch-push`, reached by all four consumers through `${CLAUDE_PLUGIN_ROOT}`. Its header comment records the three defects of the fork that was rejected.
-- Only `ccd-speckit-run` carries `disable-model-invocation`. Adding it to the other five breaks Step 6's dispatch silently. `skills/ccd-speckit-run/SKILL.md`'s authoring note says why the strict reading binds.
+- **No skill carries `disable-model-invocation`**, and none may. Adding it to any of the four `ccd-speckit-run` dispatches breaks that dispatch silently, at the end of a full run. `ccd-speckit-run` itself dropped it in feature 006 once every phase became separately gated — the gate is in the workflow, not the frontmatter. `skills/ccd-speckit-run/SKILL.md`'s authoring note says why the strict reading binds, and the count is a contract at `specs/006-claude-code-guidance/contracts/skill-names.md`.
 
 Their own history is in `specs/002-vendor-plugin-skills/`, which distributed them, and `specs/003-ccd-skill-rename/`, which gave them the `ccd-` prefix and supersedes 002's two interface contracts. `specs/005-merge-conflict-resolution/` added the sixth skill and supersedes 003's name contract.
 
