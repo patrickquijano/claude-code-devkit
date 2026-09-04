@@ -93,7 +93,7 @@ Abandoning is a deletion, so it is proposed rather than performed. List, from st
 - `.specify/.speckit-run-state.json` and `.specify/.speckit-dirty-snapshot` — this skill's own bookkeeping, always safe to remove.
 - The spec directory it names, with its file count — **committed artifacts, not scratch.** Deleting them discards the spec, plan and task list.
 - The feature branch, if one exists, with the `cleanup-plan.sh` verdict for it.
-- The worktree named in `worktree.path`, if the abandoned run was in worktree mode — a **whole working directory**, whose uncommitted contents exist nowhere else. It is listed so the user can see it, and it is **never** removed here: 6d owns worktree removal and its safety rules, and this is not that step.
+- The worktree named in `worktree.path`, if the abandoned run was in worktree mode — a **whole working directory**, whose uncommitted contents exist nowhere else. It is listed so the user can see it, and it is **never** removed here: 6e owns worktree removal and its safety rules, and this is not that step.
 - Any `stash_ref`, which is **never** dropped here whatever the answer.
 
 Confirm with `AskUserQuestion`, recommending the narrow option first: remove only the bookkeeping and leave every artifact and branch in place. That un-sticks the resume prompt without destroying anything a run produced. Removing the spec directory or the branch is a separate, explicit choice, and neither happens on the same answer as the bookkeeping. Never delete a branch here — 6c owns branch deletion and its rules, and this is not that step.

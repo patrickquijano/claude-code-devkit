@@ -9,7 +9,7 @@
 - 6a — uncommitted work check (Step 6 commits nothing itself; it may dispatch a skill that does)
 - 6b — review request: forge routing, and every reason it may be skipped
 - 6c — delete local branches, and the feature-branch exception
-- 6d — worktree teardown (worktree mode only)
+- 6e — leaving the workspace: one question, two option sets, two different guards
 - Gate
 
 ## Terminology
@@ -51,7 +51,7 @@ Creates a review request, deletes branches, and in worktree mode can remove a wo
 
 **The proposal ends by naming the questions the review skill will still ask after approval**, so that approval cannot be misread as having answered them. `ccd-gitlab-mr` asks target, assignee, reviewers and merge options; `ccd-github-pr` asks base, assignee, reviewers, and its PR options — **draft, and auto-merge**. Name them from the skill that is actually being dispatched, not from the other one. Approving Step 6's plan is consent to _reach_ that skill, never consent to skip what it asks. A run where that approval returns and no sub-skill question follows has swallowed those decisions, not settled them.
 
-Auto-merge deserves its own sentence in a GitHub proposal, because it is the one sub-skill answer that can act after this run ends: `ccd-github-pr` recommends arming `--auto --squash --delete-branch`, which merges the branch the moment its checks pass — including on a branch this pipeline shipped red under an override, and including before any human has read it. Whether to arm it stays that skill's decision behind its own gate; naming it here is what stops Step 6's approval from being read as having armed it. In worktree mode add the consequence 6c and 6d both depend on: a source branch deleted on merge is deleted while the run's worktree still has it checked out.
+Auto-merge deserves its own sentence in a GitHub proposal, because it is the one sub-skill answer that can act after this run ends: `ccd-github-pr` recommends arming `--auto --squash --delete-branch`, which merges the branch the moment its checks pass — including on a branch this pipeline shipped red under an override, and including before any human has read it. Whether to arm it stays that skill's decision behind its own gate; naming it here is what stops Step 6's approval from being read as having armed it. In worktree mode add the consequence 6c and 6e both depend on: a source branch deleted on merge is deleted while the run's worktree still has it checked out.
 
 Two sub-steps hand off to skills owning their own rules and their own approval gates. Never reimplement either — no hand-rolled review-request payload, no hand-rolled commit. And Step 6 never commits _itself_: `git add` and `git commit` are out of this step entirely. What 6a may do is **dispatch the skill whose job that is**, and only on an explicit answer to its own question. Delegating the decision is not the same as taking it.
 
@@ -87,7 +87,7 @@ A skip phrase suppresses **exactly one thing: that skill's own final approval ga
 
 Bug signature: a sub-skill that returns having asked nothing at all. Zero questions means the skill was never dispatched (see **Dispatch**) or its content questions were answered on the user's behalf. Either way the result is not shippable — re-dispatch.
 
-**Pass-through stops there, deliberately.** 6c deletes branches and 6d can remove a worktree. A skip phrase is consent to skip review of proposed content, not consent to irreversible deletion. 6c and 6d always confirm, whatever the user said.
+**Pass-through stops there, deliberately.** 6c deletes branches and 6e can remove a worktree. A skip phrase is consent to skip review of proposed content, not consent to irreversible deletion. 6c and 6e always confirm, whatever the user said.
 
 ## 6a — Uncommitted work check
 
@@ -197,15 +197,49 @@ git branch -d <branch>
 
 `-d` refuses anything git considers unmerged — that refusal is a signal, not an obstacle. `git branch -D` is available only for the feature branch, only after 6b returned a review-request URL, and only when the user explicitly asked for it over the keep above. Never touch remote branches, never `git push --delete`, never delete a `keep` row.
 
-## 6d — Worktree teardown
+## 6e — Leaving the workspace
 
-`workspace` is `worktree` only. Skipped entirely in checkout mode, and skipped with a reason when `worktree.created` is false — a worktree the session was already inside is not this run's to tear down.
+Entered once 6b has returned a review-request URL. **This is the last point at which the pipeline still has the floor** — a person merges the review request, and the pipeline is not there when they do, so "after the merge" is not a moment this skill can act in.
 
-Read `reference/worktree.md`. Default is **stay**: the run ends in the worktree, on the feature branch, because review has not happened and a review comment means editing this tree. Ask with `AskUserQuestion`, `header: "Worktree"` — stay (recommended), return to `worktree.original_dir` keeping the worktree, or return and remove it.
+Skipped, with the reason recorded, when 6b was skipped: with no review request there is nothing to leave the workspace _for_, and the run ends where it is.
 
-The removal option is offered **only** when 6a's final partition showed no `new` uncommitted paths and the branch's commits are pushed. Otherwise it is not on the list, and the reason is said out loud: the worktree is the only place that work exists. A skip-approval phrase never reaches this question — same ceiling as 6c.
+One question, one `AskUserQuestion` call. Which option set depends on `workspace`.
 
-Record the answer in `worktree.teardown`, and verify it with `git worktree list` rather than trusting the tool's report.
+**Checkout mode** — `header: "Branch"`:
+
+1. `Stay on the feature branch (Recommended)` — nothing runs.
+2. `Switch to <target>, keep the feature branch` — `git switch <target>`. The branch stays for a review comment to be answered on.
+3. `Switch to <target> and delete the feature branch` — `git switch <target>`, then `git branch -d <feature>`. Offered **only** when the branch's commits are pushed; `-d` refuses an unmerged branch and that refusal is honoured, never worked around.
+
+**Worktree mode** — `header: "Worktree"`. Skipped with a reason when `worktree.created` is false; a worktree the session was already inside is not this run's to tear down.
+
+1. `Stay in the worktree (Recommended)` — nothing runs.
+2. `Exit, keep the worktree` — `ExitWorktree(action: "keep")`, returning to `worktree.original_dir`.
+3. `Exit and remove the worktree` — `ExitWorktree(action: "keep")`, then `git worktree remove <path>`.
+4. `Exit, remove the worktree, delete the branch` — the same, then `git branch -d <feature>` from the original directory.
+
+### Why the least-destructive option is recommended
+
+Review has not happened. The branch and the tree are most wanted precisely while the review request is open, because a review comment means checking the work out again — the argument 6c already makes for keeping the feature branch. The user chose the create-time trigger with that argument in front of them; the recommendation is where it still gets its say. Recommending is not deciding: every option above is offered.
+
+### The two guards are different guards
+
+They protect different things, and collapsing them into one "is anything uncommitted" test gets both wrong.
+
+| Action              | Guarded on                                                     | Why                                                                                            |
+| ------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Deleting a branch   | its commits being pushed                                       | history exists on the remote; `git branch -d` enforces this itself and its refusal is a signal |
+| Removing a worktree | **no** uncommitted path in that directory, whatever its origin | `git worktree remove` discards the whole directory, so origin is irrelevant — it is all gone   |
+
+A guarded-out option is **not offered**, and the reason is said out loud rather than the option quietly vanishing.
+
+`git worktree remove --force` is never used. `git branch -D` is available only for the feature branch, only after 6b returned a URL, and only on an explicit request over the keep.
+
+`ExitWorktree(action: "remove")` does not apply here: that action only removes a worktree the tool itself created with `name`, and one entered by `path` is left on disk whatever is passed. The removal is the explicit `git worktree remove` above.
+
+**No skip-approval phrase reaches this question.** A skip phrase covers approval of proposed content, never a deletion — the same ceiling as 6c.
+
+Record the answer in `worktree.teardown` or `branch.teardown`, and verify it with `git worktree list` and `git branch --list` rather than trusting the tool's report.
 
 ## Gate
 

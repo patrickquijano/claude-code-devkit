@@ -96,6 +96,6 @@ Checkout mode adds: whether changes were carried directly or through the stash, 
 
 Worktree mode adds: the worktree's absolute path, that the session is now inside it and this was verified rather than assumed, that the user's original tree was not touched, and that `HEAD` is detached until Phase 2 puts it on the feature branch.
 
-The one exception is the session that was **already** inside a worktree and chose to stay in it — `worktree.created: false`. Nothing was created, nothing moved, and `HEAD` is on whatever branch that tree already had. Report it as the worktree it is, say that this run did not create it, and say that 6d will therefore not offer to remove it.
+The one exception is the session that was **already** inside a worktree and chose to stay in it — `worktree.created: false`. Nothing was created, nothing moved, and `HEAD` is on whatever branch that tree already had. Report it as the worktree it is, say that this run did not create it, and say that 6e will therefore not offer to remove it.
 
-Write `previous_branch`, `base_branch`, `workspace`, `worktree`, `stash_ref` and `steps.1` to state. Step 3's prompt-review gate reports the base and the mode, Step 6c's cleanup plan protects the base, 6d reads `worktree`, Step 7 reports the base as what the feature branch was cut from.
+Write `previous_branch`, `base_branch`, `workspace`, `worktree`, `stash_ref` and `steps.1` to state. Step 3's prompt-review gate reports the base and the mode, Step 6c's cleanup plan protects the base, 6e reads `worktree`, Step 7 reports the base as what the feature branch was cut from.

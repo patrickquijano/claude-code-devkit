@@ -11,7 +11,7 @@ Step 1 decides two things, not one: which branch this feature is cut from, and *
 - Copy env files
 - What worktree mode changes in later steps
 - Restrictions that make worktree mode unavailable
-- 6d — teardown
+- 6e — teardown, and what it needs from this file
 - Never
 
 ## Why the choice exists
@@ -32,7 +32,7 @@ Neither is correct in general, which is why it is asked rather than assumed.
 | Disk                       | none                                              | a second full checkout of the tree                                                                                                                                              |
 | Tooling                    | whatever already runs in that directory           | language servers, watchers and installed dependencies are **per directory** — `node_modules`, `.venv`, `target/` are not shared, so a first build in the worktree is a cold one |
 | Feature branch at Step 6c  | protected by a hand-written override              | protected by `cleanup-plan.sh` itself, because it is checked out                                                                                                                |
-| Extra teardown decision    | none                                              | 6d                                                                                                                                                                              |
+| Teardown decision at 6e    | 3 options: stay, switch keeping, switch deleting  | 4 options: stay, exit keeping, exit removing, exit removing and deleting the branch                                                                                             |
 
 The dependency point is the one that surprises people: a worktree shares the object store, not the untracked build tree. A repo whose test command needs an install step will need it again in the worktree, and Step 5's check pays for that.
 
@@ -127,7 +127,7 @@ sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run/scripts/copy-env-files.sh" "$or
 
 Recognized patterns: `.env` / `.env.*`, `appsettings*.json`, `local.settings.json`, `secrets.yml` / `secrets.*.yml`, `master.key`. The script skips anything git already tracks in `$orig_dir` — a tracked file is already in the worktree via checkout, and overwriting it risks clobbering a version the feature branch legitimately differs on. No output at all means no matching untracked files existed, which is the common case and not a failure.
 
-This runs once, here — not per-phase, and not again at 6d. A file added to the original checkout mid-run does not retroactively appear in the worktree; that is expected, not a bug to chase.
+This runs once, here — not per-phase, and not again at 6e. A file added to the original checkout mid-run does not retroactively appear in the worktree; that is expected, not a bug to chase.
 
 ### One more check, after Phase 2
 
@@ -148,7 +148,7 @@ Empty → the run is still detached, `specify` did not create the feature branch
 | 5          | The check runs in the worktree. Its dependencies are the worktree's, and may need installing first. Report that as part of the check, not as a failure.                                                                                                                        |
 | 6a         | Whatever the main checkout has dirty is irrelevant here and must not be reported as this run's. The snapshot handles it; the partition is trustworthy precisely because the tree started clean.                                                                                |
 | 6c         | `cleanup-plan.sh` prints `keep — checked out in a worktree` for the feature branch on its own, so the hand-written feature-branch override in `reference/ship.md` is already satisfied. State that the script protected it, rather than claiming an override that did nothing. |
-| 6d         | Exists only in this mode.                                                                                                                                                                                                                                                      |
+| 6e         | Runs in both modes, and asks the worktree option set here: stay, exit and keep, exit and remove, exit and remove and delete the branch. Skipped when `worktree.created` is false.                                                                                              |
 | 7          | Report the mode, the worktree path, and whether the worktree still exists.                                                                                                                                                                                                     |
 
 ## Restrictions that make worktree mode unavailable
@@ -160,25 +160,21 @@ Probe these before offering the option. Any hit → worktree mode is not offered
 | Repo has submodules                         | `test -f .gitmodules`                                     | Git's own docs: multiple checkouts of a superproject are not recommended and submodule support is incomplete.                                                                                                                                                                                                                                                                                                                        |
 | `git worktree` unsupported                  | `git worktree list` exits non-zero                        | Predates the feature, or a plumbing restriction.                                                                                                                                                                                                                                                                                                                                                                                     |
 | `EnterWorktree` unavailable in this session | the tool is not present                                   | Without it the session cannot move, and the mode silently degrades to phases running in the wrong tree.                                                                                                                                                                                                                                                                                                                              |
-| Already inside a worktree                   | `git rev-parse --git-common-dir` differs from `--git-dir` | Report it and offer the current tree; nesting a run's worktree inside another run's is confusion with no upside. Record that case as `workspace: "worktree"` with `worktree.created: false` and the existing path — **not** as `checkout`, which would be false, and which would leave Step 7 describing a worktree run as a checkout run. `created: false` is what tells 6d to skip teardown: the tree is not this run's to remove. |
+| Already inside a worktree                   | `git rev-parse --git-common-dir` differs from `--git-dir` | Report it and offer the current tree; nesting a run's worktree inside another run's is confusion with no upside. Record that case as `workspace: "worktree"` with `worktree.created: false` and the existing path — **not** as `checkout`, which would be false, and which would leave Step 7 describing a worktree run as a checkout run. `created: false` is what tells 6e to skip teardown: the tree is not this run's to remove. |
 
 Bare repo, or a repo with no commits, is not a restriction — `--detach` on a base that exists works in both.
 
-## 6d — Teardown
+## 6e — Teardown
 
-Worktree mode only. After 6c, before Step 7.
+**Teardown lives in `reference/ship.md`'s Step 6e**, and there is exactly one teardown question in a run. It used to be a separate step in this file; feature 006 folded it in, because checkout mode gained its own set of leave-the-workspace options and two adjacent questions asking where to be left is the click-through failure the pipeline is trying to avoid.
 
-Default is **stay**. The run ends in the worktree, on the feature branch, exactly as checkout mode ends on the feature branch: review has not happened, and a review comment means editing this tree. Leaving is the choice, not the default.
+What that step needs from this file:
 
-Ask with `AskUserQuestion`, `header: "Worktree"`:
-
-1. `Stay in the worktree (Recommended)` — nothing runs. The session stays where the review will need it. The main checkout is untouched and always has been.
-2. `Return to the original directory, keep the worktree` — `ExitWorktree(action: "keep")`. The worktree and its branch stay on disk; come back with `EnterWorktree(path: …)`.
-3. `Return and remove the worktree` — `ExitWorktree(action: "keep")`, then `git worktree remove <path>`. Offer this **only** when 6a reported no `new` uncommitted paths and the branch is pushed. Otherwise the option is not offered, and the reason is said out loud: removing the tree discards work that exists nowhere else.
-
-`ExitWorktree(action: "remove")` does not apply here. That action only removes a worktree the tool itself created with `name`; one entered by `path` is left on disk whatever is passed, so removal is the explicit `git worktree remove` above.
-
-Record the outcome in `worktree.teardown` and report it at Step 7.
+- The worktree option set is: stay (recommended), exit and keep, exit and remove, exit and remove and delete the branch.
+- **`worktree.created: false` means skip it** — a worktree the session was already inside is not this run's to tear down.
+- Removal is `ExitWorktree(action: "keep")` followed by `git worktree remove <path>`. **`ExitWorktree(action: "remove")` does not apply**: that action only removes a worktree the tool itself created with `name`, and one entered by `path` is left on disk whatever is passed.
+- The guard is **no uncommitted path in that directory, whatever its origin** — not just the run's own output. `git worktree remove` discards the whole directory, so where the work came from makes no difference to its being gone.
+- Record the outcome in `worktree.teardown` and report it at Step 7.
 
 ## Never
 
