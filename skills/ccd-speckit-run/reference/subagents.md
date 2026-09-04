@@ -31,7 +31,11 @@ Do it inline when any of these holds:
 - The repo is small enough that the sweep is a few files. A four-file repo does not need four agents.
 - The question is really "what should we do about it?" That is a decision; see the hard rules.
 
-One dispatched batch, not a habit. Two fan-out points in the whole run are named below, and they are the only two.
+**The cap is ten readers dispatched at the same time.** That is a per-batch concurrency limit, not a budget for the run: a run may dispatch several batches, and each is bounded independently of how many earlier batches used. A budget would make a later fan-out point's available width depend on what earlier points spent, which the later point cannot reason about locally and which would silently starve it.
+
+Ten is a ceiling, not a target. A batch of three genuinely independent questions is a batch of three; padding it to ten manufactures questions nobody asked.
+
+Batches, not a habit. The fan-out points named below are where a sweep has been judged to pay for itself; adding another means showing that its questions are independent, read-only, and larger than the dispatch that would replace them.
 
 ## Choosing an agent type: probe and degrade
 
@@ -58,7 +62,7 @@ Say which of the three applies once, at the prompt-review gate, so the user know
 
 The highest-value point, because Step 2 and the conflict check ask the same kind of question — _does this repo already contradict, or already implement, what the task describes?_ — and answering it well means reading widely before a single artifact exists.
 
-Up to four independent sweeps, dispatched in **one** batch so they run at once:
+Independent sweeps dispatched in **one** batch so they run at once, up to the cap of ten. The four below are the ones that pay off on almost every run; a large repository or a task touching several subsystems can justify more, and a four-file repository justifies none of them:
 
 | Sweep              | Question                                                                                  | Returns                                                                                      |
 | ------------------ | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -72,6 +76,8 @@ Each returns evidence into the main run, which then applies `reference/conflicts
 `graphify` and `ctx_*`, per `reference/tooling.md`, remain the right tools **inside** a sweep and are often enough on their own: `graphify query` answers "where is this enforced?" in one call, and when it does, that sweep needs no agent. Probe with the cheap tool first; delegate what it does not settle.
 
 Re-checking conflicts at the start of each later phase is a **lookup**, not a sweep — by then you know which artifact to re-read. Do those inline. This fan-out happens once.
+
+The boundary check that runs after every step and phase is a **script**, not a sweep, and is never delegated: it is two filesystem tests and a plumbing call, and its dispatch of `ccd-conflict-resolve` is an action. See `reference/conflicts.md`.
 
 ## Fan-out 2 — Step 5e, two of the four sources
 
@@ -91,6 +97,8 @@ An agent must never mark a finding fixed, deferred, or resolved. It reports what
 ## Phase 8 is not a fan-out point
 
 `tasks.md` carries `[P]` markers naming tasks that could run in parallel. This is the most tempting fan-out in the run, and it is forbidden.
+
+**Raising the cap to ten changes nothing here.** The prohibition was never about how many agents were permitted; it is about what they would be doing. Ten agents executing `tasks.md` is the same defect as four, arriving faster.
 
 The `[P]` markers are instructions to the `implement` command, which owns executing `tasks.md`. Dispatching agents against them means **reimplementing `implement`** — the one thing every phase rule in this skill forbids. The consequences are not theoretical: the phase's own ordering and dependency handling are bypassed, `tasks.md` checkboxes are ticked by something other than the phase that owns them, several agents write to the repo at once, and `phases.8` records a command that never ran. A run that does this has no honest value to write there.
 
