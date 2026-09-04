@@ -83,6 +83,16 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
     "branches_deleted": [],
     "branches_kept": []
   },
+  "conflict_checks": [
+    {
+      "at": "after Phase 5",
+      "verdict": "clean | conflicted | unknown",
+      "unmerged": 0,
+      "operation": null,
+      "dispatched": false,
+      "resolved": null
+    }
+  ],
   "findings": [
     {
       "id": "F1",
@@ -104,18 +114,20 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `task`, `command_form`, `skill_dir`, `tooling`                         | Step 0                                                                                                    |
 | `previous_branch`, `base_branch`, `stash_ref`, `workspace`, `worktree` | Step 1 — `workspace` the moment 1b's answer returns, `worktree` once 1d created and entered it            |
-| `worktree.teardown`                                                    | Step 6d                                                                                                   |
+| `worktree.teardown`                                                    | Step 6e                                                                                                   |
 | `claude_md`, `steps["2b"]`                                             | Step 2b                                                                                                   |
 | `feature_branch`, `spec_dir`                                           | Phase 2, once `specify` created them                                                                      |
 | `steps.N`                                                              | that step's gate, or its completion where it has none — `done`, `skipped: <reason>`, or `failed: <error>` |
 | `phases.N`                                                             | that phase, on completion — `done`, `skipped: <reason>`, or `failed: <error>`                             |
+| `conflict_checks[]`                                                    | after every step and every phase, as each boundary check completes                                        |
 | `verify`, `findings[]`, `steps.5`                                      | Step 5                                                                                                    |
 | `ship`, `steps.6`                                                      | Step 6                                                                                                    |
 | `conflicts[]`                                                          | wherever the conflict protocol resolves one                                                               |
 
 ## Rules
 
-- Every step writes its own `steps.N`, the way every phase writes `phases.N`. A precondition can only read what some step actually wrote; a key nobody writes makes the check decorative. Phases are not gated — `phases.N` is written when the phase finishes and its artifacts have been seen on disk.
+- Every step writes its own `steps.N`, the way every phase writes `phases.N`. A precondition can only read what some step actually wrote; a key nobody writes makes the check decorative. `phases.N` is written when the phase finishes and its artifacts have been seen on disk — it records what the phase did, not the approval that let it run.
+- `conflict_checks[]` gets one element per boundary — after each step and each phase — written **as that check completes**, never batched at the end. A clean verdict is recorded like any other: the count of elements equals the count of boundaries reached, and a missing element means the check did not run, not that it found nothing. `dispatched` records whether `claude-code-devkit:ccd-conflict-resolve` was actually invoked through the `Skill` tool; `resolved` is null unless it was, and `false` there means the conflict survived and the run stopped.
 - `findings[]` is written as each finding is collected in 5e, not once at the end of 5f. Collection can be interrupted; a register that only exists after the fixes cannot survive that.
 - A finding leaves the register `fixed` or `deferred`, never by deletion. Removing an entry to shorten the register destroys the only record that the issue was reported at all.
 - `steps.N` records whether the step **ran**, never whether its outcome was good. Step 5 is `done` on a failing check too — the verdict lives in `verify`.
@@ -127,8 +139,9 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
 - `phases.8` records a scope limit in the value: `done: scope-limited to <what>`. Plain `done` means `implement` executed the whole of `tasks.md`. Step 6 reads that prefix to decide whether the partial-ship question fires, so a scope limit recorded only in the conversation is a scope limit Step 6 cannot see.
 - `tooling.subagent` holds the agent type Step 0 resolved for delegated sweeps, or `none`. Read it rather than re-deriving the session's agent list at dispatch time: an agent named from recollection after a compaction is an agent that may not exist. `none` means every sweep runs inline, which changes no rule and no artifact.
 - `workspace` decides which 1d ran, which teardown exists, and where this file itself lives. In `worktree` mode the state file is inside the worktree, because every path in the run is relative to it — which is why `resume-state.sh` scans sibling worktrees rather than trusting the current directory. Write it the moment 1b's answer returns, before 1c: a mode held only in the conversation is a mode a compacted run cannot read.
-- `worktree` is null in checkout mode. In worktree mode `worktree.original_dir` is the directory the session started in, kept because 6d's exit needs somewhere to return to and `previous_branch` does not answer that. `worktree.created` distinguishes a worktree this run made from one the session was already inside — 6d never offers to remove the latter.
-- `worktree.teardown` is written by 6d and is one of `stayed`, `exited-kept`, `exited-removed`. Absent after a worktree run means 6d never ran, which Step 7 reports rather than glossing.
+- `worktree` is null in checkout mode. In worktree mode `worktree.original_dir` is the directory the session started in, kept because 6e's exit needs somewhere to return to and `previous_branch` does not answer that. `worktree.created` distinguishes a worktree this run made from one the session was already inside — 6e never offers to remove the latter.
+- `worktree.teardown` is written by 6e and is one of `stayed`, `exited-kept`, `exited-removed`, `exited-removed-branch-deleted`. Absent after a worktree run means 6e never ran, which Step 7 reports rather than glossing.
+- `branch.teardown` is 6e's checkout-mode counterpart and is one of `stayed`, `switched-kept`, `switched-deleted`. Null in worktree mode. The two never both carry a value: `workspace` decides which question 6e asked.
 - `stash_ref` holds a stash this run created and could not restore — checkout-mode 1d's conflicted `git stash pop`. Null the rest of the time, and **always** null in worktree mode, which stashes nothing. A non-null `stash_ref` on a worktree run is a bug, not a stash. A stash left on the stack with nothing in state pointing at it is uncommitted work that the next run, and the summary, both fail to mention.
 - Step 0 creates the file. Missing at a later step → the run never started, or the file was deleted; say so and restart from Step 0 rather than guessing.
 - Before acting, every step reads it and checks its predecessor is `done` or `skipped`. Predecessor `pending` or `failed` → do not run. Name the unfinished step, stop.

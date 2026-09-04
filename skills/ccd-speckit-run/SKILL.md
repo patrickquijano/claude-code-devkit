@@ -1,14 +1,13 @@
 ---
 name: ccd-speckit-run
 description: Use when the user invokes /ccd-speckit-run, or asks to take a feature end to end through GitHub Spec Kit spec-driven development from a single task description. Also use when an earlier Spec Kit run was interrupted and needs resuming.
-disable-model-invocation: true
 ---
 
 # Spec Kit pipeline run
 
 Task description: $ARGUMENTS
 
-Eight Spec Kit phases from one description. Each prompt in its phase's style. Phases run start to finish without stopping — every prompt was reviewed at Step 3, so there is nothing left to approve per phase. Never skip a step, never merge two phases into one invocation. Run ends verified and shipped — repo's own tests, review request, still on the feature branch — not at `implement`. **Review request** means a GitLab merge request or a GitHub pull request: Step 0 detects which forge `origin` points at and Step 6b dispatches the matching sub-skill, `claude-code-devkit:ccd-gitlab-mr` or `claude-code-devkit:ccd-github-pr`. A remote at neither forge is a normal result and skips that step alone.
+Eight Spec Kit phases from one description. Each prompt in its phase's style. **Every phase is proposed and approved on its own**, immediately before it runs — Step 3 drafts all eight arguments together and shows them as a plan, and each phase then states the command, its verbatim argument, the artifacts it will write, and what changed since that plan. Never skip a step, never merge two phases into one invocation. Run ends verified and shipped — repo's own tests, review request, still on the feature branch — not at `implement`. **Review request** means a GitLab merge request or a GitHub pull request: Step 0 detects which forge `origin` points at and Step 6b dispatches the matching sub-skill, `claude-code-devkit:ccd-gitlab-mr` or `claude-code-devkit:ccd-github-pr`. A remote at neither forge is a normal result and skips that step alone.
 
 Step 1 asks where the run happens: the current checkout, or a fresh git worktree that leaves the user's open tree untouched. Step 6 runs no `git add` or `git commit` of its own; where the work needs committing it dispatches `claude-code-devkit:ccd-commit-push`, which owns that decision.
 
@@ -31,10 +30,10 @@ Copy into your response, tick off as you complete them:
 - [ ] Step 1: workspace mode and base branch — both chosen by user in one call, worktree created and entered or branch switched, dirty tree snapshotted
 - [ ] Step 2: task read — requirements, goals, non-goals identified, `steps.2` written
 - [ ] Step 2b: project `CLAUDE.md` — created if absent, checked against the task if present, verdict reported (no change is the usual one)
-- [ ] Step 3: eight phase prompts drafted, prompt-review gate passed
-- [ ] Conflicts: checked at Step 2 and again at every phase, each one resolved and recorded in `conflicts[]`
+- [ ] Step 3: eight phase prompts drafted together, leakage check applied across all eight, plan presented
+- [ ] Conflicts: checked at Step 2 and again at every step and phase boundary, each one resolved and recorded in `conflicts[]` and `conflict_checks[]`
 - [ ] Sweeps: delegated where `reference/subagents.md` allows it, evidence only, no phase and no decision handed to an agent
-- [ ] Proposals: Step 1 and Step 6 each proposed and approved before executing
+- [ ] Proposals: Step 1, Step 2b, each of Phases 1–8, and Step 6 proposed and approved before executing
 - [ ] Step 4: phases 1–8
       - [ ] Phase 1: constitution
       - [ ] Phase 2: specify
@@ -53,22 +52,22 @@ Copy into your response, tick off as you complete them:
 
 Read a step's file before running that step. Each self-contained.
 
-| File                        | Covers                                                                                                                       |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `reference/run-state.md`    | state file — shape, who writes what, precondition rule                                                                       |
-| `reference/preflight.md`    | Step 0 — command resolution, tooling probe, resume detection                                                                 |
-| `reference/base-branch.md`  | Step 1 — branch pick, switch, dirty-tree snapshot                                                                            |
-| `reference/worktree.md`     | Step 1 — checkout vs worktree, worktree create/enter/verify, Step 6d teardown                                                |
-| `reference/claude-md.md`    | Step 2b — project `CLAUDE.md`: create it, or test whether the task states a durable rule it lacks                            |
-| `reference/prompt-rules.md` | Step 3 — what each phase's prompt argument may and may not contain                                                           |
-| `reference/constitution.md` | Phase 1 — constitution states, amendment, semver                                                                             |
-| `reference/conflicts.md`    | conflict detection and resolution — every phase                                                                              |
-| `reference/tooling.md`      | mandatory `ctx_*` and `graphify` substitutions                                                                               |
-| `reference/subagents.md`    | delegating read-only sweeps — the threshold, the two fan-out points, agent selection, what must never be delegated           |
-| `reference/verify.md`       | Step 5 — resolving and running the check, bounded fix loop                                                                   |
-| `reference/findings.md`     | Step 5e–5g — the finding register: collect from all four sources, resolve, gate                                              |
-| `reference/ship.md`         | Step 6 — uncommitted-work check and commit dispatch, review request and its forge routing, branch cleanup, worktree teardown |
-| `reference/evaluations.md`  | scenarios to re-run after editing this skill                                                                                 |
+| File                        | Covers                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `reference/run-state.md`    | state file — shape, who writes what, precondition rule                                                                         |
+| `reference/preflight.md`    | Step 0 — command resolution, tooling probe, resume detection                                                                   |
+| `reference/base-branch.md`  | Step 1 — branch pick, switch, dirty-tree snapshot                                                                              |
+| `reference/worktree.md`     | Step 1 — checkout vs worktree, worktree create/enter/verify, Step 6e teardown                                                  |
+| `reference/claude-md.md`    | Step 2b — project `CLAUDE.md`: create it, or test whether the task states a durable rule it lacks                              |
+| `reference/prompt-rules.md` | Step 3 — what each phase's prompt argument may and may not contain                                                             |
+| `reference/constitution.md` | Phase 1 — constitution states, amendment, semver                                                                               |
+| `reference/conflicts.md`    | conflict detection and resolution — every phase                                                                                |
+| `reference/tooling.md`      | mandatory `ctx_*` and `graphify` substitutions                                                                                 |
+| `reference/subagents.md`    | delegating read-only sweeps — the threshold, the cap of ten, the fan-out points, agent selection, what must never be delegated |
+| `reference/verify.md`       | Step 5 — resolving and running the check, bounded fix loop                                                                     |
+| `reference/findings.md`     | Step 5e–5g — the finding register: collect from all four sources, resolve, gate                                                |
+| `reference/ship.md`         | Step 6 — uncommitted-work check and commit dispatch, review request and its forge routing, branch cleanup, worktree teardown   |
+| `reference/evaluations.md`  | scenarios to re-run after editing this skill                                                                                   |
 
 ## Scripts — run them, do not re-derive them
 
@@ -111,7 +110,7 @@ Extract stated tech choices separately, **hold back for Phase 5 (`plan`)**. A fr
 
 Use `graphify` and `ctx_*` per `reference/tooling.md` — check what the repo already does before assuming new work.
 
-This is the run's widest read, and `reference/subagents.md` names it as the first of two fan-out points: up to four independent read-only sweeps — prior art, governance, existing artifacts, conventions — dispatched in one batch when the repo is big enough for the sweep to cost more than the dispatch. Evidence comes back here; every conflict block and every `conflicts[]` entry is written in the main run. A small repo, or a `graphify query` that already answers the question, needs no agent.
+This is the run's widest read, and `reference/subagents.md` names it as a fan-out point: independent read-only sweeps — prior art, governance, existing artifacts, conventions, and more where the repository justifies them — dispatched in one batch of up to ten when the repo is big enough for the sweep to cost more than the dispatch. Evidence comes back here; every conflict block and every `conflicts[]` entry is written in the main run. A small repo, or a `graphify query` that already answers the question, needs no agent.
 
 This step has no gate — nothing here is irreversible and there is nothing to approve. It still writes `steps.2 = "done"` when the extraction is finished, because Step 2b checks its predecessor and an unwritten key fails that check as surely as a failed step would.
 
@@ -133,15 +132,40 @@ It writes a committed repo-wide file, so it takes the full proposal cycle. Never
 
 Read `reference/prompt-rules.md`, draft every phase's prompt argument before running any phase. Drafting together is what catches leakage between phases.
 
-Present all eight in one block, get approval at the **prompt-review gate**. Report there: command form, base branch from Step 1, constitution state from Phase 1's classification, active optional tooling, the detected forge and the review skill Step 6b will therefore dispatch — or that this run has no review-request step, with the reason — and conflicts already found per `reference/conflicts.md`.
+Present all eight in one block as the **plan**. Report there: command form, base branch from Step 1, constitution state from Phase 1's classification, active optional tooling, the detected forge and the review skill Step 6b will therefore dispatch — or that this run has no review-request step, with the reason — and conflicts already found per `reference/conflicts.md`.
 
-This is the run's one review of what the phases will do. Phases 1–8 then execute without stopping, so a prompt approved here is a prompt that runs. Read them as such.
+**This step presents; it does not approve.** Approval belongs to each phase, at the moment that phase is about to run, per Step 4. What Step 3 owns is the **leakage check** in `reference/prompt-rules.md`, and that is why all eight are drafted together and shown together: a technology leaking out of the plan prompt and into the specify prompt is invisible when the specify prompt is read alone. Drafting together is what catches it; approving together is what Step 4 replaces.
 
-Gates work only while still read. Twenty prompts trains click-through — worse than two real ones.
+So Step 3 has no gate of its own. Report the plan and the leakage-check result, then go to Phase 1's proposal.
+
+**On the objection this design used to make.** An earlier version of this skill argued that gates work only while still read, and that twenty prompts trains click-through where two real ones do not. That argument is sound about gates that repeat themselves, and it is answered rather than dismissed: every phase proposal states **what changed since this plan**, and says so explicitly when nothing changed. A gate that carries new information each time stays read. Eight proposals that come out word-for-word identical apart from the command name are the failure the old argument predicted — if that happens, the proposals are wrong, not the plan.
 
 ## Step 4 — Execute Phases 1–8
 
-This order, straight through. No proposal before a phase, no gate after one — Step 3 approved these prompts and Step 5 checks the result.
+This order. **Each phase is proposed and approved immediately before it runs.** Step 3 drafted the arguments and checked them for leakage; this is where each one is agreed to.
+
+### The per-phase proposal
+
+Before invoking a phase, state four things and nothing else:
+
+|                            |                                                                                                                                                           |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Command**                | the command about to be invoked, in the naming form Step 0 resolved                                                                                       |
+| **Argument**               | the **verbatim** argument. Never summarized, never truncated, never paraphrased — an approval given against a paraphrase is an approval of something else |
+| **Writes**                 | the artifacts the phase will create or modify                                                                                                             |
+| **Changed since the plan** | what differs from Step 3's draft, or the words "nothing changed since the plan" when nothing does                                                         |
+
+That last row is what keeps eight gates readable. Say it explicitly; silence there is indistinguishable from having forgotten to check.
+
+Then `AskUserQuestion`: `Proceed` / `Revise` / `Stop`.
+
+- **Proceed** → invoke the phase. Confirm its artifacts on disk, report, write `phases.N`.
+- **Revise** → amend **only that phase's argument** from the user's note, re-propose it. No other phase's argument changes. After three revisions of one phase, stop and ask rather than loop.
+- **Stop** → the run halts with accurate state on disk.
+
+A **conditional phase about to be skipped still gets a proposal** — stating the skip and its reason. A skip is a decision about what will not happen, and it is reported the same way as one about what will.
+
+The proposal is not the place to re-argue the plan. It is the place to see what is about to run.
 
 | Phase | Command        | Prompt argument                  | Notes                                                                                      |
 | ----- | -------------- | -------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -160,7 +184,7 @@ Phase 8 given a scope limit records it in the value — `done: scope-limited to 
 
 ## Proposal discipline: propose before executing
 
-Applies to Steps 1, 2b and 6, the steps that touch anything outside the spec directory: Step 1 switches branch carrying uncommitted changes or creates a worktree, Step 2b writes a committed repo-wide instruction file, Step 6 opens a review request, can dispatch a commit, deletes branches, and can remove a worktree. Phases 1–8 write only inside the repo's spec directory and the feature branch, under prompts already approved at Step 3, so they do not propose.
+Applies to Steps 1, 2b and 6, **and to each of Phases 1–8**. Step 1 switches branch carrying uncommitted changes or creates a worktree; Step 2b writes a committed repo-wide instruction file; Step 6 opens a review request, can dispatch a commit, deletes branches, and can remove a worktree. Phases 1–8 write inside the repo's spec directory and the feature branch, and each proposes for itself immediately before it runs, per Step 4 — Step 3's plan is a draft to read, not an approval to spend.
 
 1. **Propose, do not act.** Proposal states: exactly what will run, the files and branches it will create, modify or delete, and any conflict found. Each step's own reference file — `reference/base-branch.md`, `reference/ship.md` — names what else its proposal must carry. No write action until step 3.
 2. **Approve with `AskUserQuestion`.** `Proceed` / `Revise` / `Stop`. That call _is_ the gate for this step; do not gate a second time before executing. Rejected → revise the proposal in place, re-submit, never proceed.
@@ -169,7 +193,7 @@ Applies to Steps 1, 2b and 6, the steps that touch anything outside the spec dir
 
 ## Report after every phase
 
-Phase completes → confirm its artifacts exist on disk, report what changed and any unresolved markers, update the state file, continue straight to the next phase. No question: the reporting keeps the run legible, it is not a stop.
+Phase completes → confirm its artifacts exist on disk, report what changed and any unresolved markers, run the boundary check per `reference/conflicts.md`, update the state file, then propose the next phase. The reporting after a phase is not itself a stop; the gate is the next phase's proposal.
 
 Confirming the artifacts is not optional just because nothing gates on it. `done` still means the files were seen on disk, never that the command appeared to succeed.
 
@@ -200,7 +224,7 @@ Then 5e–5g: a green check is not an empty register. Two of the four sources �
 
 ## Step 6 — Ship: commit check, review request, branch cleanup, worktree teardown
 
-After Step 5's gate. Read `reference/ship.md`, and `reference/worktree.md` for 6d.
+After Step 5's gate. Read `reference/ship.md`, and `reference/worktree.md` for 6e.
 
 Ships only what Step 5 cleared: `verify.result` is `pass`, or `verify.override` records the decision to ship without it, **and** every finding reads `fixed` or `deferred`. Any of that unmet → back to Step 5, no review request.
 
@@ -208,13 +232,13 @@ Ships only what Step 5 cleared: `verify.result` is `pass`, or `verify.override` 
 
 Raise the review request by dispatching the skill `tooling.review_skill` names — `claude-code-devkit:ccd-gitlab-mr` on a GitLab remote, `claude-code-devkit:ccd-github-pr` on a GitHub one — through the `Skill` tool, carrying the verification status into its description. **Read the forge from state; never re-detect it here and never infer it from the task.** That skill, its CLI, and a remote at a supported forge are all optional — any of them missing skips 6b with the reason recorded, per `reference/ship.md`, and the run still finishes. Hand that skill facts, never answers: the target or base branch, assignee, reviewers, and the forge's own merge options — squash and delete-source-branch on GitLab, draft and auto-merge on GitHub — are all its own. Then verify each postcondition with git rather than trusting the report, stay on the feature branch, delete only branches `<skill-dir>/scripts/cleanup-plan.sh` marks `delete` — **except the feature branch itself, which 6c keeps even when the script marks it `delete`**, because review has not happened yet. In worktree mode the script keeps it unprompted, since it is checked out there. Never reimplement what a sub-skill does.
 
-Worktree mode then reaches **6d**: stay in the worktree (the default — review has not happened), return to the original directory keeping it, or return and remove it. Removal is offered only when nothing is left uncommitted and the commits are pushed, and it is never covered by a skip-approval phrase.
+Once 6b has returned a review-request URL, **6e** asks where to leave the workspace — one question, with the option set matching the mode. Checkout mode: stay on the feature branch (the default), switch to the target keeping the branch, or switch and delete it. Worktree mode: stay (the default), exit and keep, exit and remove, or exit and remove and delete the branch. Review has not happened, so the least-destructive option is the recommended one in both sets. The two guards differ — a branch deletion turns on unpushed commits, a worktree removal on any uncommitted path in that directory whatever its origin — and neither is ever covered by a skip-approval phrase.
 
 ## Step 7 — Final summary
 
 Output, in this order:
 
-1. Run table: phase / command invoked / artifacts written / recorded status. Phases were not gated, so the last column is `done`, `skipped: <reason>` or `failed: <error>` from state — not a decision the user made.
+1. Run table: phase / command invoked / artifacts written / recorded status. The last column is `done`, `skipped: <reason>` or `failed: <error>` from state — what the phase did, not the approval that let it run.
 2. Conflicts table: conflict / evidence / chosen resolution. Omit only if there were none.
 3. Remaining `[NEEDS CLARIFICATION]` markers, with file locations — each one traceable to a register entry that was deferred, since 5g lets no other kind survive.
 4. Unchecked items left in `tasks.md`, on the same terms.
@@ -232,14 +256,17 @@ Each of these is a rationalization this run has an incentive to reach for, and e
 
 | Thought                                                              | Reality                                                                                                                                                                                                                                                                    |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "Phases are not gated, so nothing should stop"                       | Step 4 removed ceremony, not judgment. A failed phase, an unresolved conflict, or a decision that is not yours still stops the run.                                                                                                                                        |
+| "The plan was approved at Step 3, so the phases can run"             | Step 3 presents; it does not approve. Every phase is approved at its own proposal, immediately before it runs.                                                                                                                                                             |
+| "Eight proposals is a lot, so keep them short and identical"         | Identical gates are the click-through failure this design was warned about. What answers it is the delta line — say what changed, and say "nothing changed" when nothing did. A proposal with no delta is a defect.                                                        |
+| "The argument is long, so summarize it in the proposal"              | The verbatim argument or nothing. An approval given against a paraphrase approves something the phase will not receive.                                                                                                                                                    |
+| "This phase is being skipped, so there is nothing to propose"        | A skip is a decision about what will not happen. Propose it, with its reason, the same as one about what will.                                                                                                                                                             |
 | "The command returned, so the phase is done"                         | `done` means the artifacts were seen on disk. Never write it on the strength of a response that merely looked successful.                                                                                                                                                  |
 | "The check is green, and that finding is only Minor"                 | Minor is a claim about cost, not an exemption. Every finding leaves the register `fixed` or `deferred`, and only the user defers.                                                                                                                                          |
 | "No test runner, so there is nothing to report"                      | `verify.result = none`, said plainly, with what was searched. Never describe a check that did not run as a pass.                                                                                                                                                           |
 | "I will commit the work so the review request carries something"     | Step 6 runs no commit of its own — no `git add`, no `git commit`, no substitute. The only commit path is 6a's dispatch of `claude-code-devkit:ccd-commit-push`, on the user's explicit answer.                                                                             |
 | "The worktree is created, so the run is isolated"                    | Creating a directory does not move the session. Without a returned `EnterWorktree` call and a verified `git rev-parse --show-toplevel`, all eight phases run in the old checkout.                                                                                          |
 | "`state-file absent`, so this is a fresh run"                        | Read the `state-file-elsewhere` lines. A worktree-mode run keeps its state inside its worktree, and treating that as fresh restarts Phase 1 over eight finished phases.                                                                                                    |
-| "The worktree has served its purpose, so remove it"                  | 6d's removal option exists only with nothing uncommitted and the commits pushed, and it is never covered by a skip-approval phrase. The worktree is where the run's work lives.                                                                                            |
+| "The worktree has served its purpose, so remove it"                  | 6e's removal option exists only with nothing uncommitted and the commits pushed, and it is never covered by a skip-approval phrase. The worktree is where the run's work lives.                                                                                            |
 | "Writing `/ccd-gitlab-mr` in the response invokes it"                | Only a `Skill` tool call loads the sub-skill. Prose invokes nothing, and the run then builds a review request the sub-skill's rules never saw.                                                                                                                             |
 | "The base branch is obviously the review request's target"           | The sub-skill ranks and asks. Supplying a target or base suppresses that question by its own rule, which is how it silently becomes wrong.                                                                                                                                 |
 | "This is a merge request, so dispatch `ccd-gitlab-mr`"               | Read `tooling.review_skill`. The forge was decided at Step 0 from `origin`, not from the word the run happened to use, and `glab` against a GitHub remote fails after eight phases of work.                                                                                |
@@ -261,8 +288,10 @@ Each of these is a rationalization this run has an incentive to reach for, and e
 
 Do not hard-wrap long lines when writing or editing this skill or its reference files. One line per paragraph, bullet, or table row, however long it runs. Script bodies are code — never compress them. After editing, re-run the scenarios in `reference/evaluations.md`.
 
-**Never add `disable-model-invocation: true` to `ccd-commit-push`, `ccd-gitlab-mr`, or `ccd-github-pr`.** That field blocks the `Skill` tool, not merely automatic loading, so setting it on any of the three breaks Step 6's dispatch at 6a or 6b — and it breaks it silently, at the end of a full pipeline run. This skill carries the field because it is the entry point a user invokes; a skill that this one dispatches must not.
+**Never add `disable-model-invocation: true` to any skill in this plugin — including this one.** Zero of the six carry it, and that is a committed contract at `specs/006-claude-code-guidance/contracts/skill-names.md`. On the four skills this one dispatches through the `Skill` tool at 6a, 6b and the boundary check, the field would break that dispatch silently, at the end of a full pipeline run.
 
-The documentation is narrower than that warning. It states that `disable-model-invocation: true` prevents Claude from invoking a skill **automatically**, leaving it available to the user; it does not say whether an explicit `Skill` tool call from another skill counts as automatic invocation or as an explicit one. Both readings are available and only one of them is safe: under the strict reading the field breaks Step 6's dispatch, and under the permissive reading omitting it costs nothing at all. So the strict reading is the binding one here, and the asymmetry between this skill's frontmatter and the four companions' is deliberate. A pass that normalises the five "for consistency" would break 6a and 6b silently, at the end of a full run, with the field's own documentation appearing to permit it.
+The documentation does not settle it, and two of its passages disagree. The field's own entry says it prevents Claude from loading a skill **automatically**, which reads as silent on an explicit call. Another passage says "To keep Claude from invoking it through the `Skill` tool, set `disable-model-invocation: true`" — naming the tool, with no qualifier. So the gap is real but one-sided in its cost: under the strict reading the field breaks a dispatch, and under the permissive reading omitting it costs nothing at all. The strict reading binds.
+
+**This skill no longer carries the field either, and the reason is worth stating because it is not the same reason.** Nothing dispatches this skill, so the ambiguity above never arises for it. It carried the field because an eight-phase pipeline that engages on its own would be wrong — and that was true while one approval at Step 3 covered all eight phases. It is no longer true: every phase is proposed and approved immediately before it runs, and Steps 1, 2b and 6 keep their own gates, so being reached automatically cannot cause anything to happen without being asked. **The gate is in the workflow, not in the frontmatter.** If the per-phase gates are ever removed, the old argument returns and the field should return with them. The two are a pair.
 
 **Keep the forge in exactly one place.** `scripts/forge-detect.sh` decides it, Step 0 records it, Step 6b reads it. Adding a second detection — a host check in prose, a `glab` probe at 6b, a guess from the task description — gives the run two answers that can disagree, and the one that loses is always the one the user was shown.

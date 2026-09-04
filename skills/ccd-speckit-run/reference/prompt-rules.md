@@ -129,7 +129,9 @@ Read its findings carefully — they are the cross-artifact drift check. Every f
 
 Normally argument-free; executes `tasks.md`. Pass one only for an explicit scope limit — a single user story, or one phase of the task list — when the user asked for partial implementation.
 
-## Leakage check before the prompt-review gate
+## Leakage check before the plan presentation
+
+This check is why all eight arguments are drafted together at Step 3 even though each one is approved separately at its own phase. A technology leaking out of the plan prompt and into the specify prompt is invisible when the specify prompt is read alone; it is visible only with both in front of you. Drafting together catches it. Report its result with the plan.
 
 Before presenting the eight drafted prompts, verify:
 
