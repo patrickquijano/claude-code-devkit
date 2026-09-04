@@ -2,7 +2,7 @@
 
 > A Claude Code plugin that takes a feature from one sentence to a reviewed pull request, and checks its own repository.
 
-Installing the plugin gives you five skills. `ccd-speckit-run` drives the eight [GitHub Spec Kit](https://github.com/github/spec-kit) phases from a single task description and ships the result; the other four handle the git and forge work it hands off, and each is equally usable on its own.
+Installing the plugin gives you six skills. `ccd-speckit-run` drives the eight [GitHub Spec Kit](https://github.com/github/spec-kit) phases from a single task description and ships the result; four others handle the git and forge work it hands off, and each is equally usable on its own; `ccd-conflict-resolve` walks you through resolving a merge conflict.
 
 The repository also carries its own quality gate — one command, seven checks, no tool to install first.
 
@@ -10,7 +10,7 @@ The repository also carries its own quality gate — one command, seven checks, 
 
 - [Install](#install)
 - [Usage](#usage)
-  - [The five skills](#the-five-skills)
+  - [The six skills](#the-six-skills)
   - [Running the pipeline](#running-the-pipeline)
   - [Running the quality checks](#running-the-quality-checks)
   - [Formatting on edit](#formatting-on-edit)
@@ -40,17 +40,18 @@ To work on the plugin itself rather than use it, clone the repository and run `s
 
 ## Usage
 
-### The five skills
+### The six skills
 
 Each resolves as `claude-code-devkit:<name>`, and each is also reachable by its bare name.
 
-| Skill             | What it does                                                                                        |
-| ----------------- | --------------------------------------------------------------------------------------------------- |
-| `ccd-speckit-run` | Drives the eight Spec Kit phases from one task description, then verifies and ships the result      |
-| `ccd-branch-push` | Creates a branch off a chosen base and pushes it, with the branch name and collisions settled first |
-| `ccd-commit-push` | Commits the working tree — message convention, how the change splits, whether to push               |
-| `ccd-github-pr`   | Opens a GitHub pull request: base, assignee, reviewers, draft, auto-merge                           |
-| `ccd-gitlab-mr`   | Opens a GitLab merge request: target, assignee, reviewers, squash, delete-source-branch             |
+| Skill                  | What it does                                                                                                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `ccd-speckit-run`      | Drives the eight Spec Kit phases from one task description, then verifies and ships the result                             |
+| `ccd-branch-push`      | Creates a branch off a chosen base and pushes it, with the branch name and collisions settled first                        |
+| `ccd-commit-push`      | Commits the working tree — message convention, how the change splits, whether to push                                      |
+| `ccd-github-pr`        | Opens a GitHub pull request: base, assignee, reviewers, draft, auto-merge                                                  |
+| `ccd-gitlab-mr`        | Opens a GitLab merge request: target, assignee, reviewers, squash, delete-source-branch                                    |
+| `ccd-conflict-resolve` | Resolves an in-progress merge conflict: lists what is conflicted, proposes a resolution per path, applies what you approve |
 
 The `ccd-` prefix is deliberate and is not redundant with the namespace. The namespace disambiguates `claude-code-devkit:ccd-github-pr`; nothing disambiguates a **bare** name, and the bare name is what you type. These skills grew out of personal skills with unprefixed names, which may still be installed on the same machine — the prefix is what keeps the two apart.
 
@@ -64,7 +65,7 @@ The `ccd-` prefix is deliberate and is not redundant with the namespace. The nam
 
 It asks before anything irreversible — where the run happens, which branch to base it on, what the eight phase prompts will say, and whether to commit and open the request. It dispatches `ccd-commit-push` and one of the two forge skills at its shipping step; which forge skill runs is decided from `origin`, never from what the task description happens to call it.
 
-The other four are useful without the pipeline:
+The others are useful on their own:
 
 ```text
 /ccd-branch-push branch off staging for this work
