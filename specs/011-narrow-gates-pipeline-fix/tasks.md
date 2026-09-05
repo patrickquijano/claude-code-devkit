@@ -152,23 +152,23 @@ This is a Claude Code plugin, not an application. Real paths: `skills/<name>/` f
 Every task below follows the same shape: compact, then run `sh scripts/compaction-audit.sh <baseline> <path>`, then record `pass` or the exemption. **A `fail-lost` verdict is fixed, never waived.**
 
 - [x] T057 [P] [US4] Compact `skills/ccd-speckit-run/reference/evaluations.md` (379 lines) and audit
-- [ ] T058 [P] [US4] Compact `skills/ccd-speckit-run/reference/ship.md` (246 lines) and audit
-- [ ] T059 [P] [US4] Compact `skills/ccd-speckit-run/reference/worktree.md` (186 lines) and audit
-- [ ] T060 [P] [US4] Compact `skills/ccd-speckit-run/reference/claude-md.md` (186 lines) and audit
-- [ ] T061 [P] [US4] Compact `skills/ccd-speckit-run/reference/run-state.md` (155 lines) and audit — after T017's `gate_mode` addition
-- [ ] T062 [P] [US4] Compact `skills/ccd-speckit-run/reference/prompt-rules.md` (142 lines) and audit
-- [ ] T063 [P] [US4] Compact `skills/ccd-speckit-run/reference/subagents.md` (127 lines) and audit
-- [ ] T064 [P] [US4] Compact `skills/ccd-speckit-run/reference/preflight.md` (105 lines) and audit
-- [ ] T065 [P] [US4] Compact `skills/ccd-speckit-run/reference/base-branch.md`, `findings.md`, `conflicts.md`, `verify.md`, `tooling.md` and `constitution.md` and audit each; expect exemptions on `tooling.md` and `constitution.md`
-- [ ] T066 [P] [US4] Compact `skills/ccd-speckit-bug-run/reference/workspace.md`, `run-state.md`, `ship.md` and `stages.md` and audit each
-- [ ] T067 [US4] Compact `skills/ccd-speckit-run/SKILL.md` (297 lines) and audit — after all of Phase 3
-- [ ] T068 [P] [US4] Compact `skills/ccd-github-pr/SKILL.md` (384 lines) and audit — after T049 and T053
-- [ ] T069 [P] [US4] Compact `skills/ccd-speckit-bug-run/SKILL.md` (351 lines) and audit — after T046
-- [ ] T070 [P] [US4] Compact `skills/ccd-gitlab-mr/SKILL.md` (333 lines) and audit — after T050 and T053
-- [ ] T071 [P] [US4] Compact `skills/ccd-conflict-resolve/SKILL.md` (196 lines) and audit — after T045
-- [ ] T072 [P] [US4] Compact `skills/ccd-branch-push/SKILL.md` (149 lines) and `skills/ccd-commit-push/SKILL.md` (133 lines) and audit each — after T048 and T053
-- [ ] T073 [P] [US4] Compact the seven `evaluations.md` files at the skill roots and audit each — after T055 and T042
-- [ ] T074 [P] [US4] Compact `.claude/rules/husky-git-hooks.md`, `.claude/rules/forge-review-requests.md` and `.claude/rules/shell-scripts.md` and audit each — the three rule files Phase 7 does not edit
+- [~] T058 [P] [US4] **WON'T DO** — Compact `skills/ccd-speckit-run/reference/ship.md` (246 lines) and audit
+- [~] T059 [P] [US4] **WON'T DO** — Compact `skills/ccd-speckit-run/reference/worktree.md` (186 lines) and audit
+- [~] T060 [P] [US4] **WON'T DO** — Compact `skills/ccd-speckit-run/reference/claude-md.md` (186 lines) and audit
+- [~] T061 [P] [US4] **WON'T DO** — Compact `skills/ccd-speckit-run/reference/run-state.md` (155 lines) and audit — after T017's `gate_mode` addition
+- [~] T062 [P] [US4] **WON'T DO** — Compact `skills/ccd-speckit-run/reference/prompt-rules.md` (142 lines) and audit
+- [~] T063 [P] [US4] **WON'T DO** — Compact `skills/ccd-speckit-run/reference/subagents.md` (127 lines) and audit
+- [~] T064 [P] [US4] **WON'T DO** — Compact `skills/ccd-speckit-run/reference/preflight.md` (105 lines) and audit
+- [~] T065 [P] [US4] **WON'T DO** — Compact `skills/ccd-speckit-run/reference/base-branch.md`, `findings.md`, `conflicts.md`, `verify.md`, `tooling.md` and `constitution.md` and audit each; expect exemptions on `tooling.md` and `constitution.md`
+- [~] T066 [P] [US4] **WON'T DO** — Compact `skills/ccd-speckit-bug-run/reference/workspace.md`, `run-state.md`, `ship.md` and `stages.md` and audit each
+- [~] T067 [US4] **WON'T DO** — Compact `skills/ccd-speckit-run/SKILL.md` (297 lines) and audit — after all of Phase 3
+- [~] T068 [P] [US4] **WON'T DO** — Compact `skills/ccd-github-pr/SKILL.md` (384 lines) and audit — after T049 and T053
+- [~] T069 [P] [US4] **WON'T DO** — Compact `skills/ccd-speckit-bug-run/SKILL.md` (351 lines) and audit — after T046
+- [~] T070 [P] [US4] **WON'T DO** — Compact `skills/ccd-gitlab-mr/SKILL.md` (333 lines) and audit — after T050 and T053
+- [~] T071 [P] [US4] **WON'T DO** — Compact `skills/ccd-conflict-resolve/SKILL.md` (196 lines) and audit — after T045
+- [~] T072 [P] [US4] **WON'T DO** — Compact `skills/ccd-branch-push/SKILL.md` (149 lines) and `skills/ccd-commit-push/SKILL.md` (133 lines) and audit each — after T048 and T053
+- [~] T073 [P] [US4] **WON'T DO** — Compact the seven `evaluations.md` files at the skill roots and audit each — after T055 and T042
+- [~] T074 [P] [US4] **WON'T DO** — Compact `.claude/rules/husky-git-hooks.md`, `.claude/rules/forge-review-requests.md` and `.claude/rules/shell-scripts.md` and audit each — the three rule files Phase 7 does not edit
 
 **Checkpoint**: all four user stories complete. Three documents remain to be compacted, in Phase 7, after their content edits.
 
@@ -191,9 +191,9 @@ Every task below follows the same shape: compact, then run `sh scripts/compactio
 
 **Each runs only after the task that edits its file.** This is ordering constraint 3.
 
-- [ ] T081 [US4] Compact `CLAUDE.md` and audit — **after T076**, keeping it under 200 lines
-- [ ] T082 [US4] Compact `.claude/rules/skill-authoring.md` and `.claude/rules/repository-docs.md` and audit each — **after T078**, and after T005, T006 and T011 which both files gained content from
-- [ ] T083 [US4] Compact `.claude/rules/spec-kit-bug-workflow.md` and audit — **after T079**
+- [~] T081 [US4] **WON'T DO** — Compact `CLAUDE.md` and audit — **after T076**, keeping it under 200 lines
+- [~] T082 [US4] **WON'T DO** — Compact `.claude/rules/skill-authoring.md` and `.claude/rules/repository-docs.md` and audit each — **after T078**, and after T005, T006 and T011 which both files gained content from
+- [~] T083 [US4] **WON'T DO** — Compact `.claude/rules/spec-kit-bug-workflow.md` and audit — **after T079**
 - [x] T084 [US4] Record every compaction exemption in this file's Notes section with its path, actual percentage and reason (FR-030), and confirm no artifact outside `specs/011-narrow-gates-pipeline-fix/` was touched (FR-027a, SC-010a)
 
 ### The gate
@@ -327,20 +327,24 @@ Task: "Convert untooled asks in skills/ccd-gitlab-mr/SKILL.md"
   - `skills/ccd-speckit-run/reference/tooling.md` — **compacted, 8%, exempt from the 15% floor.** `normative-lost 0`; 4,233 → 3,864 prose characters. Reaching 15% would have meant cutting the delegation rationale or the "nothing named here is a dependency" paragraph, both of which R1 protects and both of which exist to stop a future contributor treating the tools as required. FR-030 covers this: the document is left as compacted and the reason recorded.
   - **Every other file listed in Phase 6 and in T081–T083 is NOT compacted.** They are not exempt — they were not attempted. See the scope limit below.
 
-## Scope limit
+## Scope limit — FR-027 withdrawn
 
-**Phase 6 was scope-limited during implementation, and User Story 4 is therefore incomplete.** What was delivered:
+**User Story 4 is closed, not outstanding.** T058–T074 and T081–T083 are marked `[~]` won't-do above, and FR-027 is withdrawn in `spec.md`. This section previously described the work as deferred; that was accurate when it was written and is not accurate now, so it is rewritten rather than appended to.
 
-- The carve-out in `.claude/rules/repository-docs.md` (T005, T006) — done.
-- `scripts/compaction-audit.sh` and its five selftest fixtures (T007–T010) — done, and debugged through three real defects the fixtures caught: a BSD `sed` bracket-expression bug that deleted every `t` from compared text, a line-granularity loss check that reported every reworded rule as deleted, and an awk empty-first-file bug that let a deletion report as clean.
-- The metric changed from lines to **characters** mid-implementation, because this repository forbids hard-wrapping prose, so compaction shortens lines rather than removing them and a line-count floor measured almost nothing. Recorded in the script's own comments and in `contracts/compaction-audit-cli.md`.
-- One file compacted and audited end to end (`tooling.md`), proving the loop.
+### What was delivered
 
-What was not done: T057–T066, T067–T074, T081–T083 — 27 files. **FR-027 is not met.** FR-025, FR-026, FR-028, FR-029, FR-030 and FR-031 are met in mechanism but exercised on one file only. SC-010 holds for the one file audited and is unproven for the rest.
+- The carve-out in `.claude/rules/repository-docs.md` (T005, T006) permitting a deliberate reviewed compaction pass while drive-by reformatting stays forbidden.
+- `scripts/compaction-audit.sh` (T007–T009) and its five `selftest.sh` fixtures (T010) — `removed-must`, `blank-only`, `prose-trimmed`, `altered-code`, `missing-path`.
+- R1's mechanical definition of normative content, R2's floor, R3's comparison procedure. CHK004, CHK005, CHK011, CHK012 and CHK013 all found the original wording uncheckable; all three are now checkable by a command.
+- One document compacted and audited end to end: `skills/ccd-speckit-run/reference/tooling.md`, 8%, `normative-lost 0`, recorded exempt under FR-030.
+- The unit correction (T089–T092), after the lines-to-characters switch was found to have reached the script but not the three documents specifying it.
 
-The mechanism is the reusable half and it is finished. Resuming means running `sh scripts/compaction-audit.sh 9383a6a <path>` per file against that snapshot — or, once this work is committed, against the commit that lands it.
+Three real defects surfaced during the script's development, each caught by a fixture and each recorded in a comment beside its fix: a BSD `sed` bracket-expression bug where `[ \t]` matched a literal `t` and deleted every `t` from the compared text; a line-granularity loss check that reported every reworded rule as deleted, 40 false positives across 8 files; and an `awk` `NR == FNR` bug that mistook the first baseline record for a survivor whenever the after-set was empty, letting a real deletion report clean.
 
-- Commit after each task or logical group; **the commit itself is Step 6a's dispatch of `claude-code-devkit:ccd-commit-push`**, not a `git commit` run from inside a task
-- Every new or edited shell script: POSIX `sh`, `set -eu`, tabs, zero ShellCheck findings under `shell=sh` with the four opt-in rules
-- Every edited Markdown file: no hard-wrapped prose, two-space indentation inside fences, table pipes aligned
-- Your edits are reformatted under you by the committed `PostToolUse` hook; re-read a file after editing when the exact bytes matter
+### Why the remaining 27 files were not compacted
+
+Measured, not estimated. Two documents were compacted by hand and audited: `tooling.md` at **8%** and `skills/ccd-speckit-run/reference/verify.md` at **6%**, neither reaching the 15% floor, neither dropping anything normative. `/caveman-compress` was then tried at the maintainer's direction and reached 10% — better than either — but returned `fail-lost` and rewrote a distributed skill's prose into a register that made normative sentences ambiguous, so it was reverted.
+
+The maintainer's decision, taken on that evidence: **the floor stays at 15% and FR-027 is withdrawn.** A threshold nothing in a corpus reaches is evidence about the corpus, not about the threshold — these documents are dense because this repository's own rules forbid padding and require a rationale beside anything surprising. Reasoning in `research.md` R2; withdrawal recorded in `spec.md` under "Withdrawn within this feature".
+
+**FR-028 through FR-031 are not withdrawn.** They govern any compaction that does happen, and the whole mechanism is in place for the next genuinely padded document. Nothing here needs rebuilding to use it: `sh scripts/compaction-audit.sh <baseline-ref> <path>`.
