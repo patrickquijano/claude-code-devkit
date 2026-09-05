@@ -68,6 +68,12 @@ frontmatter, a line is normative if it carries any of: a modal obligation (`MUST
 
 **Every fenced code block is normative in its entirety** and is compared byte-for-byte.
 
+A passage that explains **why an odd-looking rule exists** is preserved whether or not it matches
+any pattern above. Such a passage is load-bearing without being normative: losing it invites the
+next contributor to "fix" the rule it explains, which is the failure the rule was written to
+prevent. Where the patterns above do not already capture one, widen them rather than dropping the
+passage.
+
 The definition is deliberately over-broad. Flagging a line that did not need preserving costs a
 reviewer a glance; missing one loses an invariant that no check in this repository would ever catch
 again. Rationale markers are included because several files here record _why_ an odd-looking rule
@@ -82,7 +88,9 @@ prose, so a document here is one line per paragraph and a compaction pass shorte
 than removing them — measured in lines the floor registered almost nothing, and several of the
 largest files were arithmetically exempt before anyone read them. A document that cannot reach 15%
 without dropping a normative line is exempt, and the exemption is recorded with the percentage
-actually achieved. `scripts/compaction-audit.sh` is what measures this, and it reports both units —
+actually achieved. **Recorded means written into the feature's own artifacts — its `tasks.md` — not
+reported once in a run's output.** A reason stated in passing is not available to the reviewer
+reading the change weeks later, and that reviewer is the only one who needs it. `scripts/compaction-audit.sh` is what measures this, and it reports both units —
 `lines-before`/`lines-after` for orientation, `chars-before`/`chars-after` for the verdict.
 Reasoning and the alternatives rejected:
 [`specs/011-narrow-gates-pipeline-fix/research.md`](../../specs/011-narrow-gates-pipeline-fix/research.md)

@@ -162,6 +162,8 @@ The rule lives in one place, `specs/011-narrow-gates-pipeline-fix/contracts/gate
 3. **Verbatim argument differs from Step 3's draft?** → ask.
 4. Otherwise → **proceed without asking, and print why.**
 
+**Record which rule fired, not only announce it.** Write the deciding rule to `gates[<boundary>]` in state as each boundary resolves — `always-gate`, `every-phase`, `argument-changed`, or `auto-proceeded` — alongside the reason the announcement line carried. The announcement is for the user reading the run; the record is for anyone checking afterwards that every approval was one of the two conditions and every unasked boundary was neither. **Output is not a record**: it scrolls past, it compacts away, and a run that only printed its reasoning cannot be audited once it has finished. `reference/run-state.md` carries the field.
+
 **The always-gate set.** Membership is a property of the step, never of the run.
 
 | Boundary            | Why                                                                     |
@@ -175,7 +177,11 @@ The rule lives in one place, `specs/011-narrow-gates-pipeline-fix/contracts/gate
 
 **A boundary in this set can never compute "do not ask."** No argument comparison, no `gate_mode`, no skip-approval phrase reaches it. That invariant is what keeps the run unable to reach implementation or any irreversible step without an approval given for that step — and it is why this skill still carries no `disable-model-invocation`.
 
+**An approval does not survive an interruption.** Where a run stops between an approval and the step it approved — a compaction that loses the turn, a crash, a session ended and resumed — the resumed run **proposes that step again**. It never reads the recorded approval as still held. An approval is given against a state of the world the interruption may have changed: the tree may have moved, the remote may have advanced, the user may have done the work by hand. This is what makes the always-gate invariant worth anything; without it, a resumed run can execute an irreversible step whose approval was given against a repository that no longer exists. On resume, treat any boundary whose `gates[<boundary>]` entry exists but whose step never completed as **unapproved**.
+
 A phase in the auto-proceed set — 1, 3, 4, 6, 7 — gates anyway the moment its argument was revised, a conflict resolution changed it, a preceding phase changed what it will receive, or it is about to be skipped for a reason the Step 3 plan did not carry.
+
+**When an auto-proceeded phase fails, say that nobody approved it individually.** The failure report names the phase, the error, and the fact that this boundary proceeded under rule 4 rather than under an approval. Two things follow and neither is optional: the auto-proceed is **never** offered as a reason to continue past the failure — it is the opposite, since less was read before it ran than at a gated boundary — and the failure is **never** presented as though an approval had covered it. The narrowed gate is defensible only while the run is honest about which boundaries it did not stop at, and a failure is exactly when that matters.
 
 ### Announcing a phase that did not gate
 
@@ -335,7 +341,7 @@ Each of these is a rationalization this run has an incentive to reach for, and e
 
 Do not hard-wrap long lines when writing or editing this skill or its reference files. One line per paragraph, bullet, or table row, however long it runs. Script bodies are code — never compress them. After editing, re-run the scenarios in `reference/evaluations.md`.
 
-**Never add `disable-model-invocation: true` to any skill in this plugin — including this one.** Zero of the seven carry it, and that is a committed contract at `specs/010-bug-run-ship/contracts/skill-names.md`. On the four skills this one dispatches through the `Skill` tool at 6a, 6b and the boundary check, the field would break that dispatch silently, at the end of a full pipeline run — and three of those four are now dispatched by `ccd-speckit-bug-run` as well, so the field would break two callers rather than one.
+**Never add `disable-model-invocation: true` to any skill in this plugin — including this one.** Zero of the eight carry it, and that is a committed contract at `specs/011-narrow-gates-pipeline-fix/contracts/skill-names.md`. On the four skills this one dispatches through the `Skill` tool at 6a, 6b and the boundary check, the field would break that dispatch silently, at the end of a full pipeline run — and three of those four are now dispatched by `ccd-speckit-bug-run` as well, so the field would break two callers rather than one.
 
 The documentation does not settle it, and two of its passages disagree. The field's own entry says it prevents Claude from loading a skill **automatically**, which reads as silent on an explicit call. Another passage says "To keep Claude from invoking it through the `Skill` tool, set `disable-model-invocation: true`" — naming the tool, with no qualifier. So the gap is real but one-sided in its cost: under the strict reading the field breaks a dispatch, and under the permissive reading omitting it costs nothing at all. The strict reading binds.
 

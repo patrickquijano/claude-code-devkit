@@ -346,7 +346,7 @@ Do not hard-wrap long lines when editing this skill or its reference files. One 
 
 After editing, re-run the scenarios in `evaluations.md`.
 
-**Never add `disable-model-invocation: true`, and never add `user-invocable`.** Zero of the seven skills in this plugin carry either, and that is a committed contract at `specs/010-bug-run-ship/contracts/skill-names.md`.
+**Never add `disable-model-invocation: true`, and never add `user-invocable`.** Zero of the eight skills in this plugin carry either, and that is a committed contract at `specs/011-narrow-gates-pipeline-fix/contracts/skill-names.md`.
 
 That contract's ancestor said a seventh skill "with side effects and no per-action gate would have a real case for" the field. This skill has side effects — Stage 2 edits source, Step 4a commits through a sub-skill, Step 4c can delete a branch — and the answer was to remove the antecedent rather than add the field: every stage and every step is proposed and approved immediately before it runs, and a skip is announced rather than taken silently. **The gate is in the workflow, not in the frontmatter.** If those gates are ever collapsed into one approval, that justification lapses and the field's case returns with them. The two are a pair.
 
