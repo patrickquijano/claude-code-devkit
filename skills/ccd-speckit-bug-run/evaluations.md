@@ -160,3 +160,15 @@ Check 4 carries a `speckit-bug-` exclusion and it is load-bearing. The three sta
 Check 6 is the one that failed before feature 010: two files cited a superseded contract. Check 7 encodes FR-029a — `ccd-gitlab-mr` already offers independent source-branch deletion and this feature must not have touched it.
 
 Then `sh scripts/lint.sh` and `sh scripts/selftest.sh`, and `sh scripts/lint.sh` again under `LINT_FORCE_CONTAINER=1` to confirm the native and container paths agree.
+
+## The question standard
+
+Every ask in this skill goes through `AskUserQuestion` with options, per-option effect and cost, exactly one `(Recommended)` and the reason for it — or an explicit statement that no recommendation is defensible. The rule lives once, in `.claude/rules/skill-authoring.md`; this skill restates none of it.
+
+**Regression to re-check after any edit that touches a question**: no ask site instructs asking without naming the tool, no question offers options with no recommendation and no explanation of why none is given, and no local copy of the rule has crept back in. Run:
+
+```sh
+grep -n "Every question in this skill goes through" SKILL.md
+```
+
+Zero hits is correct. A hit means the repository-wide rule now has a second copy, which is the drift `.claude/rules/repository-docs.md` calls worse than having no rule at all.

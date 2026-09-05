@@ -109,3 +109,15 @@ grep -rl 'ccd-branch-push/scripts/branch-options\.sh' skills/*/SKILL.md | wc -l 
 A second copy appearing anywhere under `skills/` is the regression this replaces the old `cmp` check with. The old check compared three of the four copies that used to exist and never the fourth, which is how a divergent fork survived in `ccd-speckit-run` unnoticed; a count cannot miss a copy the way a comparison can.
 
 After any edit to `SKILL.md`: walk E1–E5 against the changed text and confirm each still prescribes the stated behavior. Any edit touching Step 5b, Step 7's create command, or the Boundaries name rules: walk E4, all three variants. Any edit touching Step 1's probes, the remote handling, or the worktree rules: walk E5, both halves, from inside a real worktree. After any edit to `scripts/branch-options.sh`: `sh -n` it, then run it in a work tree, in a repo with no commits (expect silent exit 0), in a detached-HEAD checkout (expect no `current` tag), and outside a git repo (expect exit 1 with a message). Re-read the diff for rules softened from imperative into description. Test on the models that will run it — terse enough for Opus can be too terse for a smaller model.
+
+## The question standard
+
+Every ask in this skill goes through `AskUserQuestion` with options, per-option effect and cost, exactly one `(Recommended)` and the reason for it — or an explicit statement that no recommendation is defensible. The rule lives once, in `.claude/rules/skill-authoring.md`; this skill restates none of it.
+
+**Regression to re-check after any edit that touches a question**: no ask site instructs asking without naming the tool, no question offers options with no recommendation and no explanation of why none is given, and no local copy of the rule has crept back in. Run:
+
+```sh
+grep -n "Every question in this skill goes through" SKILL.md
+```
+
+Zero hits is correct. A hit means the repository-wide rule now has a second copy, which is the drift `.claude/rules/repository-docs.md` calls worse than having no rule at all.

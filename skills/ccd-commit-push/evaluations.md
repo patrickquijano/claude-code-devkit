@@ -52,3 +52,15 @@ Three scenarios exercising what fails first. Run against a scratch repo before t
 ## Re-test after editing the skill
 
 After any edit to `SKILL.md`: walk E1–E3 against the changed text and confirm each still prescribes the stated behavior. Pay particular attention to Step 3 — the unstage question is the one guard standing between the skill and destroying deliberate staging, and it must stay outside the Step 0 skip check. Re-read the diff for rules softened from imperative into description. Test on the models that will run it — terse enough for Opus can be too terse for a smaller model.
+
+## The question standard
+
+Every ask in this skill goes through `AskUserQuestion` with options, per-option effect and cost, exactly one `(Recommended)` and the reason for it — or an explicit statement that no recommendation is defensible. The rule lives once, in `.claude/rules/skill-authoring.md`; this skill restates none of it.
+
+**Regression to re-check after any edit that touches a question**: no ask site instructs asking without naming the tool, no question offers options with no recommendation and no explanation of why none is given, and no local copy of the rule has crept back in. Run:
+
+```sh
+grep -n "Every question in this skill goes through" SKILL.md
+```
+
+Zero hits is correct. A hit means the repository-wide rule now has a second copy, which is the drift `.claude/rules/repository-docs.md` calls worse than having no rule at all.

@@ -14,7 +14,7 @@ Groups a repo's uncommitted changes into isolated, logical commits with conventi
 
 ## Asking the user
 
-Every question in this skill goes through `AskUserQuestion`. Never ask in prose, never wait on an untooled "confirm?".
+Questions in this skill follow the repository-wide standard in [`.claude/rules/skill-authoring.md`](../../.claude/rules/skill-authoring.md).
 
 - **Yes/no question** → exactly two options, `Yes` first, `No` second. Each `description` states what that choice causes.
 - **Anything else** → 2–4 options, the recommended one **first** with `(Recommended)` appended to its `label`. Every `description` carries the justification for that option plus the cost of not picking it.

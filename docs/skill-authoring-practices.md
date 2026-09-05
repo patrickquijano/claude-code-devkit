@@ -12,6 +12,7 @@ Sources are the official documentation at <https://code.claude.com/docs>, princi
 - Naming and addressing
 - Shipping scripts with a skill
 - Evaluating a skill
+- Asking the user something
 - Corrections to this repository's earlier records
 - Recorded gaps
 
@@ -133,6 +134,38 @@ The documented tool is the `skill-creator` plugin: test cases in `evals/evals.js
 
 **GAP**: `/skill-doctor` and `claude plugin eval` are not covered in the skills documentation; `skill-creator` is the documented route.
 
+## Asking the user something
+
+**In this repository.** Feature 011 moved the question standard into
+[`.claude/rules/skill-authoring.md`](../.claude/rules/skill-authoring.md) as its single normative
+home. Before that, four of the seven skills — `ccd-branch-push`, `ccd-commit-push`,
+`ccd-github-pr`, `ccd-gitlab-mr` — each carried their own copy of one sentence requiring
+`AskUserQuestion`, and the other three carried nothing. A survey behind that feature found 66
+mentions of the tool across 18 files, roughly twenty ask sites that named no tool at all, and
+several tooled asks offering options with neither a recommendation nor a reason. The rule now
+states all four properties — options, per-option effect and cost, exactly one recommendation, and
+the reason for it — in one place, and the four local copies were removed rather than kept for
+emphasis.
+
+Removing them is the mechanism [`repository-docs.md`](../.claude/rules/repository-docs.md)
+prescribes, not a loss of force: instruction files concatenate rather than override, so two copies
+of a rule are both present, agree the day they are written, and drift with nothing to catch it.
+
+**What the documentation settles, and what it does not.** The `AskUserQuestion` tool is documented
+as the way to present the user with a small set of choices, and the tool's own interface requires
+each option to carry a label and a description. Source: the tool definition supplied to the model
+at runtime, which is the only authoritative description of its shape.
+
+**GAP.** No authoritative source was found stating that a recommendation must be marked, that
+exactly one option may be marked, or that a justification must accompany it. Those three are this
+repository's own convention, adopted because a question offering four unranked options transfers
+the analysis back to the reader that the skill was meant to have done. They are recorded here as
+convention rather than as a documented requirement.
+
+**GAP.** No authoritative source was found on whether a question may legitimately offer a single
+option. This repository treats a one-option question as degenerate and requires the situation to be
+stated as a fact instead, but nothing upstream says so.
+
 ## Corrections to this repository's earlier records
 
 Research for feature 005 found three claims in earlier artifacts that the documentation does not support. Those artifacts are left as the record of what each feature believed and shipped; the corrections live here.
@@ -171,3 +204,5 @@ Collected for convenience; each is explained where it appears above.
 - Whether the directory basename must equal the frontmatter `name` (it need not).
 - Token costs for description loading, full skill loading, or reference files.
 - Whether a description should be phrased in third person, or should state when _not_ to use the skill. This repository does both, by convention rather than by documented advice.
+- Whether an `AskUserQuestion` option may be marked as recommended, whether only one may be, and whether a justification is required. All three are this repository's convention.
+- Whether a question may offer a single option.
