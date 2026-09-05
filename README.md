@@ -63,7 +63,7 @@ The `ccd-` prefix is deliberate and is not redundant with the namespace. The nam
 /ccd-speckit-run add pagination to the audit log list
 ```
 
-It asks before anything irreversible — where the run happens, which branch to base it on, what the eight phase prompts will say, and whether to commit and open the request. It dispatches `ccd-commit-push` and one of the two forge skills at its shipping step; which forge skill runs is decided from `origin`, never from what the task description happens to call it.
+It asks before anything irreversible — where the run happens, which branch to base it on, whether to commit and open the request, and where to leave you afterwards. It also proposes **each phase separately**, immediately before running it, naming the command, the exact argument it will receive and what changed since the plan it showed you at the start. After every step and phase it checks whether the working tree has become conflicted, and hands you to `ccd-conflict-resolve` when it has. It dispatches `ccd-commit-push` and one of the two forge skills at its shipping step; which forge skill runs is decided from `origin`, never from what the task description happens to call it.
 
 The others are useful on their own:
 

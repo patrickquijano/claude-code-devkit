@@ -27,7 +27,13 @@ Claude Code reads instruction files in a fixed precedence, broadest to most spec
 
 Files above the working directory load at launch. Files in subdirectories load **on demand**, when Claude reads files in those directories.
 
-`@path/to/import` pulls in another file. Relative and absolute paths both work, imports recurse to a **maximum depth of four hops**, and import parsing skips code spans and fenced code blocks.
+`@path/to/import` pulls in another file. Relative and absolute paths both work — and a relative path "resolve[s] relative to the file containing the import, not the working directory". Imports recurse to a **maximum depth of four hops**, and import parsing skips code spans and fenced code blocks, so a path wrapped in backticks is mentioned rather than imported.
+
+**Instruction files concatenate; they do not override one another.** "All discovered files are concatenated into context rather than overriding each other... instructions closer to where you launched Claude are read last." That is why the contradiction behaviour below is a consequence rather than a separate rule: nothing overrides anything, so two instructions that disagree are both present.
+
+Auto memory has its own limit worth knowing: only "the first 200 lines of `MEMORY.md`, or the first 25KB, whichever comes first" load at the start of every conversation. Topic files load on demand.
+
+The full layout — what each part of `.claude/` holds, when it loads, and how a plugin's manifest fields extend or replace the defaults — is in [`claude-code-project-structure.md`](./claude-code-project-structure.md).
 
 **In this repository**: the project file is `./CLAUDE.md`. `AGENTS.md` and `LEAN-CTX.md` are deliberately **not** imported — they are read on demand when a task touches their subject. Importing them would put their whole contents into every session for the sake of the occasional task that needs them.
 
@@ -54,6 +60,10 @@ Does not belong:
 
 The documentation's own trigger for adding an entry: when Claude makes the same mistake twice, when a review catches something Claude should have known, or when you type the same correction repeatedly.
 
+**There is a tool for pruning it.** "For a checked-in CLAUDE.md, run `/doctor` and Claude proposes cuts for content it can derive from the codebase" — the derivability test, run by the tool rather than by hand.
+
+**Emphasis is a scarce resource.** "If Claude keeps skipping one instruction, add emphasis such as 'IMPORTANT' to that line alone. If you emphasize many lines, none of them stands out." A file where several things are shouted has no way left to shout.
+
 **Contradictions do not error — they get resolved arbitrarily.** "If two rules contradict each other, Claude may pick one arbitrarily." That is why an instruction file needs periodic review for stale entries, and why a rule recorded in two places is worse than a rule recorded in one: the copies agree the day they are written and drift silently afterwards.
 
 ## Path-scoped rules, and the one mistake that wastes them
@@ -71,7 +81,7 @@ Rules that apply only when working on files under skills/.
 
 - The key is `paths`, not `path`.
 - Glob patterns work, including `**/*.ts`, `src/**/*`, and brace expansion like `src/**/*.{ts,tsx}`.
-- A `paths` list shares a budget of **1,000 expanded patterns and 4 MiB**; each brace group multiplies the expanded count.
+- A `paths` list shares a budget of **1,000 expanded patterns and 4 MiB**; each brace group multiplies the expanded count. **Patterns without braces do not count against it** — the budget exists for the expansion, so a list of plain globs cannot exhaust it.
 - A rule with `paths` applies **only** when Claude is working with matching files.
 
 **The mistake: a rule file with no `paths` key is loaded unconditionally at launch.** It then costs context in every session while sitting in a directory named `rules` and looking scoped. This is the failure the whole mechanism exists to avoid, and it is invisible — nothing errors, nothing warns, the file simply behaves like `CLAUDE.md` content with extra steps.
@@ -96,7 +106,9 @@ Settings precedence, highest first ([settings](https://code.claude.com/docs/en/s
 
 A key set at a higher level overrides the same key below it — but **lists merge rather than override**, so each file can add entries without removing another's.
 
-Hook events are numerous and include `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `SessionStart`, `SessionEnd`, `UserPromptSubmit`, `Stop`, `SubagentStop`, `PreCompact`, `PostCompact`, `PermissionRequest`, `FileChanged` and others ([hooks](https://code.claude.com/docs/en/hooks.md)).
+**There are 32 documented hook events**, not the dozen this document used to list ([hooks](https://code.claude.com/docs/en/hooks-guide.md)). Alongside the tool and session events — `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PostToolBatch`, `SessionStart`, `SessionEnd`, `Setup`, `UserPromptSubmit`, `UserPromptExpansion`, `Stop`, `StopFailure`, `SubagentStop`, `PreCompact`, `PostCompact`, `PermissionRequest`, `PermissionDenied` — there are events for the filesystem and the environment (`FileChanged`, `CwdChanged`, `DirectoryAdded`, `WorktreeCreate`, `WorktreeRemove`, `ConfigChange`, `InstructionsLoaded`), for models (`PreModelSwitch`, `PostModelSwitch`), for tasks and teammates (`TaskCreated`, `TaskCompleted`, `TeammateIdle`), for elicitation (`Elicitation`, `ElicitationResult`), and for display (`MessageDisplay`).
+
+Consult the documentation rather than this list for the current set — the list grew by twenty between features 005 and 006, and there is no reason to think it has stopped.
 
 **In this repository**: exactly one hook is registered, a `PostToolUse` hook in `.claude/settings.json` running `scripts/format-file.sh` after `Edit`, `Write`, `MultiEdit` and `NotebookEdit`. It reformats the file you just edited, which means **your edits are rewritten under you** — re-read a file after editing it if the exact bytes matter.
 

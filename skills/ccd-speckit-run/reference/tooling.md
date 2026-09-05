@@ -39,4 +39,4 @@ Main context holds artifacts, gate decisions, state. Not the files the sweep rea
 
 Delegate the search, never the decision. A subagent reports evidence; the conflict protocol, the gates, and every write stay in the main run.
 
-**`reference/subagents.md` is the full rule.** It names the threshold at which an agent pays for itself, how to pick an agent type without hardcoding a plugin's, the two points in the run that fan out, and what must never be delegated — every phase command, the hook dispatch, and Phase 8's `[P]` markers. Read it before dispatching anything. The tools above are what a sweep uses; that file is when a sweep becomes an agent.
+**`reference/subagents.md` is the full rule.** It names the threshold at which an agent pays for itself, the cap of **ten concurrent readers per batch**, how to pick an agent type without hardcoding a plugin's, the points in the run that fan out, and what must never be delegated — every phase command, the hook dispatch, the boundary check, and Phase 8's `[P]` markers. Read it before dispatching anything. The tools above are what a sweep uses; that file is when a sweep becomes an agent.

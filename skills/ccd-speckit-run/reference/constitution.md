@@ -14,7 +14,7 @@ Draft principles from, in priority order: explicit non-negotiables in the task; 
 
 `CLAUDE.md` is **evidence**, not source text. Read it for what the repo already holds itself to and draw a testable principle from that; never copy a bullet across. The two files answer different questions — `CLAUDE.md` is operational, this file is normative governance that the `plan` phase's gates read at runtime — and `reference/claude-md.md` draws that line from the other side. A rule living in both agrees on the day it is written and drifts silently afterwards, and because the two never contradict at any single moment, no conflict check will ever catch it.
 
-This writes governance binding every future feature, so report the drafted principles before invoking the phase and report the Sync Impact Report after. Phase 1 is not gated — the constitution prompt was approved at Step 3 with the other seven.
+This writes governance binding every future feature, so report the drafted principles before invoking the phase and report the Sync Impact Report after. Phase 1 is gated like every other phase — its proposal states the command, the verbatim argument, the artifacts and the delta since Step 3's plan, and it is approved before the command runs.
 
 ## ratified
 

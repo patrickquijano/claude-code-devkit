@@ -14,10 +14,13 @@ Reasoning and sources: [`docs/skill-authoring-practices.md`](../../docs/skill-au
   a name its own path contradicts.
 - One skill dispatching another uses the namespaced form `claude-code-devkit:<name>`. A bare name
   resolves to whichever copy the session picks when a personal skill shares the name.
-- Exactly one skill carries `disable-model-invocation`, and it is `ccd-speckit-run`. Adding the
-  field to a skill that another skill dispatches breaks that dispatch silently, at the end of a
-  long workflow. The count is a contract:
-  `specs/005-merge-conflict-resolution/contracts/skill-names.md`.
+- **No skill carries `disable-model-invocation`**, and none may. Adding the field to a skill that
+  another skill dispatches breaks that dispatch silently, at the end of a long workflow —
+  `ccd-speckit-run` dispatches four of the other five. It dropped the field itself in feature 006
+  once every phase became separately gated: the gate is in the workflow, not the frontmatter. The
+  count is a contract: `specs/006-claude-code-guidance/contracts/skill-names.md`.
+- No skill carries `user-invocable`. Its absence is what leaves a skill user-invocable; `false`
+  would hide it from the `/` menu.
 
 ## Referencing bundled files
 
