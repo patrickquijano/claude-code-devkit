@@ -1,6 +1,6 @@
 # Evaluations — ccd-gitlab-mr
 
-Four scenarios exercising what fails first. Run against a scratch repo and a scratch GitLab project before trusting a change to the skill. Each states setup, invocation, and correct behavior — catching a regression, not scoring prose.
+Nine scenarios exercising what fails first. Run against a scratch repo and a scratch GitLab project before trusting a change to the skill. Each states setup, invocation, and correct behavior — catching a regression, not scoring prose.
 
 ## Contents
 
@@ -9,6 +9,11 @@ Four scenarios exercising what fails first. Run against a scratch repo and a scr
 - E3 — `glab` unavailable, MCP fallback
 - E4 — invoked from inside a git worktree
 - E5 — a GitHub remote, which this skill must refuse rather than attempt
+- E6 — Reviewers on an existing MR, and the prefix that keeps them
+- E7 — The MR description carries work a person did
+- E8 — The MR is closed, or merged
+- E9 — Two open MRs from one branch
+- E10 — The MR is already under review
 - Re-test after editing the skill
 
 ## E1 — 20 members, 15 branches, one batched call
@@ -33,15 +38,19 @@ Four scenarios exercising what fails first. Run against a scratch repo and a scr
 
 ## E2 — Branch already has an open MR
 
-**Setup**: same project. `feat/audit-pagination` already has MR `!42` open against `main`.
+**Setup**: same project. `feat/audit-pagination` already has MR `!42` open against `main`. Its description is the one this skill generated on the first run and nobody has edited it. No approvals and no discussions.
 
 **Invoke**: `/ccd-gitlab-mr create a merge request`
 
 **Expect**:
 
-- Step 1's `glab mr list --source-branch` finds `!42` and the run **stops**, reporting the MR URL.
-- The stop happens before Step 3, so the paginated 20-member fetch never runs. This is the ordering regression to catch — the old skill fetched members at Step 3 of 13, long before anything could abort.
-- No second MR is created, and no attempt is made to edit `!42` — this skill only creates.
+- Step 1's `glab mr list --source-branch <branch> --all` finds `!42` and the run continues in **update mode**, reporting the internal id, URL and state. A run that **stops** here is the headline regression this scenario now catches — that was the old behavior and it is what left the user editing the MR by hand.
+- `--all` is actually passed. Omitting it is invisible in this scenario, because `!42` is open, and it is exactly what breaks E8 — so check the call, not just the outcome.
+- Detection still happens before Step 3, so the paginated 20-member fetch never runs on a stop. This is the ordering regression the scenario has always caught, and it survives the mode change.
+- Step 8's summary says it is an update in its first line and lists all five fields — title, description, target, reviewers, assignees — each with its current and proposed value, naming the ones that are not changing.
+- The `Merge opts` question is **not** asked. Squash and delete-source-branch are outside the five fields, and asking about something update mode cannot change is a regression even though nothing breaks.
+- Step 9 issues one `glab mr update 42` carrying only the flags whose field changed. No `glab mr create` is issued.
+- Afterwards `glab mr list --source-branch <branch> --all` returns exactly one MR, still `!42`, with its discussion history intact.
 
 ## E3 — `glab` unavailable, MCP fallback
 
@@ -88,6 +97,80 @@ Four scenarios exercising what fails first. Run against a scratch repo and a scr
 
 **The regression this catches**: a skill invoked on the wrong forge. `ccd-speckit-run` routes by remote before dispatching, but a user typing `/ccd-gitlab-mr` in a GitHub repo does not, and the guard has to live here. Its absence costs a rebase and a force-push before anything reveals that the MR was never possible.
 
+## E6 — Reviewers on an existing MR, and the prefix that keeps them
+
+**This is the most important scenario in this file.** It is the one defect that succeeds silently, on a command that reports success, and destroys someone else's state.
+
+**Setup**: `!42` open, with `alice` and `bob` already set as reviewers by someone else.
+
+**Invoke**: `/ccd-gitlab-mr update the MR, add carol as reviewer`
+
+**Expect**:
+
+- Step 9 issues `glab mr update 42 --reviewer '+carol'` — **with the `+`**.
+- Afterwards the MR has **three** reviewers: alice, bob, carol.
+- `glab mr update 42 --reviewer 'carol'` is the regression. It exits zero, reports success, and leaves carol as the only reviewer. Check the **command that was issued**, not just that the run said it worked — and check the reviewer list on the MR afterwards, because the run's own output will not tell you.
+- The same holds for `--assignee`. `--unassign` must not appear unless the user explicitly asked to clear assignees.
+- The Reviewers question does not offer alice or bob as options to add; they are already there, and the question text says so.
+- With `/ccd-gitlab-mr update the MR, remove bob, don't ask me anything`: the removal is confirmed **anyway** and the skill says why the skip was not honored. Removal is `--reviewer '-bob'`, never a bare list omitting bob.
+
+Walk this scenario after **any** edit to Step 4 or Step 9 of this skill, and after any edit that touches both skills at once — a rule written once for GitHub and GitLab together is correct for `gh` and wrong here.
+
+## E7 — The MR description carries work a person did
+
+**Setup**: same project, `!42` open. Someone has edited its description: a hand-written paragraph near the top, and one of the template's checklist items ticked.
+
+**Invoke**: `/ccd-gitlab-mr update the MR`
+
+**Expect**:
+
+- Step 7 reads the live description with `glab mr view 42 --output json` **before** proposing anything, and shows the difference against what it would generate.
+- The question offers leave / append / replace, with **leave first and recommended**. `Replace it entirely` says in its own description that hand-written text and ticked checkboxes go with it.
+- Choosing leave: `glab mr update` is issued without `--description-file` at all. Passing the flag with an unchanged value is a regression — it rewrites the description for no reason.
+- Choosing append: the paragraph and the tick are still present afterwards, and the generated content sits between `<!-- ccd-gitlab-mr:begin -->` and `<!-- ccd-gitlab-mr:end -->`.
+- Run again, choosing append again: there is still exactly **one** fenced region, replaced rather than added to.
+- Delete just the `:end` marker by hand and run again choosing append: the skill reports the region as not found and appends a **fresh** section, rather than guessing where it ended.
+- With `don't ask me anything` in the invocation: the description question is asked **anyway**, with the reason the skip was not honored.
+
+## E8 — The MR is closed, or merged
+
+**Setup**: two variants against the same branch, run separately. (a) `!42` closed. (b) `!42` merged.
+
+**Invoke**: `/ccd-gitlab-mr open an MR for this branch`
+
+**Expect**:
+
+- (a) Step 1 offers two options: reopen `!42` and update it, or leave it closed and open a fresh one. Reopen is recommended. **Nothing is changed before the answer.**
+- (a) Choosing reopen: `glab mr reopen 42` runs, then the E2 update path.
+- (b) The skill states that a merged MR cannot be reopened — long-standing GitLab behaviour, `gitlab-org/gitlab#9428` — and continues in create mode. Attempting `glab mr reopen` on a merged MR is the regression: it cannot work.
+- (b) A new MR is created, and the merged one is mentioned rather than passed over in silence.
+- Both variants require `--all` on the Step 1 listing. With the default open-only listing, both silently become "no candidate" and open a duplicate.
+
+## E9 — Two open MRs from one branch
+
+**Setup**: `feat/audit-pagination` has `!42` open against `main` and `!43` open against `release/2.x`. Both are legal: GitLab's one-open-MR rule is per source-**and**-target pair, so two targets means two MRs are permitted.
+
+**Invoke**: `/ccd-gitlab-mr update the MR for this branch`
+
+**Expect**:
+
+- Step 1 lists both with internal id, state, target branch and title, and asks which. Picking the newest, or the first returned, is the regression — and a silent one, because the run then looks entirely normal while updating the wrong MR.
+- Nothing is written before the pick.
+- The chosen MR's target is the default for the `Target` question, not the project default branch.
+
+## E10 — The MR is already under review
+
+**Setup**: `!42` open, a reviewer has left a discussion thread on a line of the diff and one approval is recorded. Record the branch's remote tip: `git rev-parse origin/feat/audit-pagination`. The target branch has moved on since the branch was cut.
+
+**Invoke**: `/ccd-gitlab-mr update the MR`
+
+**Expect**:
+
+- Step 5 probes approvals and discussions **before** rebasing, and finds anchored activity.
+- No `git rebase` and no `git push --force-with-lease` is issued. The previously recorded commit is still reachable from the tip afterwards — commits may be added, none replaced.
+- The suppression, its reason, and the three alternatives appear in **Step 8's summary**, not only in passing output.
+- Variant: the only activity is one conversation comment and one pipeline-bot comment, neither carrying diff position. Then the rebase **does** run. Treating any comment as review activity is the regression — on a project with a commenting bot it disables the rebase permanently.
+
 ## Re-test after editing the skill
 
 `branch-options.sh` is not this skill's file. It exists **once**, in `ccd-branch-push`, and this skill reaches it through `${CLAUDE_PLUGIN_ROOT}`. There is nothing to compare, so the check is that the single implementation is still single and that this skill's reference still resolves to it:
@@ -99,7 +182,11 @@ grep -c 'ccd-branch-push/scripts/branch-options\.sh' skills/ccd-gitlab-mr/SKILL.
 
 Editing it means editing `ccd-branch-push`'s copy, and its contract — the four columns and the ordering — is in that skill's own header comment. A copy reappearing under this skill is the regression to catch.
 
-After any edit to `SKILL.md`: walk E1–E5 against the changed text. Any edit touching Step 1's remote check or the forge guard: walk E5 including its self-hosted variant — the GitHub half fails loudly, the self-hosted half fails by refusing a repo it should have accepted. Any edit touching Step 1's probes, the script invocation paths, or the Boundaries tree rules: walk E4 specifically, from inside a real worktree. Assert the Step 4 call is still one call of four questions, and that every option set is still bounded at four.
+After any edit to Step 1, Step 5, Step 7, Step 8 or Step 9 — the five steps update mode runs through — walk E2, E6, E7, E8, E9 and E10 specifically, and walk **E6 first**. The create path and the update path share those steps, so an edit meant for one reaches the other; E1 is the check that the create path did not move.
+
+Any edit that changes both this skill and `ccd-github-pr` in one pass: walk E6 before anything else. A rule phrased once to cover both forges is correct for `gh` and strips this project's reviewers.
+
+After any edit to `SKILL.md`: walk E1–E10 against the changed text. Any edit touching Step 1's remote check or the forge guard: walk E5 including its self-hosted variant — the GitHub half fails loudly, the self-hosted half fails by refusing a repo it should have accepted. Any edit touching Step 1's probes, the script invocation paths, or the Boundaries tree rules: walk E4 specifically, from inside a real worktree. Assert the Step 4 call is still one call of four questions, and that every option set is still bounded at four.
 
 After any edit to the scripts: `sh -n` both, then run `scripts/branch-options.sh` in a work tree, in a commit-less repo (silent exit 0), detached (no `current` tag), and outside a repo (exit 1). Run `scripts/member-options.sh` with a stub `glab` on `PATH` emitting 20 ndjson members and confirm recent committers sort first, then access level descending, then username; confirm exit 1 with no `glab` and exit 2 with no `jq`. With a stub emitting more than 500 records, confirm the listing stops at 500 and a `truncated:` note reaches stderr — a silent cap would misreport coverage.
 

@@ -1,6 +1,6 @@
 # Evaluations — ccd-github-pr
 
-Six scenarios exercising what fails first. Run against a scratch repo and a scratch GitHub repo before trusting a change to the skill. Each states setup, invocation, and correct behavior — catching a regression, not scoring prose.
+Ten scenarios exercising what fails first. Run against a scratch repo and a scratch GitHub repo before trusting a change to the skill. Each states setup, invocation, and correct behavior — catching a regression, not scoring prose.
 
 ## Contents
 
@@ -10,6 +10,10 @@ Six scenarios exercising what fails first. Run against a scratch repo and a scra
 - E4 — Multiple templates in `.github/PULL_REQUEST_TEMPLATE/`
 - E5 — Invoked from inside a git worktree
 - E6 — Auto-merge cannot be armed
+- E7 — The PR body carries work a person did
+- E8 — The PR is closed, or merged
+- E9 — Two open PRs from one branch
+- E10 — The PR is already under review
 - Re-test after editing the skill
 
 ## E1 — 25 assignable users, 15 branches, one batched call
@@ -35,15 +39,19 @@ Six scenarios exercising what fails first. Run against a scratch repo and a scra
 
 ## E2 — Branch already has an open PR
 
-**Setup**: same repo. `feat/audit-pagination` already has PR `#42` open against `main`.
+**Setup**: same repo. `feat/audit-pagination` already has PR `#42` open against `main`. Its body is the one this skill generated on the first run and nobody has edited it. No reviews and no comments.
 
 **Invoke**: `/ccd-github-pr create a pull request`
 
 **Expect**:
 
-- Step 1's `gh pr list --head` finds `#42` and the run **stops**, reporting the PR URL and whether it is a draft.
-- The stop happens before Step 3, so the reviewer fetch never runs.
-- No second PR is created, and no attempt is made to edit `#42` — this skill only creates.
+- Step 1's `gh pr list --head <branch> --state all` finds `#42` and the run continues in **update mode**, reporting the number, URL and state. A run that **stops** here is the headline regression this scenario now catches — that was the old behavior and it is what left the user editing the PR by hand.
+- `--state all` is actually passed. Omitting it is invisible in this scenario, because `#42` is open, and it is exactly what breaks E8 — so check the call, not just the outcome.
+- Step 8's summary says it is an update in its first line and lists all five fields — title, body, base, reviewers, assignees — each with its current and proposed value, naming the ones that are not changing.
+- The `PR opts` question is **not** asked. Draft state and auto-merge are outside the five fields, and asking about something update mode cannot change is a regression even though nothing breaks.
+- Step 9 issues one `gh pr edit 42` carrying only the flags whose field changed. No `gh pr create` is issued.
+- Afterwards `gh pr list --head <branch> --state all` returns exactly one PR, still `#42`, with its comment history intact.
+- Nothing arms auto-merge on `#42`.
 
 ## E3 — PR from a fork
 
@@ -102,6 +110,62 @@ Six scenarios exercising what fails first. Run against a scratch repo and a scra
 - Nothing is merged. `--auto` arms; it does not merge.
 - Same expectation when the user picked draft: a draft cannot auto-merge, so the skill says so rather than issuing a call it knows will fail.
 
+## E7 — The PR body carries work a person did
+
+**Setup**: same repo, `#42` open. Someone has edited its body: a hand-written paragraph near the top, and one of the template's checklist items ticked.
+
+**Invoke**: `/ccd-github-pr update the PR`
+
+**Expect**:
+
+- Step 7 reads the live body with `gh pr view 42 --json body` **before** proposing anything, and shows the difference against what it would generate.
+- The question offers leave / append / replace, with **leave first and recommended**. `Replace it entirely` says in its own description that hand-written text and ticked checkboxes go with it.
+- Choosing leave: `gh pr edit` is issued without `--body-file` at all. Passing the flag with an unchanged value is a regression — it rewrites the body for no reason.
+- Choosing append: the paragraph and the tick are still present afterwards, and the generated content sits between `<!-- ccd-github-pr:begin -->` and `<!-- ccd-github-pr:end -->`.
+- Run again, choosing append again: there is still exactly **one** fenced region, replaced rather than added to. Two stacked regions is the regression.
+- Now delete just the `:end` marker by hand and run again choosing append. The skill reports the region as not found and appends a **fresh** fenced section. Anything that guesses where the region ended, or that deletes to the end of the body, is the dangerous failure here.
+- With `/ccd-github-pr update the PR, don't ask me anything`: the body question is asked **anyway**, and the skill says why the skip was not honored. A skip phrase that reaches this question is the worst regression in the whole suite — it silently destroys a reviewer's work on a run the user thought was routine.
+
+## E8 — The PR is closed, or merged
+
+**Setup**: two variants against the same branch, run separately. (a) `#42` closed, not merged. (b) `#42` merged.
+
+**Invoke**: `/ccd-github-pr open a PR for this branch`
+
+**Expect**:
+
+- (a) Step 1 offers two options: reopen `#42` and update it, or leave it closed and open a fresh one. Reopen is recommended, because it keeps the review history. **Nothing is changed before the answer** — no `gh pr reopen`, no create.
+- (a) Choosing reopen: `gh pr reopen 42` runs, then the E2 update path.
+- (a) Choosing fresh: a new PR is created and `#42` is left closed, untouched.
+- (b) The skill states that a merged PR cannot be reopened — GitHub treats merge as terminal — and continues in create mode. Attempting `gh pr reopen` on a merged PR is the regression: it cannot work.
+- (b) A new PR is created. Treating the merged one as "no candidate" and saying nothing about it is a lesser regression but still one: the user is entitled to know a previous PR for this branch was merged.
+- Both variants require `--state all` on the Step 1 listing. With the default open-only listing, both silently become "no candidate" and open a duplicate.
+
+## E9 — Two open PRs from one branch
+
+**Setup**: `feat/audit-pagination` has `#42` open against `main` and `#43` open against `release/2.x`. Both are legal — GitHub forbids two open PRs only when head **and** base match.
+
+**Invoke**: `/ccd-github-pr update the PR for this branch`
+
+**Expect**:
+
+- Step 1 lists both with number, state, base branch and title, and asks which. Picking the newest, or the first returned, is the regression — and a silent one, because the run then looks entirely normal while updating the wrong PR.
+- Nothing is written before the pick.
+- The chosen PR's base is the default for the `Base` question, not the repo default branch.
+
+## E10 — The PR is already under review
+
+**Setup**: `#42` open, a reviewer has left a comment thread on a line of the diff and requested changes. Record the branch's remote tip: `git rev-parse origin/feat/audit-pagination`. The base branch has moved on since the branch was cut.
+
+**Invoke**: `/ccd-github-pr update the PR`
+
+**Expect**:
+
+- Step 5 probes for review activity **before** rebasing, and finds it.
+- No `git rebase` and no `git push --force-with-lease` is issued. The remote tip is unchanged, or if the user amended the branch, the previously recorded commit is still reachable from the new tip — commits may be added, none replaced.
+- The suppression, its reason, and the three alternatives appear in **Step 8's summary**, not only in passing output.
+- Variant: same PR, but the only activity is one conversation comment and one bot comment, neither anchored to the diff. Then the rebase **does** run. Treating any comment as review activity is the regression — on a repo with a commenting bot it disables the rebase permanently, and the user is told it was skipped on every single run.
+
 ## Re-test after editing the skill
 
 `branch-options.sh` is not this skill's file. It exists **once**, in `ccd-branch-push`, and this skill reaches it through `${CLAUDE_PLUGIN_ROOT}`. There is nothing to compare, so the check is that the single implementation is still single and that this skill's reference still resolves to it:
@@ -113,7 +177,9 @@ grep -c 'ccd-branch-push/scripts/branch-options\.sh' skills/ccd-github-pr/SKILL.
 
 Editing it means editing `ccd-branch-push`'s copy, and its contract — the four columns and the ordering — is in that skill's own header comment. A copy reappearing under this skill is the regression to catch.
 
-After any edit to `SKILL.md`: walk E1–E6 against the changed text. Any edit touching Step 1's probes, the script invocation paths, or the Boundaries tree rules: walk E5 specifically, from inside a real worktree. Assert the Step 4 call is still one call of four questions, that every option set is still bounded at four, and that the current user still cannot appear as a reviewer option.
+After any edit to Step 1, Step 5, Step 7, Step 8 or Step 9 — the five steps update mode runs through — walk E2, E7, E8, E9 and E10 specifically. The create path and the update path share those steps, so an edit meant for one reaches the other. E1 is the check that the create path did not move.
+
+After any edit to `SKILL.md`: walk E1–E10 against the changed text. Any edit touching Step 1's probes, the script invocation paths, or the Boundaries tree rules: walk E5 specifically, from inside a real worktree. Assert the Step 4 call is still one call of four questions, that every option set is still bounded at four, and that the current user still cannot appear as a reviewer option.
 
 After any edit to the scripts: `sh -n` both. Run `branch-options.sh` in a work tree, in a commit-less repo (silent exit 0), detached (no `current` tag), and outside a repo (exit 1). Run `reviewer-options.sh` against a stub `gh` on `PATH` that answers `auth status` with exit 0 and `repo view --json assignableUsers` with a fixed JSON list, in a repo carrying a `.github/CODEOWNERS` with both `@user` and `@org/team` entries; confirm the order is codeowner-and-committer, then codeowner, then committer, then the rest, that the `@org/team` entry emits a `team` row with no `recent-committer` flag, and that the `codeowners: <path>` note reaches stderr. Confirm exit 1 with no `gh` on `PATH` and exit 2 with no `jq` — note that `jq` ships at `/usr/bin/jq` on this machine, so isolating the exit-2 path needs a scrubbed `PATH`, not merely a trimmed one. With a stub emitting more than 500 users, confirm the listing stops at 500 and a `truncated:` note reaches stderr.
 
