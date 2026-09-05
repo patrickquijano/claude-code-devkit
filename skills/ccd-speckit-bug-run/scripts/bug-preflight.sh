@@ -136,6 +136,36 @@ if [ "$in_git" = yes ]; then
 	fi
 fi
 
+# Workspace facts for Step 1. Probed here so the question can be built from one answer: a second
+# probe at question time is a second answer, and the two can disagree. Each is `yes`, `no`, or
+# `unknown` outside a work tree -- never silently `no`, which would read as "probed and negative".
+worktree_supported=unknown
+in_worktree=unknown
+submodules=unknown
+if [ "$in_git" = yes ]; then
+	worktree_supported=no
+	if git worktree list > /dev/null 2>&1; then
+		worktree_supported=yes
+	fi
+
+	# Inside a linked worktree these two differ; in the main checkout they are the same path.
+	# Both are assigned before comparison so a git failure cannot masquerade as a match.
+	common_dir=''
+	git_dir=''
+	if common_dir=$(git rev-parse --git-common-dir 2> /dev/null) \
+		&& git_dir=$(git rev-parse --git-dir 2> /dev/null); then
+		in_worktree=no
+		if [ "$common_dir" != "$git_dir" ]; then
+			in_worktree=yes
+		fi
+	fi
+
+	submodules=no
+	if [ -f .gitmodules ]; then
+		submodules=yes
+	fi
+fi
+
 # The script does not emit `blocked`. It cannot: blocking requires having determined absence, and
 # this script can only determine presence. `undetermined` hands that decision to the caller, which
 # has the available-skills listing this script does not.
@@ -152,6 +182,10 @@ printf 'stage-test\t%s\n' "$stage_test"
 printf 'bugs-root\t%s\n' "$bugs_root"
 printf 'slug\t%s\n' "$slug"
 printf 'slug-taken\t%s\n' "$slug_taken"
+printf 'git-repo\t%s\n' "$in_git"
+printf 'worktree-supported\t%s\n' "$worktree_supported"
+printf 'in-worktree\t%s\n' "$in_worktree"
+printf 'submodules\t%s\n' "$submodules"
 printf 'dirty\t%s\n' "$dirty"
 printf 'dirty-count\t%s\n' "$dirty_count"
 if [ -n "$dirty_paths" ]; then
