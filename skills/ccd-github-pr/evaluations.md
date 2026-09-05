@@ -179,7 +179,21 @@ Editing it means editing `ccd-branch-push`'s copy, and its contract — the four
 
 After any edit to Step 1, Step 5, Step 7, Step 8 or Step 9 — the five steps update mode runs through — walk E2, E7, E8, E9 and E10 specifically. The create path and the update path share those steps, so an edit meant for one reaches the other. E1 is the check that the create path did not move.
 
-After any edit to `SKILL.md`: walk E1–E10 against the changed text. Any edit touching Step 1's probes, the script invocation paths, or the Boundaries tree rules: walk E5 specifically, from inside a real worktree. Assert the Step 4 call is still one call of four questions, that every option set is still bounded at four, and that the current user still cannot appear as a reviewer option.
+## E11: the merge options, independently
+
+Reach Step 4 in create mode and select `Delete source branch on merge` **without** selecting `Enable auto-merge`.
+
+**Expect** the pull request created, and then **no `gh pr merge` call at all** — without `--auto` that command merges immediately, which nobody asked for. Expect the run to report instead that the branch will not be deleted automatically, and to name the two ways to get it: arm auto-merge, or pass `--delete-branch` when merging by hand.
+
+**Fails if** the run merges the pull request in order to honour a branch-deletion preference. That is the regression this scenario exists for, and it is worse than the bug it replaced.
+
+**Expect also**, on a repository whose `deleteBranchOnMerge` is already `true`: the delete option **not offered**, with the repository default stated. Same for the squash option where `squashMergeAllowed` is `false`.
+
+**Fails if** the four options are ever re-bundled into one. They were a single `Enable auto-merge — squash + delete branch` option until feature 010, which meant a maintainer wanting the finished branch tidied up but a human to do the merging could ask for neither.
+
+**Fails if** update mode asks the merge options at all. Four excluded options are as excluded as one was: title, description, base branch, reviewers and assignees remain the only five fields.
+
+After any edit to `SKILL.md`: walk E1–E11 against the changed text. Any edit touching Step 1's probes, the script invocation paths, or the Boundaries tree rules: walk E5 specifically, from inside a real worktree. Assert the Step 4 call is still one call of four questions, that every option set is still bounded at four, and that the current user still cannot appear as a reviewer option.
 
 After any edit to the scripts: `sh -n` both. Run `branch-options.sh` in a work tree, in a commit-less repo (silent exit 0), detached (no `current` tag), and outside a repo (exit 1). Run `reviewer-options.sh` against a stub `gh` on `PATH` that answers `auth status` with exit 0 and `repo view --json assignableUsers` with a fixed JSON list, in a repo carrying a `.github/CODEOWNERS` with both `@user` and `@org/team` entries; confirm the order is codeowner-and-committer, then codeowner, then committer, then the rest, that the `@org/team` entry emits a `team` row with no `recent-committer` flag, and that the `codeowners: <path>` note reaches stderr. Confirm exit 1 with no `gh` on `PATH` and exit 2 with no `jq` — note that `jq` ships at `/usr/bin/jq` on this machine, so isolating the exit-2 path needs a scrubbed `PATH`, not merely a trimmed one. With a stub emitting more than 500 users, confirm the listing stops at 500 and a `truncated:` note reaches stderr.
 
