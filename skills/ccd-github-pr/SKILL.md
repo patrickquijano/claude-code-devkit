@@ -1,17 +1,26 @@
 ---
 name: ccd-github-pr
-description: Use when the user wants a GitHub pull request created end-to-end — e.g. "open a PR for this branch", "create a pull request", "push this and make a GitHub PR to main". Not for a plain branch push with no pull request.
+description: Use when the user wants a GitHub pull request opened or brought up to date end-to-end — e.g. "open a PR for this branch", "create a pull request", "update the PR for this branch", "push this and make a GitHub PR to main". Not for a plain branch push with no pull request.
 ---
 
 # Auto GitHub PR
 
-Pushes the current branch if needed, gathers ranked base-branch and reviewer candidates, collects every required selection in one batched question, then creates the pull request with a conventional-style title and a template-structured description.
+Pushes the current branch if needed, establishes whether the branch already has a pull request, gathers ranked base-branch and reviewer candidates, collects every required selection in one batched question, then either creates the pull request or updates the existing one — with a conventional-style title and a template-structured description.
 
 ## When NOT to use
 
 - User just wants a branch pushed with no PR — use `claude-code-devkit:ccd-branch-push` instead.
-- User already has an open PR and wants to edit it — this skill only creates PRs, it doesn't update existing ones.
+- User wants a PR reviewed, approved, merged or closed — this skill opens and updates PRs and does none of those.
 - Target is a GitLab project — use `claude-code-devkit:ccd-gitlab-mr` instead. Step 1 detects this from the remote host and stops.
+
+## Two modes
+
+Step 1 establishes which one this run is in, and Steps 4, 5, 7, 8 and 9 read it.
+
+- **Create** — the branch has no pull request whose head is this branch, or the user chose to open a fresh one. This is the path an unchanged first run takes, and nothing about it changed.
+- **Update** — an existing pull request was found and selected. The run brings it up to date rather than refusing, and everything it would change is shown with both values before anything is written.
+
+The reasoning behind every forge-specific rule below, its source, and the tool version it was verified against are in [`docs/forge-review-requests.md`](../../docs/forge-review-requests.md). The short imperative form is in [`.claude/rules/forge-review-requests.md`](../../.claude/rules/forge-review-requests.md), which loads when this file is opened.
 
 ## Asking the user
 
@@ -26,6 +35,8 @@ Every question in this skill goes through `AskUserQuestion`. Never ask in prose,
 
 **Two calls on a clean run.** Step 4 batches all four selections into one call; Step 8 is the approval gate. Each of these adds a call only when triggered: multiple repo PR templates at Step 6, a rebase conflict at Step 5, a title-convention conflict at Step 6. The head branch is never asked — it is the current branch, established in Step 1.
 
+**Update mode adds at most two more**, neither of which fires when it has nothing to ask: one at Step 1 to pick among several candidates or to decide a closed one's fate, and one at Step 7 for the description. The create path's count is unchanged.
+
 Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-github-pr/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
 
 ## Workflow
@@ -36,6 +47,7 @@ Two tests before honoring a match:
 
 - **Scope test.** The phrase must refer to approval or confirmation _in general_. A phrase scoped to one named sub-decision ("don't ask me about the branch name") is not blanket consent — it narrows that one question and leaves the gate standing.
 - **Hard exception.** Never honor a skip when the run pushes to, or targets, the repo default branch.
+- **Hard exception, update mode.** A skip never covers an operation that destroys something a person wrote. Ask anyway, and say why the skip was not honored, when the run would: replace a description that already contains content, remove a reviewer or an assignee, or change the target branch of an existing pull request. A blanket "don't ask" is consent to skip a confirmation, not consent to lose a reviewer's checklist.
 
 Honored → skip the **Step 8** wait, still show the summary, and **name the phrase that triggered the skip** so the user can see the inference that was made. Not honored, or no match → always wait for approval, and when a skip was present but not honored, say why.
 
@@ -49,12 +61,34 @@ command -v gh
 gh auth status
 gh repo view --json nameWithOwner,isFork,parent,viewerPermission,defaultBranchRef,squashMergeAllowed,deleteBranchOnMerge
 git ls-remote --heads origin <branch>
-gh pr list --head <branch> --state open --json number,url,isDraft
+gh pr list --head <branch> --state all \
+  --json number,url,state,isDraft,headRefName,baseRefName,isCrossRepository,author
 ```
 
 Order matters: `command -v gh` and `gh auth status` come **before** any other `gh` call, because "stop when `gh` is unauthenticated" needs a probe behind it — otherwise the first real failure is a confusing error from `gh repo view`.
 
-Stop and say why when: not inside a git work tree; detached HEAD (no head branch exists); the remote is not GitHub (name the right skill instead); `gh` missing, or present but unauthenticated; or `gh pr list` returns an **open PR for this branch** — report its URL and whether it is a draft, since this skill only creates PRs and a second create would just error.
+Stop and say why when: not inside a git work tree; detached HEAD (no head branch exists); the remote is not GitHub (name the right skill instead); or `gh` missing, or present but unauthenticated.
+
+**Step 1b — Establish the mode.** Detection runs **after** the branch is known to be on the remote and **before** Step 3's reviewer fetch, Step 4's questions and Step 7's description — everything a stop, or a switch to update mode, would otherwise waste. It is not bounded to a time window or to a number of recent pull requests: the branch's whole history on this repository is in scope.
+
+`--state` is passed explicitly because `gh pr list` lists open pull requests by default, and a closed or merged one for this branch is exactly what changes the answer.
+
+**A detection call that fails stops the run with its reason.** An error from `gh pr list` is never read as "no pull request exists" — that reading turns an outage into a duplicate PR.
+
+**Admissibility.** A returned pull request is a candidate only when its head is **this branch in this repository**. `gh pr list --head` does **not** accept the qualified `owner:branch` form — its own flag help says the syntax is unsupported — so a fork carrying a branch of the same name comes back in the same list. Filter on `isCrossRepository` and the head repository's owner. Never pass a qualified head to work around it.
+
+A pull request's head branch cannot be changed after creation; there is no `gh pr edit` flag for it. So a pull request whose head is a different branch is not this branch's, permanently, and is never something to correct by editing.
+
+Then, from the admissible candidates:
+
+- **None** → **create mode.** Continue exactly as before; nothing below applies.
+- **Exactly one, open** → **update mode** against it, whatever closed or merged candidates also exist. Report the others as present; do not offer them. An open pull request is unambiguously the live one for this branch.
+- **More than one open** → ask with `AskUserQuestion`, `header: "Which PR"`, listing each candidate's number, state, base branch and title. Never pick. This is a real state rather than a theoretical one: GitHub forbids two open pull requests with the same head **and base**, so two open ones from this branch to two different bases are perfectly legal.
+- **No open candidate, exactly one closed** → ask, `header: "Closed PR"`: reopen and update it (`gh pr reopen <number>`, recommended — it keeps the review history), or leave it closed and open a fresh one. Change nothing before the answer.
+- **No open candidate, more than one closed or merged** → ask which, then apply the single-candidate rule to the pick.
+- **Candidates all merged** → say so: GitHub treats merge as terminal and a merged pull request cannot be reopened. Continue in **create mode**.
+
+When more candidates exist than the question can show, say how many were found and how many are listed.
 
 **Worktree.** `--git-dir` and `--git-common-dir` differing means this is a linked worktree, not the main checkout. That changes nothing this skill does — every command it runs is worktree-local, and the branch it reads is this tree's branch — but it changes what the user needs told. Record the worktree's path and report it in Step 8's summary, so a PR raised from one of several parallel trees says which tree it came from. Never switch branch, never `cd` to the main checkout, never act on a branch this tree does not have checked out.
 
@@ -92,7 +126,34 @@ GitHub exposes no per-collaborator access level to a read-only token, so the scr
 
 Step 1's `squashMergeAllowed: false` → drop the squash half of option 4 and say the repo forbids it; `deleteBranchOnMerge: true` already → say the delete half is the repo default and needs no flag.
 
+**Update mode changes what may be asked here.** Exactly five fields can change on an existing pull request: **title, description, base branch, reviewers, assignees.** Nothing else — not draft state, not auto-merge, not labels, not milestone — whether or not `gh` has a flag for it.
+
+So in update mode:
+
+- Question 1 `Base` still applies. Its **default is the base the pull request already has**, not the repo default branch. A different pick is a change like any other: it appears in Step 8's summary with both values and is applied only on approval, never on the strength of the selection.
+- Questions 2 and 3 `Assignee` and `Reviewers` still apply, and they **add**. See below.
+- Question 4 `PR opts` is **not asked**. Draft state and auto-merge are outside the five fields, and a question whose answer this run cannot act on is worse than no question — it implies a change that will not happen.
+
+**Reviewers and assignees are added, never substituted.** Naming someone adds them to whoever is already on the pull request. `gh pr edit --add-reviewer` and `--add-assignee` are additive by construction, which is why GitHub cannot strip anyone here by accident — but the rule is about the outcome, not the flag: never replace the existing set as a side effect of naming a different one. Removal is available and is always an explicit choice by the user, offered only when they ask for it, and it goes through Step 0's hard exception. Re-naming a reviewer who is already requested is how GitHub re-requests review, so it is harmless rather than an error.
+
+The Reviewers question in update mode excludes people already requested from its recommended options — they are already there — and says who those are in the question text.
+
+**When no field would change**, say so and issue no edit at Step 9. An edit that changes nothing still produces activity every watcher of the pull request sees. This does not affect pushing the branch or bringing it up to date, which Step 5 governs.
+
 **Step 5 — Rebase onto base.** Head branch MUST rebase onto the chosen base before the PR is created — the PR reflects a clean, up-to-date diff, and Step 7's generated description is built from post-rebase commits/diff.
+
+**In update mode, probe first.** Rebasing and force-pushing rewrites the branch's published history, which detaches review threads from the lines they point at. The comments survive; the code they were about does not. So before rebasing, establish whether the selected pull request carries **review activity**:
+
+```bash
+gh pr view reviews,reviewDecision,latestReviews < number > --json
+gh api "repos/{owner}/{repo}/pulls/<number>/comments" --jq 'length'
+```
+
+**Review activity** means a submitted review, an approval or a change request, or a comment thread attached to a line of the diff. A plain conversation comment on the pull request is **not** review activity, and neither is anything a bot posted: neither is anchored to a commit, so neither is broken by a rewrite. Counting them would suppress the rebase on nearly every run, and on a repository with commenting automation it would suppress it from the first push onward — which is indistinguishable from removing the rebase.
+
+Review activity **present** → do not rebase, do not force-push. Report the suppression, its reason, and these alternatives: let GitHub report any conflict on the PR page itself; merge the base into the branch rather than replaying the branch onto it; or rebase deliberately once the review threads are resolved. Carry all of that into Step 8's summary, not only into passing output — a decision the user reads once in transient text is a decision they did not make.
+
+Review activity **absent**, or create mode → rebase and force-push exactly as below. The create path is unchanged.
 
 ```bash
 git fetch origin <base>
@@ -135,9 +196,67 @@ Fill the template's own prompts; never leave an HTML comment or an italic placeh
 
 **Issue references are behavior, not prose.** `Closes #123` / `Fixes #123` in the body closes that issue when the PR merges; a bare `#123` only links. Use the closing form only for an issue the user actually named as resolved by this branch. Never infer one from a branch name — `fix/1234-timeout` may be a ticket ID from another tracker, and a wrong `Closes` silently closes someone else's issue on merge.
 
+**Update mode: the existing body is read before anything is proposed.**
+
+```bash
+gh pr view body --jq '.body' < number > --json
+```
+
+`gh pr edit --body` and `--body-file` **replace the body outright.** There is no append mode in `gh` and no merge on GitHub's side. The body is where reviewers tick checklist items and where people write notes they were asked to record, and none of that is recoverable once overwritten. This is the only irreversible thing this skill can do.
+
+Live body identical to what this run would generate → no change; say so and move on.
+
+Otherwise show the difference and ask with `AskUserQuestion`, `header: "PR body"`:
+
+1. `Leave it as it is (Recommended)` — the body is not touched. Recommended because a body that differs from the generated one usually differs because a person changed it.
+2. `Append an update section` — the existing text is untouched and new content is added below it, inside this skill's fence.
+3. `Replace it entirely` — the generated body replaces everything, including any hand-written text and any ticked checkbox. Say that in the option description, in those words.
+
+**The fence.** An appended section is delimited by a begin and an end HTML comment naming this skill:
+
+```markdown
+<!-- ccd-github-pr:begin -->
+
+... generated content ...
+
+<!-- ccd-github-pr:end -->
+```
+
+Both markers are invisible when GitHub renders the body, so they cost the reader nothing. Exactly one well-formed pair — one begin, one end, begin first — means replace the text between them and leave everything else alone. **Anything else means the region was not found**: one marker without its partner, more than one pair, or an end before a begin. Report what was found and append a fresh section. Never infer the missing boundary from surrounding content, and never delete a region this skill did not write.
+
+Step 0's hard exception applies: a blanket skip-approval phrase does not reach this question when the live body is non-empty.
+
 **Step 8 — Approval gate.** Present the full structured summary: head, base, base repo (and the fork it is raised from, when Step 1 found one), assignee, reviewers, whether CODEOWNERS will add more, draft, auto-merge, rebase outcome (clean or how conflicts were resolved), generated title, generated description, which template was used, and — when Step 1 found one — the worktree path this PR is being raised from. Then ask with `AskUserQuestion`, `header: "Open PR?"`: `Yes` (create the pull request now) / `No` (stop, create nothing). Step 0 matched → display the summary and proceed without asking.
 
-**Step 9 — Create the PR.** Write the description to a temp file and pass it with `--body-file`. A generated PR description routinely contains backticks, `$`, and newlines; inlining it in a double-quoted `--body` argument makes the shell run those backticks as command substitution. `--body-file` avoids the quoting problem entirely — do not substitute `--body "$(cat …)"` for it.
+**In update mode the summary is a different shape**, and says so in its first line — a reader must be able to tell an update from a creation without inspecting the fields. Lead with the pull request's number, URL and state, then list **each of the five fields with its current value and its proposed value**, and name the ones that are not changing rather than omitting them silently. Include Step 5's rebase outcome or its suppression with the reason, the description decision that was taken, and the worktree path when there is one. The question becomes `header: "Update PR?"`: `Yes` (apply these changes to PR #N) / `No` (stop, change nothing).
+
+**The values shown are the values read during this run.** GitHub is a shared system and the pull request can move underneath a run — someone merges it, closes it, or edits the body between Step 1's read and Step 8's approval. Before applying at Step 9, re-read the fields being changed. Where any differs from what was displayed, do **not** apply over the newer state: report what changed, and ask again with the fresh values.
+
+Nothing about `Yes` here means "create as well as update". Update mode never creates a second pull request.
+
+**Step 9, update mode — Edit the PR.** One `gh pr edit` call, carrying **only** the flags whose field actually changed. A flag passed with the value already on the pull request is not harmless: `--body-file` with an unchanged body still rewrites the body, and every flag passed widens the blast radius of a mistake.
+
+```bash
+printf '%s\n' "$body" > "$tmp"
+gh pr edit '<number>' \
+  --title '<title>' \
+  --body-file "$tmp" \
+  --base '<base>' \
+  --add-reviewer '<login1>,<org/team>' \
+  --add-assignee '<login>'
+```
+
+- `--body-file`, never `--body "$(cat …)"`, for the same reason as the create path: a generated body contains backticks and `$`, and a double-quoted argument runs them.
+- `--add-reviewer` and `--add-assignee` add. `--remove-reviewer` and `--remove-assignee` exist and are issued **only** on an explicit removal the user asked for.
+- There is **no flag for the head branch.** It cannot be changed after creation. If the head is wrong, the pull request is the wrong one.
+- No `--add-label`, `--remove-label`, `--milestone`, `--add-project` or `--remove-project`: all outside the five fields. `--add-project` would additionally need the `project` scope, which the create path never asked for.
+- Nothing arms auto-merge here. Arming it on an existing pull request that someone deliberately left un-armed is a change nobody asked for.
+
+No field changed → issue no call at all, and report that the pull request was already up to date.
+
+Report the pull request's URL, its number, and which fields were changed.
+
+**Step 9, create mode — Create the PR.** Write the description to a temp file and pass it with `--body-file`. A generated PR description routinely contains backticks, `$`, and newlines; inlining it in a double-quoted `--body` argument makes the shell run those backticks as command substitution. `--body-file` avoids the quoting problem entirely — do not substitute `--body "$(cat …)"` for it.
 
 ```bash
 printf '%s\n' "$description" > "$tmp"
@@ -181,8 +300,14 @@ GitHub's squash merge takes the commit subject from the PR title and the commit 
 - Never write a `Closes`/`Fixes` reference for an issue the user did not name.
 - Never silently override a detected project title/template convention that conflicts with a hard rule — route it through Step 6's conflict question.
 - Never resolve a rebase conflict unilaterally — route it through Step 5's conflict question and wait for approval.
-- Never create the PR before Step 8 returns `Yes`.
-- Only creates PRs; never edits, reviews, merges, or closes existing ones. Step 9's `gh pr merge --auto` arms auto-merge on the PR just created and merges nothing itself.
+- Never create or edit the PR before Step 8 returns `Yes`.
+- Creates and updates PRs. Never reviews, approves, merges, or closes one. Step 9's `gh pr merge --auto` arms auto-merge on a PR this run just created, and merges nothing itself; update mode arms nothing.
+- Never open a second PR for a branch that already has an open one — that is what Step 1b exists to prevent, and GitHub would reject it anyway when the base matches.
+- Never replace a PR body that contains content a person wrote without an explicit answer to Step 7's question. There is no undo.
+- Never remove a reviewer or an assignee as a side effect of naming a different set.
+- Never change draft state, auto-merge, labels or the milestone on an existing PR. Five fields, no others.
+- Never rewrite the branch's published history when the PR carries review activity.
+- Never read a failed detection call as "no PR exists".
 
 ## Tool Reference
 
@@ -193,7 +318,11 @@ GitHub's squash merge takes the commit subject from the PR title and the commit 
 | Current branch                         | `git rev-parse --abbrev-ref HEAD`                                                                                          |
 | Repo, fork, permission, merge settings | `gh repo view --json nameWithOwner,isFork,parent,viewerPermission,defaultBranchRef,squashMergeAllowed,deleteBranchOnMerge` |
 | Branch on remote                       | `git ls-remote --heads origin <branch>`                                                                                    |
-| Existing PR for branch                 | `gh pr list --head <branch> --state open --json number,url,isDraft`                                                        |
+| Candidates for branch, all states      | `gh pr list --head <branch> --state all --json number,url,state,isDraft,headRefName,baseRefName,isCrossRepository,author`  |
+| Existing PR's body                     | `gh pr view <number> --json body --jq '.body'`                                                                             |
+| Review activity on a PR                | `gh pr view <number> --json reviews,reviewDecision,latestReviews` plus `gh api repos/{owner}/{repo}/pulls/<n>/comments`    |
+| Update a PR                            | `gh pr edit <number>` (see Step 9, update mode)                                                                            |
+| Reopen a closed PR                     | `gh pr reopen <number>` — a merged PR cannot be reopened                                                                   |
 | Push branch                            | `git push -u origin <branch>`                                                                                              |
 | Fetch base                             | `git fetch origin <base>` (fork: `git fetch upstream <base>`)                                                              |
 | Rebase onto base                       | `git rebase origin/<base>`                                                                                                 |
@@ -204,6 +333,8 @@ GitHub's squash merge takes the commit subject from the PR title and the commit 
 | Create PR                              | `gh pr create` (see Step 9)                                                                                                |
 | Arm auto-merge                         | `gh pr merge <url> --auto --squash --delete-branch`                                                                        |
 | Available labels                       | `gh label list`                                                                                                            |
+
+Every command and flag in this table, what it does, and the `gh` version it was verified against are recorded in [`docs/forge-review-requests.md`](../../docs/forge-review-requests.md), together with the GitLab equivalents and the places the two forges differ. Check a claim there before changing one here.
 
 `repos/{owner}/{repo}/collaborators` is **not** a usable member source: it returns 403 without push access on the repo. `assignableUsers` resolves for a read-only token, which is why the script uses it.
 
@@ -230,4 +361,4 @@ Regression scenarios for this skill live in [evaluations.md](evaluations.md). No
 
 `branch-options.sh` is **not** this skill's file and no longer exists in it. It ships once, in `ccd-branch-push`, and this skill invokes that copy through `${CLAUDE_PLUGIN_ROOT}`. There is nothing left to keep in step: the four consumers see identical candidates by construction rather than by comparison. Adding a copy back here is the regression — see evaluations.md for the check.
 
-**Never add `disable-model-invocation: true` to this skill's frontmatter.** That field blocks the `Skill` tool, not merely automatic loading, so any skill or pipeline dispatching this one through that tool breaks silently. `ccd-speckit-run` dispatches this skill at its Step 6b on a GitHub remote — a GitLab one gets `claude-code-devkit:ccd-gitlab-mr` — so setting the field breaks that handoff at the very end of a full eight-phase pipeline run. The same applies to `user-invocable: false`, which would take away the `/ccd-github-pr` invocation this skill is designed around.
+**Never add `disable-model-invocation: true` to this skill's frontmatter.** No skill in this plugin carries it, and none may — the count is a contract at `specs/006-claude-code-guidance/contracts/skill-names.md`. The field blocks the `Skill` tool, not merely automatic loading, so any skill or pipeline dispatching this one through that tool breaks silently. `ccd-speckit-run` dispatches this skill at its Step 6b on a GitHub remote — a GitLab one gets `claude-code-devkit:ccd-gitlab-mr` — so setting the field breaks that handoff at the very end of a full pipeline run. The same applies to `user-invocable: false`, which would take away the `/ccd-github-pr` invocation this skill is designed around.
