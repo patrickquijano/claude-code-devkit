@@ -115,6 +115,7 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `task`, `command_form`, `skill_dir`, `tooling`                         | Step 0                                                                                                    |
 | `gate_mode`                                                            | Step 3, from its one question, before Phase 1 runs                                                        |
+| `gates`                                                                | every boundary, as it resolves — see below                                                                |
 | `previous_branch`, `base_branch`, `stash_ref`, `workspace`, `worktree` | Step 1 — `workspace` the moment 1b's answer returns, `worktree` once 1d created and entered it            |
 | `worktree.teardown`                                                    | Step 6e                                                                                                   |
 | `claude_md`, `steps["2b"]`                                             | Step 2b                                                                                                   |
@@ -125,6 +126,26 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
 | `verify`, `findings[]`, `steps.5`                                      | Step 5                                                                                                    |
 | `ship`, `steps.6`                                                      | Step 6                                                                                                    |
 | `conflicts[]`                                                          | wherever the conflict protocol resolves one                                                               |
+
+## `gates` — which rule decided each boundary
+
+An object keyed by boundary name — `step-1`, `step-2b`, `phase-1` … `phase-8`, `step-6` — whose value records the rule that fired and the reason given:
+
+```json
+{
+  "phase-2": { "rule": "always-gate", "reason": "cuts the feature branch", "approved": true },
+  "phase-3": {
+    "rule": "auto-proceeded",
+    "reason": "argument identical to the plan; clarify is reversible"
+  }
+}
+```
+
+`rule` is one of four: `always-gate`, `every-phase`, `argument-changed`, `auto-proceeded`. The first three asked; the fourth did not.
+
+**Why this is a field and not just output.** SC-002 is verified by inspecting a completed run's record, and SC-014 requires that record to answer, per phase, why it did or did not ask. The announcement line satisfies neither: it is printed, and printed text scrolls past, compacts away, and is gone by the time anyone audits the run. A narrowed gate is only defensible while it is auditable afterwards.
+
+`approved` is written **when the approved step completes**, never when the approval is given. An entry with `rule` set and no `approved: true` is a boundary that was approved and then interrupted, and a resumed run treats it as **unapproved** and proposes the step again — an approval is given against a state of the world an interruption may have changed.
 
 ## Rules
 
