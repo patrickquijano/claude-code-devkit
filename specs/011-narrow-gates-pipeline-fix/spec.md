@@ -143,12 +143,14 @@ The toolkit's own workflow instructions and durable instruction files have grown
 
 - **FR-025**: The repository's written conventions for maintaining its durable instruction files MUST be amended to permit a deliberate, reviewed revision pass, while continuing to forbid incidental reformatting during unrelated work.
 - **FR-026**: The amendment required by FR-025 MUST be in place before any document is shortened.
-- **FR-027**: Each of the toolkit's workflow instruction documents, the repository's durable instruction files, and what the workflows print while running MUST be shortened.
-- **FR-027a**: The artifacts the workflows write to disk are out of scope for shortening. They MUST NOT be compacted by this feature.
+- **FR-027**: ~~Each of the toolkit's workflow instruction documents, the repository's durable instruction files, and what the workflows print while running MUST be shortened.~~ **WITHDRAWN.** Kept in place, not deleted, and not renumbered: it is the record of what this feature originally required. Withdrawn by the maintainer's explicit decision during implementation, on measurement rather than on estimate — two documents were compacted by hand and audited, `skills/ccd-speckit-run/reference/tooling.md` at **8%** and `skills/ccd-speckit-run/reference/verify.md` at **6%**, against the 15% floor R2 sets, with no normative content dropped in either. The corpus is already at its information floor: `.claude/rules/repository-docs.md` forbids padding and requires a rationale beside anything surprising, so nearly every line carries a backticked identifier, a number or a `because`. One document, `tooling.md`, is compacted and recorded exempt under FR-030; the remaining 27 are not attempted. See `research.md` R2 and the withdrawal row in the Supersession record.
+- **FR-027a**: The artifacts the workflows write to disk are out of scope for shortening. They MUST NOT be compacted by this feature. **Unaffected by FR-027's withdrawal** — it excluded a category from a scope that no longer applies, and it stays as the record of that exclusion.
 - **FR-028**: Shortening MUST preserve every behavioural rule, constraint, warning, prohibition and recorded rationale the document previously carried.
 - **FR-029**: For each shortened document it MUST be establishable, by comparison against the previous version, that nothing normative was dropped.
 - **FR-030**: Where a document cannot be shortened without losing a normative statement, it MUST be left unshortened and the reason reported.
 - **FR-031**: Shortening MUST NOT breach the length, structure and formatting limits the repository already places on these documents.
+
+**FR-028 through FR-031 are NOT withdrawn.** They govern any shortening that happens, whenever it happens, and are conditional on one occurring rather than requiring one. All four were satisfied on the single document this feature compacted. What FR-027's withdrawal removes is the obligation to compact the corpus; what survives is every rule about how a compaction must behave, together with the carve-out in `.claude/rules/repository-docs.md` and the audit script that enforces them. A future contributor with a genuinely padded document has the whole mechanism and no need to rebuild it.
 
 #### Records and supersession
 
@@ -180,7 +182,7 @@ The toolkit's own workflow instructions and durable instruction files have grown
 - **SC-007**: The pipeline capability makes no source-file change of its own; every change originates from the bug-remediation workflow it invokes.
 - **SC-008**: Every question in every workflow presents choices, per-choice explanations, exactly one recommendation, and the reason for it — or states explicitly why no recommendation is given. Zero questions posed as prose alone.
 - **SC-009**: The standard governing questions is stated in exactly one place. Zero restatements.
-- **SC-010**: Every shortened document is shorter than its previous version and retains every normative statement from it. Zero normative statements lost.
+- **SC-010**: Every shortened document is shorter than its previous version and retains every normative statement from it. Zero normative statements lost. **Met over a denominator of one.** With FR-027 withdrawn, exactly one document was shortened — `skills/ccd-speckit-run/reference/tooling.md`, 8%, `normative-lost 0` — so "every shortened document" quantifies over a set of one and reads stronger than the evidence behind it. The denominator is stated here rather than left to be discovered, because a criterion that is vacuously or nearly-vacuously true is the kind a later reader cites as though it covered the corpus.
 - **SC-010a**: No artifact written by a workflow is compacted by this feature. Zero artifact files shortened.
 - **SC-011**: Every statement in the repository of how many guided workflows it distributes agrees with every other. The repository's own word for one of these is a **skill**, so the statements to compare are the ones using that word. Zero disagreements.
 - **SC-012**: A maintainer with working forge access reaches displayed failing evidence without supplying any output by hand; one without it is told so before the run begins rather than partway through. Zero runs discover the missing access late.
@@ -195,6 +197,16 @@ This feature supersedes part of feature `006-claude-code-guidance` and the count
 | 006 FR-011 — every phase approved before it runs               | FR-001 – FR-003, FR-005            | Approval is now required where the step is irreversible or its argument changed, not uniformly.                                |
 | 006 FR-013 — every proposal states what changed since the plan | FR-001, FR-004                     | The delta row survives on gated proposals and is now the reason the gate fired; unasked boundaries state their reason instead. |
 | 010 `contracts/skill-names.md` — seven skills                  | FR-035, `contracts/skill-names.md` | An eighth skill exists, and `ccd-speckit-bug-run` gained a second caller.                                                      |
+
+### Withdrawn within this feature
+
+**FR-027 is withdrawn, and this is not a supersession.** Nothing replaces it and no later feature takes it over — the four rows above record requirements another specification now owns, and FR-027 has no successor. It was withdrawn during this feature's own implementation, by the maintainer, after the requirement had been attempted and measured.
+
+| Withdrawn                                                          | Replaced by | Why                                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FR-027 — every workflow and instruction document MUST be shortened | nothing     | Attempted and measured: 8% and 6% against a 15% floor, no normative content dropped in either. The documents are already at their information floor. The floor and the audit both stay; the conclusion is about this corpus, not about the bar. |
+
+Distinguishing the two matters for a reader tracing a requirement forward. A superseded requirement is still in force somewhere else and the trail continues; a withdrawn one stops here, and following it further finds nothing because there is nothing to find.
 
 **006 FR-012 is not superseded and survives verbatim.** All eight phase arguments are still drafted together at Step 3 and still checked across each other for cross-phase leakage, whatever `gate_mode` says and however few boundaries end up asking. FR-006 restates that obligation, and T025 exists solely to verify it survived the Step 4 rewrite — because the specify prompt sits in the auto-proceed set and is the prompt most often corrupted.
 

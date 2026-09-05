@@ -120,7 +120,9 @@ Expected: **zero** hits for the first — the four local restatements are gone. 
 
 ## Scenario 8 — Compaction lost nothing
 
-**Proves**: FR-025 – FR-031, SC-010, SC-010a.
+**Proves**: FR-025, FR-026, FR-027a, FR-028 – FR-031, SC-010, SC-010a.
+
+**FR-027 is withdrawn, so this scenario validates the mechanism, not the corpus.** It asks whether a compaction — when one is done — lands after the carve-out, drops nothing normative, and is audited. It does **not** assert that the toolkit's documents were compacted; exactly one was. Read every "each compacted document" below against a set of one: `skills/ccd-speckit-run/reference/tooling.md`. Reasoning in `research.md` R2, withdrawal in `spec.md`.
 
 The amendment lands first:
 
@@ -136,7 +138,9 @@ Then, for each compacted document:
 sh scripts/compaction-audit.sh <base-commit> <path>
 ```
 
-Expected: `verdict pass` — `normative-lost 0` and `reduction-pct` ≥ 15 — or a recorded exemption with its reason and actual percentage. **A `fail-lost` verdict is never waivable.**
+Expected: `verdict pass` — `normative-lost 0` and `reduction-pct` ≥ 15, measured in **characters** — or a recorded exemption with its reason and actual percentage. **A `fail-lost` verdict is never waivable.**
+
+Actual, for the one document: `fail-short` at 8% with `normative-lost 0`, recorded exempt under FR-030 in `tasks.md`. That is the expected shape here and not a failure — an exemption covers missing the floor and never covers losing a rule.
 
 Confirm the exclusion held:
 
