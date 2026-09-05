@@ -1,0 +1,11 @@
+#!/bin/sh
+# Dispatcher. The rules live in scripts/hooks/commit-msg.sh, where the shell
+# check's '*.sh' glob finds them and where the self-test can invoke them
+# directly with a fixture. See specs/008-commit-hooks/research.md section 8.
+#
+# The root comes from git rather than from $0. Under Husky, core.hooksPath is
+# .husky/_ and this file is sourced by a shim living there, so $0 points at the
+# shim and a path relative to it lands in the wrong directory.
+set -eu
+root=$(git rev-parse --show-toplevel)
+exec "$root/scripts/hooks/commit-msg.sh" "$@"

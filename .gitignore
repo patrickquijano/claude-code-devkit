@@ -30,6 +30,14 @@
 # pre-compaction copy is not a decision anyone needs to review.
 *.full.md
 
+# Husky's generated shim directory. Husky writes .husky/_/.gitignore containing
+# `*` itself, so this entry is belt and braces -- it also covers the case where
+# .husky/_ exists without that file. The hook bodies at .husky/commit-msg and
+# .husky/pre-push ARE committed; only the generated shims are not. That
+# asymmetry is the whole reason scripts/install-hooks.sh exists: a fresh clone
+# has the hooks and not the shims, so nothing runs until core.hooksPath is set.
+.husky/_/
+
 # Agent memory
 .remember/
 
