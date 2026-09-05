@@ -39,12 +39,12 @@ sh "${CLAUDE_SKILL_DIR}/scripts/conflict-conclude.sh"
 sh "${CLAUDE_SKILL_DIR}/scripts/conflict-preflight.sh"
 ```
 
-| Exit | Meaning                         | Do                                                                                                          |
-| ---- | ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `2`  | `git` is not available          | **Stop.** Tell the user git is not on `PATH` and that nothing was changed. Nothing else in this skill runs. |
-| `1`  | Not a git repository            | **Stop.** Say so.                                                                                           |
-| `3`  | The remote could not be reached | Report it and **ask** whether to continue against the state already on disk. Do not proceed silently.       |
-| `0`  | Probe succeeded                 | Continue                                                                                                    |
+| Exit | Meaning                         | Do                                                                                                                                                                                                                                                                                           |
+| ---- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `2`  | `git` is not available          | **Stop.** Tell the user git is not on `PATH` and that nothing was changed. Nothing else in this skill runs.                                                                                                                                                                                  |
+| `1`  | Not a git repository            | **Stop.** Say so.                                                                                                                                                                                                                                                                            |
+| `3`  | The remote could not be reached | Report it, then `AskUserQuestion`: continue against the state already on disk (recommended — the conflict is local and the resolution does not need the remote, at the cost of comparing against a possibly stale base), or stop and retry once the network is back. Never proceed silently. |
+| `0`  | Probe succeeded                 | Continue                                                                                                                                                                                                                                                                                     |
 
 Read the printed keys. `operation` and `conflicts` are **independent facts** — a conflicted tree can report `operation none`, because `git merge --squash` records no marker. Never infer one from the other.
 
@@ -144,19 +144,19 @@ After every applied resolution, run `conflict-list.sh` again.
 
 - **Fewer paths than last pass** → progress. Propose again for what remains.
 - **Zero paths** → conclude.
-- **The same set as last pass** → **no progress.** Report that the resolution did not resolve what it targeted, and ask what to do. Do not loop.
+- **The same set as last pass** → **no progress.** Report that the resolution did not resolve what it targeted, then `AskUserQuestion`, `header: "No progress"`: try a different resolution for the same paths (recommended — the previous choice demonstrably did not take, and changing it is the only move that can), open the files and resolve by hand outside this skill, or abort the whole operation. Never loop.
 
 ```sh
 sh "${CLAUDE_SKILL_DIR}/scripts/conflict-conclude.sh"
 ```
 
-| Exit | Meaning                             | Do                                                                              |
-| ---- | ----------------------------------- | ------------------------------------------------------------------------------- |
-| `0`  | Concluded                           | Report what was committed                                                       |
-| `2`  | Conflicts remain                    | Go back to step 3                                                               |
-| `3`  | No operation in progress            | Nothing to conclude; report and stop                                            |
-| `4`  | Staged paths outside the resolution | **Report each path and ask.** Do not unstage anything yourself                  |
-| `5`  | The concluding command failed       | Report its output. **The resolved content is left in place** — do not revert it |
+| Exit | Meaning                             | Do                                                                                                                                                                                                                                                                                                   |
+| ---- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | Concluded                           | Report what was committed                                                                                                                                                                                                                                                                            |
+| `2`  | Conflicts remain                    | Go back to step 3                                                                                                                                                                                                                                                                                    |
+| `3`  | No operation in progress            | Nothing to conclude; report and stop                                                                                                                                                                                                                                                                 |
+| `4`  | Staged paths outside the resolution | **Report each path**, then `AskUserQuestion`: conclude including them (recommended only when the user confirms they belong — they were staged deliberately and discarding that intent is not this skill's to do), conclude after they unstage them by hand, or stop. Never unstage anything yourself |
+| `5`  | The concluding command failed       | Report its output. **The resolved content is left in place** — do not revert it                                                                                                                                                                                                                      |
 
 Exit `4` is the guard that keeps unrelated work out of the commit. Concluding commits the whole index and `git commit` refuses to be limited to pathnames during a merge, so this check is the only thing standing between a staged unrelated change and the commit. Never work around it by unstaging on the user's behalf.
 

@@ -24,7 +24,7 @@ The reasoning behind every forge-specific rule below, its source, and the tool v
 
 ## Asking the user
 
-Every question in this skill goes through `AskUserQuestion`. Never ask in prose, never wait on an untooled "confirm?".
+Questions in this skill follow the repository-wide standard in [`.claude/rules/skill-authoring.md`](../../.claude/rules/skill-authoring.md).
 
 - **Yes/no question** → exactly two options, `Yes` first, `No` second. Each `description` states what that choice causes.
 - **Anything else** → 2–4 options, the recommended one **first** with `(Recommended)` appended to its `label`. Every `description` carries the justification for that option plus the cost of not picking it.
@@ -82,8 +82,8 @@ Then, from the admissible candidates:
 - **None** → **create mode.** Continue exactly as before; nothing below applies.
 - **Exactly one, opened** → **update mode** against it, whatever closed or merged candidates also exist. Report the others as present; do not offer them. An open merge request is unambiguously the live one for this branch.
 - **More than one opened** → ask with `AskUserQuestion`, `header: "Which MR"`, listing each candidate's internal id, state, target branch and title. Never pick. This is a real state rather than a theoretical one: GitLab permits one open merge request per source-and-target pair, so two open ones from this branch to two different targets are perfectly legal.
-- **No opened candidate, exactly one closed** → ask, `header: "Closed MR"`: reopen and update it (`glab mr reopen <iid>`, recommended — it keeps the review history), or leave it closed and open a fresh one. Change nothing before the answer.
-- **No opened candidate, more than one closed or merged** → ask which, then apply the single-candidate rule to the pick.
+- **No opened candidate, exactly one closed** → `AskUserQuestion`, `header: "Closed MR"`: reopen and update it (`glab mr reopen <iid>`, recommended — it keeps the review history), or leave it closed and open a fresh one. Change nothing before the answer.
+- **No opened candidate, more than one closed or merged** → `AskUserQuestion` listing each with its state, title and last update, then apply the single-candidate rule to the pick. **No recommendation is defensible here**: a closed merge request and a merged one mean different things about intent, and only the user knows which of several was the real one. Say that rather than defaulting to the most recent.
 - **Candidates all merged** → say so: a merged merge request cannot be reopened, which is long-standing GitLab behaviour tracked upstream as `gitlab-org/gitlab#9428`. Continue in **create mode**.
 
 When more candidates exist than the question can show, say how many were found and how many are listed.
@@ -111,7 +111,7 @@ glab api user --output ndjson # the current user, for the assignee default
 
 Tab separated, best candidate first: `<username>  <name>  <access_level>  recent-committer|-`. Recent committers on this branch rank above everyone else, then descending access level. Take the top four.
 
-Script exits 1 (no `glab`) or 2 (no `jq`) → fall back to the GitLab MCP server per Tool Reference, or ask the user to name the assignee and reviewers directly.
+Script exits 1 (no `glab`) or 2 (no `jq`) → say which, then fall back to the GitLab MCP server per Tool Reference. Where that is unavailable too, `AskUserQuestion`, `header: "Reviewers"`: name them now, or open the merge request with none and add them on the forge afterwards. Recommend opening with none, because an unreviewed merge request is visible and correctable while a guessed reviewer is neither.
 
 **Step 4 — One batched `AskUserQuestion` call, four questions.**
 
@@ -224,7 +224,7 @@ Step 0's hard exception applies: a blanket skip-approval phrase does not reach t
 
 **In update mode the summary is a different shape**, and says so in its first line — a reader must be able to tell an update from a creation without inspecting the fields. Lead with the merge request's internal id, URL and state, then list **each of the five fields with its current value and its proposed value**, and name the ones that are not changing rather than omitting them silently. Include Step 5's rebase outcome or its suppression with the reason, the description decision that was taken, and the worktree path when there is one. The question becomes `header: "Update MR?"`: `Yes` (apply these changes to MR !N) / `No` (stop, change nothing).
 
-**The values shown are the values read during this run.** GitLab is a shared system and the merge request can move underneath a run — someone merges it, closes it, or edits the description between Step 1's read and Step 8's approval. Before applying at Step 9, re-read the fields being changed. Where any differs from what was displayed, do **not** apply over the newer state: report what changed, and ask again with the fresh values.
+**The values shown are the values read during this run.** GitLab is a shared system and the merge request can move underneath a run — someone merges it, closes it, or edits the description between Step 1's read and Step 8's approval. Before applying at Step 9, re-read the fields being changed. Where any differs from what was displayed, do **not** apply over the newer state: report what changed, then put the Step 8 question again with `AskUserQuestion` and the fresh values. Recommend re-reviewing rather than re-applying, and say why — the earlier approval was given against text that no longer exists.
 
 Nothing about `Yes` here means "create as well as update". Update mode never creates a second merge request.
 

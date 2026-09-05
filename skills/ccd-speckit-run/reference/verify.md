@@ -34,7 +34,7 @@ The cap is three on `consecutive_failures`, never on `attempts`. Once 5f has re-
 
 - Fix root causes. Never make a test pass by weakening it, skipping it, or deleting it.
 - A failure tracing to the spec or plan rather than the code is a conflict — route through `reference/conflicts.md` instead of patching around it.
-- Three consecutive failures → stop, report the last output, ask: keep fixing, ship anyway with the failure recorded, or stop the run.
+- Three consecutive failures → stop, report the last output, then `AskUserQuestion`, `header: "Check failing"`: keep fixing, ship anyway with the failure recorded as `verify.override`, or stop the run. **Recommend keeping the fix loop open** and say why — three attempts is a cap on unattended retries, not evidence the check is unfixable, and shipping red puts the failure in front of a reviewer instead. Where the three failures are all the same error with no progress between them, say instead that no recommendation is defensible: that pattern means the run has learned nothing new to try, and whether to keep going is a judgement about the code that only the user can make.
 - **Ship anyway is an override, and it is recorded, not remembered.** Set `verify.result = "fail"` and `verify.override` to that decision in the user's own words, with the command and both counters. Step 6 reads `verify.override`; absent it, Step 6 refuses to ship a red branch and sends the run back here.
 
 ## 5d — No runner found

@@ -198,3 +198,15 @@ After any edit to `SKILL.md`: walk E1–E11 against the changed text. Any edit t
 After any edit to the scripts: `sh -n` both. Run `branch-options.sh` in a work tree, in a commit-less repo (silent exit 0), detached (no `current` tag), and outside a repo (exit 1). Run `reviewer-options.sh` against a stub `gh` on `PATH` that answers `auth status` with exit 0 and `repo view --json assignableUsers` with a fixed JSON list, in a repo carrying a `.github/CODEOWNERS` with both `@user` and `@org/team` entries; confirm the order is codeowner-and-committer, then codeowner, then committer, then the rest, that the `@org/team` entry emits a `team` row with no `recent-committer` flag, and that the `codeowners: <path>` note reaches stderr. Confirm exit 1 with no `gh` on `PATH` and exit 2 with no `jq` — note that `jq` ships at `/usr/bin/jq` on this machine, so isolating the exit-2 path needs a scrubbed `PATH`, not merely a trimmed one. With a stub emitting more than 500 users, confirm the listing stops at 500 and a `truncated:` note reaches stderr.
 
 E1–E4 and E6 need a real GitHub repo for a true end-to-end run, and E3 needs a fork the user has only read access to upstream of. When those are unavailable, walk them against the text and report them as walked, not passed. Re-read the diff for rules softened from imperative into description. Test on the models that will run it — terse enough for Opus can be too terse for a smaller model.
+
+## The question standard
+
+Every ask in this skill goes through `AskUserQuestion` with options, per-option effect and cost, exactly one `(Recommended)` and the reason for it — or an explicit statement that no recommendation is defensible. The rule lives once, in `.claude/rules/skill-authoring.md`; this skill restates none of it.
+
+**Regression to re-check after any edit that touches a question**: no ask site instructs asking without naming the tool, no question offers options with no recommendation and no explanation of why none is given, and no local copy of the rule has crept back in. Run:
+
+```sh
+grep -n "Every question in this skill goes through" SKILL.md
+```
+
+Zero hits is correct. A hit means the repository-wide rule now has a second copy, which is the drift `.claude/rules/repository-docs.md` calls worse than having no rule at all.

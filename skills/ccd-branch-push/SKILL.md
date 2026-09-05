@@ -14,7 +14,7 @@ Creates a conventionally-named branch off a user-chosen base branch, checks it o
 
 ## Asking the user
 
-Every question in this skill goes through `AskUserQuestion`. Never ask in prose, never wait on an untooled "confirm?".
+Questions in this skill follow the repository-wide standard in [`.claude/rules/skill-authoring.md`](../../.claude/rules/skill-authoring.md).
 
 - **Yes/no question** → exactly two options, `Yes` first, `No` second. Each `description` states what that choice causes.
 - **Anything else** → 2–4 options, the recommended one **first** with `(Recommended)` appended to its `label`. Every `description` carries the justification for that option plus the cost of not picking it.
@@ -51,7 +51,7 @@ Stop and say why, rather than proceeding, when any of these holds:
 
 - Not inside a git work tree (`sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh` exits 1 and says so).
 - No remote configured — the Step 7 push has nowhere to go.
-- **No remote named `origin`.** Step 7 pushes to `origin` by name, so a repo whose only remote is `upstream` or `fork` passes a bare "is there a remote" check and then dies at the push, after the approval gate. Name the remotes that do exist and ask with `AskUserQuestion` which to push to, or stop. Never assume the single remote is `origin` — use the name the user picked everywhere Step 7 says `origin`.
+- **No remote named `origin`.** Step 7 pushes to `origin` by name, so a repo whose only remote is `upstream` or `fork` passes a bare "is there a remote" check and then dies at the push, after the approval gate. Name the remotes that do exist and ask with `AskUserQuestion` which to push to, or stop. Recommend the remote the current branch already tracks where there is one, and say so; where nothing is tracked, **no recommendation is defensible** — which of `upstream` and `fork` is the right target is a fact about the user's workflow, not about the repository. Say that rather than picking the first one listed. Never assume the single remote is `origin` — use the name the user picked everywhere Step 7 says `origin`.
 
 A detached HEAD is **not** a blocker: the new branch is cut from the Step 3 base, not from HEAD. Note it in the Step 6 summary and continue.
 
@@ -75,7 +75,7 @@ Output is tab separated, repo default branch first then newest commit first: `<b
 
 Present those four via `AskUserQuestion`, `header: "Base"`. The line tagged `default` goes first with `(Recommended)` — it is the repo's own integration branch. Each `description` names the branch's last-commit date and whether it lives locally, remotely, or both, so the user can tell a stale branch from a live one. Say in the question text when there were more than four candidates.
 
-Skip this question entirely when the invoking prompt already names an explicit base and the script's output confirms it exists. Named but absent from the output → ask, never invent it.
+Skip this question entirely when the invoking prompt already names an explicit base and the script's output confirms it exists. Named but absent from the output → `AskUserQuestion` offering the script's own candidates, with the repository's default branch recommended and the reason given (it is what the named branch was most likely meant to be, and it demonstrably exists). Never invent a branch that the script did not print.
 
 **Step 4 — Detect repo-native branch conventions.** Scan the Step 3 branch names for a shared prefix pattern (`feature/`, `users/<name>/...`, `JIRA-123-...`) and check `CONTRIBUTING.md` / repo `CLAUDE.md` for an explicit branching rule. Found → it overrides the default type vocabulary in Branch Name Rules below.
 
@@ -129,7 +129,7 @@ Hard rules, no deviation:
 
 - Never force-push (`git push -f` / `--force`) the new branch.
 - Never discard uncommitted changes to make the checkout succeed. `git switch -c` errors on a conflict with the base → stop and ask with `AskUserQuestion`; don't stash or discard unasked.
-- Never reuse or overwrite an existing branch name. No `git branch -f`, no `git switch -C`, no silent numeric suffix — Step 5b asks instead.
+- Never reuse or overwrite an existing branch name. No `git branch -f`, no `git switch -C`, no silent numeric suffix — Step 5b asks with `AskUserQuestion` instead.
 - Never leave the tree this skill was invoked in, and never act on another worktree. `git switch -c` moves this tree's `HEAD` and no other; a base checked out elsewhere is read for its commit and left alone. No `cd`, no `git -C`, no `git worktree add`.
 - Never invent a repo-native convention that contradicts one actually observed in Step 4 — route it through Step 4's conflict question.
 - Never create the branch before Step 6 returns `Yes`.

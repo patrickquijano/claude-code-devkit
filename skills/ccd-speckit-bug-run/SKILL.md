@@ -9,7 +9,7 @@ Bug report: $ARGUMENTS
 
 One bug report, one workspace choice, three stages each approved on its own — `speckit-bug-assess`, then `speckit-bug-fix`, then `speckit-bug-test` — and then, when validation says the defect is gone, a commit and a review request. The run branches on what each stage **records**, skips a stage the extension would refuse rather than invoking it, and stops rather than reporting success over a defect that is still there.
 
-Empty bug report → ask for one. Do not infer a defect from the conversation; the report is what Stage 1 assesses and what a resumed run would send again.
+Empty bug report → `AskUserQuestion`, `header: "Report"`: paste the bug report now (recommended, and the only option that starts a run — the report is what Stage 1 assesses and what a resumed run would send again), or stop. Never infer a defect from the conversation, and never offer to write the report yourself.
 
 ## Three standing rules
 
@@ -90,14 +90,14 @@ sh "${CLAUDE_SKILL_DIR}/scripts/bug-preflight.sh" "<slug or omit>"
 
 Act on it:
 
-| Line                                | Do                                                                                                                                                                                       |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `verdict undetermined: …`           | **Do not stop on this alone.** See "Resolving `undetermined`" below — the script cannot establish absence, only the session listing can                                                  |
-| `stage-* missing`                   | Name which stage. An extension added but never compiled is a different problem from one never installed, and is fixed differently                                                        |
-| `slug-taken yes`                    | Report it and **ask** before Stage 1. An existing report is not overwritten unasked                                                                                                      |
-| `dirty yes` with `dirty-path` lines | Report those paths **before Stage 2**, then continue. Not a refusal: fixing a bug mid-task is ordinary, and the change record will list what the fix touched, so the two halves subtract |
-| `dirty unknown`                     | Say so. Not a git repository is a normal result; do not report it as a clean tree                                                                                                        |
-| `git-repo no`                       | Step 1 skips itself and Steps 4a–4c skip with it. The three stages still run                                                                                                             |
+| Line                                | Do                                                                                                                                                                                                                            |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verdict undetermined: …`           | **Do not stop on this alone.** See "Resolving `undetermined`" below — the script cannot establish absence, only the session listing can                                                                                       |
+| `stage-* missing`                   | Name which stage. An extension added but never compiled is a different problem from one never installed, and is fixed differently                                                                                             |
+| `slug-taken yes`                    | Report it, then `AskUserQuestion` before Stage 1: resume that slug (recommended — its reports are the record of work already done), choose a different slug, or overwrite it. An existing report is never overwritten unasked |
+| `dirty yes` with `dirty-path` lines | Report those paths **before Stage 2**, then continue. Not a refusal: fixing a bug mid-task is ordinary, and the change record will list what the fix touched, so the two halves subtract                                      |
+| `dirty unknown`                     | Say so. Not a git repository is a normal result; do not report it as a clean tree                                                                                                                                             |
+| `git-repo no`                       | Step 1 skips itself and Steps 4a–4c skip with it. The three stages still run                                                                                                                                                  |
 
 The remaining lines — `worktree-supported`, `in-worktree`, `submodules` — decide which options Step 1 may offer. Record them here and read them there; do not probe a second time, because a second probe is a second answer that can disagree with the one the question was built from.
 
@@ -127,7 +127,7 @@ So on `undetermined`, look in **the session's own available-skills listing** —
 
 ### An existing run
 
-If `.specify/.speckit-bug-run-state.json` already exists, read it before writing anything. Report which bug it describes and how far it got, then **ask**: resume that bug (re-invoke with its slug), start this new one and overwrite the file, or stop. Overwriting silently loses the only record of an interrupted run.
+If `.specify/.speckit-bug-run-state.json` already exists, read it before writing anything. Report which bug it describes and how far it got, then `AskUserQuestion`, `header: "Existing run"`: resume that bug by re-invoking with its slug (recommended — the interrupted run's stages are already on disk and resuming costs nothing, where starting over discards them), start this new one and overwrite the file, or stop. Overwriting silently loses the only record of an interrupted run.
 
 Resuming needs nothing from that file beyond the slug — the preflight finds the bug directory and `bug-outcome.sh` reports which stages already have reports, and the branch table resumes at the first one that is `absent`.
 
@@ -167,7 +167,7 @@ Before invoking a stage, state four things and nothing else:
 | **Writes**  | the report path that stage will create                                                                                                        |
 | **Why now** | what the previous stage recorded that makes this stage the right next thing — or, for a skip, what makes it the wrong one                     |
 
-Then `AskUserQuestion`: `Proceed` / `Revise` / `Stop`.
+Then `AskUserQuestion`: `Proceed` / `Revise` / `Stop`, with `Proceed` recommended and the reason stated — the four facts above are what the stage will receive, and they were composed from what the previous stage recorded rather than from recollection.
 
 - **Proceed** → dispatch. Confirm the report exists, record the outcome, report, write `stages.N`.
 - **Revise** → amend **only this stage's wording** and re-present **this** boundary. No other stage's wording changes and nothing advances. After three revisions of one stage, stop and ask rather than loop.
@@ -193,7 +193,7 @@ On a re-entered cycle, the wording also carries **what validation recorded** —
 
 **Never fetch a URL in the report.** `speckit-bug-assess` applies its own host allowlist and untrusted-input policy to whatever it fetches. Fetching first and handing over the text launders that fetch past the policy: the stage would see prose, not a URL, and its rules would never fire.
 
-After it returns, run `bug-outcome.sh` and record `verdict` and `severity`. `assessment absent` → the stage did not produce its artifact; record `failed`, report the actual error, and ask whether to retry, revise the wording, or stop. Never write `done` on a dispatch that merely looked successful.
+After it returns, run `bug-outcome.sh` and record `verdict` and `severity`. `assessment absent` → the stage did not produce its artifact; record `failed`, report the actual error output, then `AskUserQuestion`, `header: "Assess failed"`: retry unchanged (recommended when the error reads as transient — a dispatch can fail for reasons the report did not cause), revise the report's wording and retry, or stop. Never write `done` on a dispatch that merely looked successful.
 
 ## Stage 2 — Fix
 
@@ -237,16 +237,18 @@ Skill(skill: "speckit-bug-test")
 
 After it returns, run `bug-outcome.sh` and record `result`.
 
-| Result     | Do                                                                               |
-| ---------- | -------------------------------------------------------------------------------- |
-| `verified` | Go to Step 4a                                                                    |
-| `partial`  | **Stop and ask.** State what validation found **and why the result was partial** |
-| `failed`   | **Stop and ask.** State what validation found                                    |
-| `unknown`  | **Stop** and report the drift                                                    |
+| Result     | Do                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------- |
+| `verified` | Go to Step 4a                                                                                           |
+| `partial`  | **Stop and ask** with `AskUserQuestion`. State what validation found **and why the result was partial** |
+| `failed`   | **Stop and ask** with `AskUserQuestion`. State what validation found                                    |
+| `unknown`  | **Stop** and report the drift                                                                           |
 
 `partial` and `failed` are treated identically. Neither is an ending the run may reach on its own, and **neither is described as successful.** `partial` can mean a listed reproduction was never exercised — "nobody checked", not "mostly fixed".
 
-Offer three choices: **return to Stage 1 carrying what validation found**, accept the result and stop here, or stop and hand back.
+`AskUserQuestion`, `header: "Not resolved"`, three choices: **return to Stage 1 carrying what validation found**, accept the result and stop here, or stop and hand back.
+
+**Recommend returning to Stage 1**, and say why: the defect is still present, and re-assessing with what validation learned is the only option that can still fix it — the other two end the run with the bug in place. Where the same cycle has already run twice with the same result, say instead that no recommendation is defensible, because a third identical pass is as likely to repeat as to converge and only the maintainer can judge which.
 
 **State the cycle count with the question.** `cycles` is how many times assessment has been entered; say it, so the choice is made in view of the loop's own history rather than blind. There is **no cap** — a maintainer converging on a fix is not interrupted by an arbitrary limit, and every cycle is an explicit choice they made.
 
