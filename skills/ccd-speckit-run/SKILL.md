@@ -7,7 +7,7 @@ description: Use when the user invokes /ccd-speckit-run, or asks to take a featu
 
 Task description: $ARGUMENTS
 
-Eight Spec Kit phases from one description. Each prompt in its phase's style. **Every phase is proposed and approved on its own**, immediately before it runs — Step 3 drafts all eight arguments together and shows them as a plan, and each phase then states the command, its verbatim argument, the artifacts it will write, and what changed since that plan. Never skip a step, never merge two phases into one invocation. Run ends verified and shipped — repo's own tests, review request, still on the feature branch — not at `implement`. **Review request** means a GitLab merge request or a GitHub pull request: Step 0 detects which forge `origin` points at and Step 6b dispatches the matching sub-skill, `claude-code-devkit:ccd-gitlab-mr` or `claude-code-devkit:ccd-github-pr`. A remote at neither forge is a normal result and skips that step alone.
+Eight Spec Kit phases from one description. Each prompt in its phase's style. Step 3 drafts all eight arguments together and shows them as a plan. **A boundary then either gates or announces**: it gates when it is irreversible or its argument changed since that plan, stating the command, the verbatim argument, the artifacts and the delta; otherwise it proceeds and prints one line saying which boundary and why it did not ask. Never skip a step, never merge two phases into one invocation, and never let a boundary pass in silence. Run ends verified and shipped — repo's own tests, review request, still on the feature branch — not at `implement`. **Review request** means a GitLab merge request or a GitHub pull request: Step 0 detects which forge `origin` points at and Step 6b dispatches the matching sub-skill, `claude-code-devkit:ccd-gitlab-mr` or `claude-code-devkit:ccd-github-pr`. A remote at neither forge is a normal result and skips that step alone.
 
 Step 1 asks where the run happens: the current checkout, or a fresh git worktree that leaves the user's open tree untouched. Step 6 runs no `git add` or `git commit` of its own; where the work needs committing it dispatches `claude-code-devkit:ccd-commit-push`, which owns that decision.
 
@@ -30,10 +30,11 @@ Copy into your response, tick off as you complete them:
 - [ ] Step 1: workspace mode and base branch — both chosen by user in one call, worktree created and entered or branch switched, dirty tree snapshotted
 - [ ] Step 2: task read — requirements, goals, non-goals identified, `steps.2` written
 - [ ] Step 2b: project `CLAUDE.md` — created if absent, checked against the task if present, verdict reported (no change is the usual one)
-- [ ] Step 3: eight phase prompts drafted together, leakage check applied across all eight, plan presented
+- [ ] Step 3: eight phase prompts drafted together, leakage check applied across all eight, plan presented, `gate_mode` chosen and written to state
 - [ ] Conflicts: checked at Step 2 and again at every step and phase boundary, each one resolved and recorded in `conflicts[]` and `conflict_checks[]`
 - [ ] Sweeps: delegated where `reference/subagents.md` allows it, evidence only, no phase and no decision handed to an agent
-- [ ] Proposals: Step 1, Step 2b, each of Phases 1–8, and Step 6 proposed and approved before executing
+- [ ] Gates: every always-gate boundary — Steps 1, 2b, 6 and Phases 2, 5, 8 — proposed and approved before executing, plus any phase whose argument changed
+- [ ] Announcements: every boundary that proceeded without asking printed one line naming it and the reason — no boundary passed in silence
 - [ ] Step 4: phases 1–8
       - [ ] Phase 1: constitution
       - [ ] Phase 2: specify
@@ -134,19 +135,61 @@ Read `reference/prompt-rules.md`, draft every phase's prompt argument before run
 
 Present all eight in one block as the **plan**. Report there: command form, base branch from Step 1, constitution state from Phase 1's classification, active optional tooling, the detected forge and the review skill Step 6b will therefore dispatch — or that this run has no review-request step, with the reason — and conflicts already found per `reference/conflicts.md`.
 
-**This step presents; it does not approve.** Approval belongs to each phase, at the moment that phase is about to run, per Step 4. What Step 3 owns is the **leakage check** in `reference/prompt-rules.md`, and that is why all eight are drafted together and shown together: a technology leaking out of the plan prompt and into the specify prompt is invisible when the specify prompt is read alone. Drafting together is what catches it; approving together is what Step 4 replaces.
+**This step presents; it does not approve.** Approval belongs to each boundary that gates, at the moment it is about to run, per Step 4. What Step 3 owns is the **leakage check** in `reference/prompt-rules.md`, and that is why all eight arguments are drafted together and shown together: a technology leaking out of the plan prompt and into the specify prompt is invisible when the specify prompt is read alone.
 
-So Step 3 has no gate of its own. Report the plan and the leakage-check result, then go to Phase 1's proposal.
+**Narrowing the gates does not narrow this check, and never may.** Feature 006 required all eight arguments to be drafted together and checked across each other, and feature 011 supersedes only the requirement to approve each one — the leakage check still runs over all eight, here, every run, whatever `gate_mode` says and however few boundaries end up asking. A run that checks only the arguments belonging to boundaries that will gate has silently reintroduced the defect both features exist to prevent, because the specify prompt is in the auto-proceed set and is the prompt most often corrupted.
 
-**On the objection this design used to make.** An earlier version of this skill argued that gates work only while still read, and that twenty prompts trains click-through where two real ones do not. That argument is sound about gates that repeat themselves, and it is answered rather than dismissed: every phase proposal states **what changed since this plan**, and says so explicitly when nothing changed. A gate that carries new information each time stays read. Eight proposals that come out word-for-word identical apart from the command name are the failure the old argument predicted — if that happens, the proposals are wrong, not the plan.
+Step 3 approves nothing, but it does **ask one question**: how often the run should stop. `AskUserQuestion`, `header: "Gating"`, two options — `Narrowed (Recommended)`, which asks only at the always-gate set and where an argument changed, saying so at every boundary it skips; and `Every phase`, which asks at all thirteen. Recommend `narrowed`, and say why: the irreversible steps still gate either way, so `every-phase` buys confirmation of decisions already settled at the cost of the click-through it is meant to prevent. Write the answer to `gate_mode` in state **before Phase 1**, and read it from there at every boundary — a mode held only in the conversation is a mode a compacted run silently reverts.
+
+Then report the plan and the leakage-check result, and go to Phase 1.
+
+**On the objection this design used to make, and how it was finally answered.** An early version of this skill argued that gates work only while still read, and that twenty prompts trains click-through where two real ones do not. Feature 006 answered it with the delta row: every proposal states **what changed since this plan**, so an unchanged proposal is visibly unchanged. That was a real answer and the delta row survives.
+
+It was not a sufficient one. A proposal that says "nothing changed since the plan" is still a proposal to read, and eight of them in a row is still the pattern the objection described. Feature 011 finishes the job: a boundary with nothing to decide no longer asks at all — it says what it is doing and why it did not ask. **The gate did not get better; there are simply fewer of them, and each survivor carries a decision that is genuinely still open.** The original argument is now spent rather than merely mitigated.
+
+What it cost: a boundary can now proceed with no approval. That is bounded by the always-gate set, which no comparison and no mode can reach, and audited by the announcement line, which is never suppressed.
 
 ## Step 4 — Execute Phases 1–8
 
-This order. **Each phase is proposed and approved immediately before it runs.** Step 3 drafted the arguments and checked them for leakage; this is where each one is agreed to.
+This order. **Each phase is proposed immediately before it runs. Whether that proposal is also gated depends on the rule below** — Step 3 drafted the arguments and checked them for leakage; this is where each one is either agreed to or announced.
 
-### The per-phase proposal
+### When a phase gates, and when it proceeds
 
-Before invoking a phase, state four things and nothing else:
+The rule lives in one place, `specs/011-narrow-gates-pipeline-fix/contracts/gate-decision.md`, and nothing here or in `reference/` restates it. Evaluated fresh at each boundary; the first `true` decides:
+
+1. **In the always-gate set?** → ask.
+2. **`gate_mode` is `every-phase`?** → ask.
+3. **Verbatim argument differs from Step 3's draft?** → ask.
+4. Otherwise → **proceed without asking, and print why.**
+
+**The always-gate set.** Membership is a property of the step, never of the run.
+
+| Boundary            | Why                                                                     |
+| ------------------- | ----------------------------------------------------------------------- |
+| Step 1              | Creates a working directory, or moves the user's tree and may stash it  |
+| Step 2b             | Writes a committed repo-wide instruction file                           |
+| Phase 2 `specify`   | Cuts the feature branch                                                 |
+| Phase 5 `plan`      | Fixes the approach everything later is built on                         |
+| Phase 8 `implement` | Writes source                                                           |
+| Step 6              | Commits, pushes, opens a review request, deletes branches and worktrees |
+
+**A boundary in this set can never compute "do not ask."** No argument comparison, no `gate_mode`, no skip-approval phrase reaches it. That invariant is what keeps the run unable to reach implementation or any irreversible step without an approval given for that step — and it is why this skill still carries no `disable-model-invocation`.
+
+A phase in the auto-proceed set — 1, 3, 4, 6, 7 — gates anyway the moment its argument was revised, a conflict resolution changed it, a preceding phase changed what it will receive, or it is about to be skipped for a reason the Step 3 plan did not carry.
+
+### Announcing a phase that did not gate
+
+**Silence is forbidden.** Before the phase runs, print one line naming the boundary and the reason:
+
+```text
+Phase 6 (tasks) — proceeding without asking: argument byte-identical to the approved plan, effect readily undone.
+```
+
+A boundary that proceeds with no line is a defect: it is indistinguishable from one that was forgotten. This line is not ceremony and is **out of scope for any compaction pass** — it is the mechanism by which a narrowed gate stays auditable.
+
+### The proposal, when a phase does gate
+
+State four things and nothing else:
 
 |                            |                                                                                                                                                           |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -155,15 +198,15 @@ Before invoking a phase, state four things and nothing else:
 | **Writes**                 | the artifacts the phase will create or modify                                                                                                             |
 | **Changed since the plan** | what differs from Step 3's draft, or the words "nothing changed since the plan" when nothing does                                                         |
 
-That last row is what keeps eight gates readable. Say it explicitly; silence there is indistinguishable from having forgotten to check.
+That last row is now the most informative line in the proposal rather than a formality: under the narrowed rule, a Phase 1/3/4/6/7 proposal exists **because** something changed. Say it explicitly; silence there is indistinguishable from having forgotten to check.
 
-Then `AskUserQuestion`: `Proceed` / `Revise` / `Stop`.
+Then `AskUserQuestion`: `Proceed` / `Revise` / `Stop`, with `Proceed` recommended and the reason stated — the argument was reviewed at Step 3 and the delta row says what moved since.
 
 - **Proceed** → invoke the phase. Confirm its artifacts on disk, report, write `phases.N`.
 - **Revise** → amend **only that phase's argument** from the user's note, re-propose it. No other phase's argument changes. After three revisions of one phase, stop and ask rather than loop.
 - **Stop** → the run halts with accurate state on disk.
 
-A **conditional phase about to be skipped still gets a proposal** — stating the skip and its reason. A skip is a decision about what will not happen, and it is reported the same way as one about what will.
+A **conditional phase about to be skipped is still reported** — the skip and its reason, at the point the phase would have run. A skip the Step 3 plan already carried is announced; a skip for any other reason is a difference from the plan and therefore gates. A skip is a decision about what will not happen, and it is never silent either way.
 
 The proposal is not the place to re-argue the plan. It is the place to see what is about to run.
 
@@ -184,10 +227,12 @@ Phase 8 given a scope limit records it in the value — `done: scope-limited to 
 
 ## Proposal discipline: propose before executing
 
-Applies to Steps 1, 2b and 6, **and to each of Phases 1–8**. Step 1 switches branch carrying uncommitted changes or creates a worktree; Step 2b writes a committed repo-wide instruction file; Step 6 opens a review request, can dispatch a commit, deletes branches, and can remove a worktree. Phases 1–8 write inside the repo's spec directory and the feature branch, and each proposes for itself immediately before it runs, per Step 4 — Step 3's plan is a draft to read, not an approval to spend.
+Applies to **the always-gate set** — Steps 1, 2b and 6, and Phases 2, 5 and 8 — and to any other phase whose argument changed since the plan. Step 1 switches branch carrying uncommitted changes or creates a worktree; Step 2b writes a committed repo-wide instruction file; Step 6 opens a review request, can dispatch a commit, deletes branches, and can remove a worktree; Phases 2, 5 and 8 cut the branch, fix the approach, and write source. Every one of these proposes for itself immediately before it runs — Step 3's plan is a draft to read, not an approval to spend.
+
+Phases 1, 3, 4, 6 and 7 are outside it while their arguments are unchanged: they announce rather than ask, per Step 4. They are not exempt from the discipline, only from the gate — the proposal's content is still stated, in the announcement line.
 
 1. **Propose, do not act.** Proposal states: exactly what will run, the files and branches it will create, modify or delete, and any conflict found. Each step's own reference file — `reference/base-branch.md`, `reference/ship.md` — names what else its proposal must carry. No write action until step 3.
-2. **Approve with `AskUserQuestion`.** `Proceed` / `Revise` / `Stop`. That call _is_ the gate for this step; do not gate a second time before executing. Rejected → revise the proposal in place, re-submit, never proceed.
+2. **Approve with `AskUserQuestion`.** `Proceed` / `Revise` / `Stop`, each option saying what it does and costs, with one recommended and the reason given. Recommend `Proceed` where the proposal matches what was planned and the step is reversible; where the step deletes something or reaches a remote, say what is not undoable and let that carry the recommendation. That call _is_ the gate for this step; do not gate a second time before executing. Rejected → revise the proposal in place, re-submit, never proceed.
 3. **Execute only after approval.** These steps switch branches, stash, push and delete. Nothing writes before approval.
 4. **Propose again for each one.** Step 1's approval is not Step 2b's and neither is Step 6's; they are separated by phases, gates and often a compaction. One exception, stated in `reference/claude-md.md`: a 2b verdict of "no change needed" reports and continues without a gate, because changing nothing needs no approval.
 
@@ -205,7 +250,7 @@ The default is silence: report and continue. What overrides that default is not 
 
 Two cases meet that test every time, and they are named because they are the ones that recur — not because they are the only ones:
 
-- **A phase that errors or writes nothing does not advance.** Record `failed: <error>`, report the actual error output, ask: retry unchanged, revise the prompt and retry, or stop. Continuing hands the next phase an artifact that does not exist. Never hand-write the artifact a phase failed to produce, never mark a phase `done` on the assumption it worked.
+- **A phase that errors or writes nothing does not advance.** Record `failed: <error>`, report the actual error output, then `AskUserQuestion`, `header: "Phase failed"`: retry unchanged, revise the prompt and retry, or stop. Recommend retrying unchanged when the error reads as transient and revising when it names something in the argument, and say which of the two the output supports. Continuing hands the next phase an artifact that does not exist. Never hand-write the artifact a phase failed to produce, never mark a phase `done` on the assumption it worked.
 - **A conflict is resolved before the phase that hit it advances**, per `reference/conflicts.md`. That protocol asks because the choice is the user's — which artifact to change is not a decision this skill may make on its own. `analyze`'s findings are conflicts by this definition, so Phase 7 reporting drift is the most common way a real stop arrives.
 
 Anything else that meets the test stops too, on its own merits — a phase that wrote its artifacts but reports it could not do part of the work, a `checklist` result that invalidates the spec the plan was built on, a scope limit the task never asked for. Judge these by the test, not by whether they appear above. Ordinary progress, an unremarkable phase result, and a marker you have already reported are not attention; stopping for those is the ceremony that was just removed.
@@ -256,8 +301,10 @@ Each of these is a rationalization this run has an incentive to reach for, and e
 
 | Thought                                                              | Reality                                                                                                                                                                                                                                                                    |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "The plan was approved at Step 3, so the phases can run"             | Step 3 presents; it does not approve. Every phase is approved at its own proposal, immediately before it runs.                                                                                                                                                             |
-| "Eight proposals is a lot, so keep them short and identical"         | Identical gates are the click-through failure this design was warned about. What answers it is the delta line — say what changed, and say "nothing changed" when nothing did. A proposal with no delta is a defect.                                                        |
+| "The plan was approved at Step 3, so the phases can run"             | Step 3 presents and asks one question about gating; it approves no phase. Every boundary in the always-gate set is approved at its own proposal, immediately before it runs.                                                                                               |
+| "This boundary has nothing to decide, so say nothing and move on"    | Proceeding without asking requires the announcement line. A boundary that proceeds silently is indistinguishable from one that was forgotten, and that line is what makes a narrowed gate auditable. Never suppress it, and never compact it away.                         |
+| "Nothing changed, so Step 6 can proceed unasked like Phase 6 did"    | Step 6 is in the always-gate set. So are Steps 1 and 2b and Phases 2, 5 and 8. No argument comparison, no `gate_mode` and no skip-approval phrase reaches any of them — that invariant is why this skill carries no `disable-model-invocation`.                            |
+| "The user said auto-approve earlier, so `gate_mode` is narrowed"     | A skip-approval phrase is not an answer to Step 3's gating question. Read `gate_mode` from state; absent on a resumed pre-011 run it is `narrowed`, and that is said out loud rather than assumed.                                                                         |
 | "The argument is long, so summarize it in the proposal"              | The verbatim argument or nothing. An approval given against a paraphrase approves something the phase will not receive.                                                                                                                                                    |
 | "This phase is being skipped, so there is nothing to propose"        | A skip is a decision about what will not happen. Propose it, with its reason, the same as one about what will.                                                                                                                                                             |
 | "The command returned, so the phase is done"                         | `done` means the artifacts were seen on disk. Never write it on the strength of a response that merely looked successful.                                                                                                                                                  |
@@ -292,6 +339,10 @@ Do not hard-wrap long lines when writing or editing this skill or its reference 
 
 The documentation does not settle it, and two of its passages disagree. The field's own entry says it prevents Claude from loading a skill **automatically**, which reads as silent on an explicit call. Another passage says "To keep Claude from invoking it through the `Skill` tool, set `disable-model-invocation: true`" — naming the tool, with no qualifier. So the gap is real but one-sided in its cost: under the strict reading the field breaks a dispatch, and under the permissive reading omitting it costs nothing at all. The strict reading binds.
 
-**This skill no longer carries the field either, and the reason is worth stating because it is not the same reason.** Nothing dispatches this skill, so the ambiguity above never arises for it. It carried the field because an eight-phase pipeline that engages on its own would be wrong — and that was true while one approval at Step 3 covered all eight phases. It is no longer true: every phase is proposed and approved immediately before it runs, and Steps 1, 2b and 6 keep their own gates, so being reached automatically cannot cause anything to happen without being asked. **The gate is in the workflow, not in the frontmatter.** If the per-phase gates are ever removed, the old argument returns and the field should return with them. The two are a pair.
+**This skill no longer carries the field either, and the reason is worth stating because it is not the same reason.** Nothing dispatches this skill, so the ambiguity above never arises for it. It carried the field because an eight-phase pipeline that engages on its own would be wrong — and that was true while one approval at Step 3 covered all eight phases. It is no longer true. **The gate is in the workflow, not in the frontmatter.**
+
+**Feature 011 narrowed those gates and the field still stays off — this is the re-examination, not an oversight.** Feature 006 recorded that the field's absence was justified by every phase being separately gated, and that "if the per-phase gates are ever removed, the old argument returns and the field should return with them. The two are a pair." Narrowing is not removal, and the property the pairing actually depended on is untouched: by the always-gate set in Step 4, this skill cannot reach `implement`, or any step that commits, pushes, raises a review request or deletes a branch or workspace, without an explicit approval for that step. A skill reached automatically still cannot **do** anything automatically, which is the whole of what the original argument was about.
+
+The pairing is therefore satisfied, not discharged. **If a future feature removes the always-gate set, the argument returns intact and the field should return with it.** Recorded at `specs/011-narrow-gates-pipeline-fix/research.md` R9 and `contracts/skill-names.md`.
 
 **Keep the forge in exactly one place.** `scripts/forge-detect.sh` decides it, Step 0 records it, Step 6b reads it. Adding a second detection — a host check in prose, a `glab` probe at 6b, a guess from the task description — gives the run two answers that can disagree, and the one that loses is always the one the user was shown.

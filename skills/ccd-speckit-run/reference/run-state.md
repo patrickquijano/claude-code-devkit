@@ -27,6 +27,7 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
     "init": true,
     "subagent": "<agent type name> | none"
   },
+  "gate_mode": "narrowed | every-phase",
   "previous_branch": "main",
   "stash_ref": null,
   "workspace": "checkout | worktree",
@@ -113,6 +114,7 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
 | Field                                                                  | Written at                                                                                                |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `task`, `command_form`, `skill_dir`, `tooling`                         | Step 0                                                                                                    |
+| `gate_mode`                                                            | Step 3, from its one question, before Phase 1 runs                                                        |
 | `previous_branch`, `base_branch`, `stash_ref`, `workspace`, `worktree` | Step 1 — `workspace` the moment 1b's answer returns, `worktree` once 1d created and entered it            |
 | `worktree.teardown`                                                    | Step 6e                                                                                                   |
 | `claude_md`, `steps["2b"]`                                             | Step 2b                                                                                                   |
@@ -137,6 +139,7 @@ Both are internal bookkeeping. Never commit them. `scripts/dirty-diff.sh` report
 - `claude_md.action` distinguishes the five outcomes, and Step 7 reports it verbatim. `unchanged` is the expected value on most runs and means the four tests in `reference/claude-md.md` were applied and none passed — never that the step was quietly bypassed. `claude_md.entries` holds each added instruction in one line, so a compacted run can still report what it wrote into a file that governs every future session.
 - `verify.attempts` is the **total** number of times the check ran in Step 5, across 5c's fix loop and 5f's per-finding re-runs. `verify.consecutive_failures` is the separate counter the three-attempt cap actually governs: it increments on each failing run and resets to `0` on a green one. The gate offers a re-run only while `consecutive_failures` is under three. Deriving the cap from `attempts` is wrong once 5f has re-run the check even once.
 - `phases.8` records a scope limit in the value: `done: scope-limited to <what>`. Plain `done` means `implement` executed the whole of `tasks.md`. Step 6 reads that prefix to decide whether the partial-ship question fires, so a scope limit recorded only in the conversation is a scope limit Step 6 cannot see.
+- `gate_mode` is a **closed set** of exactly two values, `narrowed` and `every-phase`; anything else is an error condition, not a third behaviour. Written once at Step 3, read before every boundary, never rewritten mid-run — a user changing their mind restarts the choice by stopping and re-running. **Absent on a resumed run written before feature 011** → treat as `narrowed` and say so at the next boundary. Read it; never infer it from the conversation, because a compacted run that guesses will guess `narrowed` and silently stop asking where the user asked to be asked.
 - `tooling.subagent` holds the agent type Step 0 resolved for delegated sweeps, or `none`. Read it rather than re-deriving the session's agent list at dispatch time: an agent named from recollection after a compaction is an agent that may not exist. `none` means every sweep runs inline, which changes no rule and no artifact.
 - `workspace` decides which 1d ran, which teardown exists, and where this file itself lives. In `worktree` mode the state file is inside the worktree, because every path in the run is relative to it — which is why `resume-state.sh` scans sibling worktrees rather than trusting the current directory. Write it the moment 1b's answer returns, before 1c: a mode held only in the conversation is a mode a compacted run cannot read.
 - `worktree` is null in checkout mode. In worktree mode `worktree.original_dir` is the directory the session started in, kept because 6e's exit needs somewhere to return to and `previous_branch` does not answer that. `worktree.created` distinguishes a worktree this run made from one the session was already inside — 6e never offers to remove the latter.
