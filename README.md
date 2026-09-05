@@ -154,6 +154,14 @@ Two further templates in [`.github/PULL_REQUEST_TEMPLATE/`](.github/PULL_REQUEST
 
 Before proposing a change, run `scripts/lint.sh` and make sure it passes. The constitution requires it, and the reviewer will check.
 
+Arm the git hooks once per clone, before your first commit:
+
+```sh
+sh scripts/install-hooks.sh
+```
+
+That points git at the committed hooks in `.husky/`, which refuse a commit message that is not a Conventional Commits subject of at most 72 characters and refuse a push carrying an unsigned or badly signed commit. It needs nothing but POSIX `sh` and git — no `npm install`, no `package.json`, and Husky itself is optional. `sh scripts/install-hooks.sh --status` reports whether the checks are currently on. What each hook enforces, why Husky is optional, and how to bypass a check in an emergency are in [`docs/husky-git-hooks.md`](docs/husky-git-hooks.md).
+
 Two things worth knowing before you edit:
 
 - Each check declares its excluded paths in **one** place: the configuration file that already drives it. The runner reads that same declaration to build the file list, so running a tool by hand applies the exclusions the runner applies. ShellCheck has no exclusion mechanism of its own, so its declaration is a marked comment block in `.shellcheckrc` — read by the runner, invisible to the tool, which is a limitation stated in that file.
