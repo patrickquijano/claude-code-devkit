@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repository is
 
-`claude-code-devkit` is a Claude Code plugin and developer toolkit for building custom agents, commands, skills, and MCP servers. The quality gate, the plugin manifests described below, and six skills under `skills/` are on disk and working; the commands, agents and MCP servers the toolkit advertises are not built yet.
+`claude-code-devkit` is a Claude Code plugin and developer toolkit for building custom agents, commands, skills, and MCP servers. The quality gate, the plugin manifests described below, and seven skills under `skills/` are on disk and working; the commands, agents and MCP servers the toolkit advertises are not built yet.
 
 ## The distributed skills
 
@@ -12,16 +12,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `ccd-speckit-run` is the entry point: it drives the eight Spec Kit phases from one task description and ships the result. `ccd-branch-push`, `ccd-commit-push`, `ccd-github-pr` and `ccd-gitlab-mr` are the git and forge skills it dispatches at its Step 6, and each is usable on its own. `ccd-conflict-resolve` walks a user through an already-conflicted working tree, one approved resolution at a time; `ccd-speckit-run` dispatches it at every step and phase boundary, but only when its boundary check finds the tree actually conflicted.
 
+`ccd-speckit-bug-run` is the other entry point, and it is the exception to the paragraph below. It drives Spec Kit's **bug** extension — `speckit-bug-assess`, then `speckit-bug-fix`, then `speckit-bug-test` — from one bug report, gating each stage separately and skipping any whose precondition the extension would refuse. Those three are Spec Kit project skills, not this plugin's, so it dispatches them by their **bare** names; `claude-code-devkit:speckit-bug-assess` names nothing. It is also the one skill that addresses its own bundled files as `${CLAUDE_SKILL_DIR}` rather than `${CLAUDE_PLUGIN_ROOT}/skills/…`, which is what `.claude/rules/skill-authoring.md` requires and what `ccd-speckit-run` predates. Details: [`.claude/rules/spec-kit-bug-workflow.md`](.claude/rules/spec-kit-bug-workflow.md) and [`docs/spec-kit-extensions.md`](docs/spec-kit-extensions.md).
+
 Four things about them are load-bearing and easy to undo by tidying:
 
 - Every distributed skill carries the `ccd-` prefix in its directory name and its frontmatter `name`. The prefix looks redundant under the `claude-code-devkit:` namespace and is not — it is what makes the **bare** name unambiguous when a personal copy of the same skill is also installed.
-- Cross-skill dispatch uses the **namespaced** name. A bare name resolves to whatever the session decides when a personal copy is also installed.
+- Cross-skill dispatch uses the **namespaced** name. A bare name resolves to whatever the session decides when a personal copy is also installed. This governs **this plugin's own** skills; `ccd-speckit-bug-run`'s three `speckit-bug-*` dispatches are outside its scope, not an exception to it, because the namespace does not address a Spec Kit project skill.
 - `branch-options.sh` exists **once**, in `ccd-branch-push`, reached by all four consumers through `${CLAUDE_PLUGIN_ROOT}`. Its header comment records the three defects of the fork that was rejected.
-- **No skill carries `disable-model-invocation`**, and none may. Adding it to any of the four `ccd-speckit-run` dispatches breaks that dispatch silently, at the end of a full run. `ccd-speckit-run` itself dropped it in feature 006 once every phase became separately gated — the gate is in the workflow, not the frontmatter. `skills/ccd-speckit-run/SKILL.md`'s authoring note says why the strict reading binds, and the count is a contract at `specs/006-claude-code-guidance/contracts/skill-names.md`.
+- **No skill carries `disable-model-invocation`**, and none may. Adding it to any of the four `ccd-speckit-run` dispatches breaks that dispatch silently, at the end of a full run. `ccd-speckit-run` itself dropped it in feature 006 once every phase became separately gated, and `ccd-speckit-bug-run` never carried it for the same reason — the gate is in the workflow, not the frontmatter. That skill is the case 006's contract said it could not settle, a seventh skill with side effects; 009 settles it by gating every stage rather than by adding the field. The count is a contract at `specs/009-bug-triage-run/contracts/skill-names.md`, which supersedes 006's.
 
 **Bump `version` in `.claude-plugin/plugin.json` in any feature that changes `skills/`** — minor for a behaviour change, patch for wording. It is the only cache key a consumer has, and a stale copy is served silently: features 002 through 007 all shipped under an unchanged `0.1.0`, and feature 008 caught `/claude-code-devkit:ccd-speckit-run` executing an older workflow than the byte-identical file on disk. Evidence and the alternatives considered are in `specs/008-commit-hooks/research.md`.
 
-Their own history is in `specs/002-vendor-plugin-skills/`, which distributed them, and `specs/003-ccd-skill-rename/`, which gave them the `ccd-` prefix and supersedes 002's two interface contracts. `specs/005-merge-conflict-resolution/` added the sixth skill and supersedes 003's name contract.
+Their own history is in `specs/002-vendor-plugin-skills/`, which distributed them, and `specs/003-ccd-skill-rename/`, which gave them the `ccd-` prefix and supersedes 002's two interface contracts. `specs/005-merge-conflict-resolution/` added the sixth skill and supersedes 003's name contract; `specs/009-bug-triage-run/` added the seventh and supersedes 006's in turn.
 
 ## Agent instructions
 

@@ -1,8 +1,8 @@
 {
   "name": "claude-code-devkit",
   "displayName": "Claude Code Devkit",
-  "description": "A spec-driven-development toolkit for Claude Code: six git and forge skills that take a feature from one task description through GitHub Spec Kit's eight phases to a reviewed pull or merge request, plus a seven-check quality gate that runs on POSIX sh and digest-pinned containers.",
-  "version": "0.2.0",
+  "description": "A spec-driven-development toolkit for Claude Code: seven skills that take a feature from one task description through GitHub Spec Kit's eight phases to a reviewed pull or merge request, drive its bug-triage workflow from one bug report to a verified fix, and handle the git and forge work in between, plus a seven-check quality gate that runs on POSIX sh and digest-pinned containers.",
+  "version": "0.3.0",
   "author": {
     "name": "Patrick Quijano",
     "url": "https://github.com/patrickquijano"
