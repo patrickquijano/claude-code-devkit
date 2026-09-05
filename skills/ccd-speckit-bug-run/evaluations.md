@@ -153,7 +153,7 @@ Finish a worktree run with an uncommitted file in the worktree, and a branch run
 
 ## Contract checks
 
-Run the seven commands in `specs/010-bug-run-ship/contracts/skill-names.md` from the repository root. Expect no output from checks 1, 2, 3, 4 and 6; `7` from the count in check 1; and an empty diff from check 7.
+Run the seven commands in `specs/011-narrow-gates-pipeline-fix/contracts/skill-names.md` from the repository root. Expect no output from checks 1, 2, 3, 4 and 6; `7` from the count in check 1; and an empty diff from check 7.
 
 Check 4 carries a `speckit-bug-` exclusion and it is load-bearing. The three stage dispatches are bare on purpose — they are Spec Kit project skills, not this plugin's. A run of check 4 without that exclusion reports three false positives, and "fixing" them produces a dispatch that resolves to nothing.
 
