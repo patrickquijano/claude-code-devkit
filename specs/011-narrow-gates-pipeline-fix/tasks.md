@@ -216,6 +216,34 @@ Every task below follows the same shape: compact, then run `sh scripts/compactio
 
 ---
 
+## Phase 9: Unit consistency (T089–T092, resumed run)
+
+Discovered at the preflight of a resumed run, after the work above had already shipped in PR #11. Not a compaction task and not part of User Story 4.
+
+**The defect.** The lines-to-characters change approved during Phase 8 reached `scripts/compaction-audit.sh` and its comments, but not the three documents that specify it. The rule stated the floor in lines, `research.md` R2 recorded the decision in lines, and `contracts/compaction-audit-cli.md` documented nine of the eleven keys the script emits — omitting `chars-before` and `chars-after`, the pair the verdict actually turns on, while calling its own output "machine-readable and stable".
+
+- [x] T089 State the floor in `.claude/rules/repository-docs.md` § The length floor as at least 15% of non-code, non-frontmatter, non-blank **characters**, with the reason the unit is characters
+- [x] T090 Amend `specs/011-narrow-gates-pipeline-fix/research.md` decision R2 to characters, recording the Phase 5 → Phase 8 amendment rather than deleting the original, and correcting the rationale paragraph, whose prediction that size predicts compressibility the measurements contradicted
+- [x] T091 Add `chars-before` and `chars-after` to the documented output block in `specs/011-narrow-gates-pipeline-fix/contracts/compaction-audit-cli.md` in emit order, and state that `reduction-pct` is computed from characters
+- [x] T092 Verify the four agree by reading them side by side, and record the check here
+
+### T092 result
+
+Read against `scripts/compaction-audit.sh` at `THRESHOLD=15` (line 15), `REDUCTION=$(((CHARS_BEFORE - CHARS_AFTER) * 100 / CHARS_BEFORE))` (line 249) and the emit block (lines 263–273):
+
+| Artefact                            | Unit                           | Keys                                 | Agrees            |
+| ----------------------------------- | ------------------------------ | ------------------------------------ | ----------------- |
+| `scripts/compaction-audit.sh`       | characters                     | emits 11                             | — (the authority) |
+| `.claude/rules/repository-docs.md`  | characters                     | names both pairs, says which decides | yes               |
+| `research.md` R2                    | characters, amendment recorded | names both pairs                     | yes               |
+| `contracts/compaction-audit-cli.md` | characters, stated explicitly  | documents all 11 in emit order       | yes               |
+
+The number 15 is unchanged in all four, so nothing already audited needs re-auditing.
+
+**What this pass deliberately did not do.** No document was compacted. FR-027, T058–T074 and T081–T083 are untouched — whether to compact the remaining 27 files is a separate decision, deferred to after this fix, and `research.md` R2 now records the open question about whether 15% is the right number given that no file in this corpus has reached it.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase dependencies

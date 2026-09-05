@@ -46,16 +46,27 @@ Additionally, **every fenced code block is normative in its entirety** and is co
 
 **Problem**: FR-027 says documents "MUST be shortened" and SC-010 says each is "shorter than its previous version". CHK011 and CHK012 established both are satisfied by deleting one character.
 
-**Decision**: a compacted document MUST lose **at least 15% of its non-code, non-frontmatter lines**, measured as lines outside fenced code blocks and outside YAML frontmatter, ignoring blank lines.
+**Decision** (as amended at Phase 8 — see the amendment below): a compacted document MUST lose **at least 15% of its non-code, non-frontmatter characters**, measured across the text outside fenced code blocks and outside YAML frontmatter, ignoring blank lines.
+
+**Amendment, Phase 8.** This decision was taken at Phase 5 in **lines** and amended to **characters** during implementation, with the maintainer's approval. It is amended rather than replaced because the reasoning below is still the reasoning; only the unit was wrong.
+
+What forced it: `.claude/rules/repository-docs.md` forbids hard-wrapping prose, so every document this rule governs is one line per paragraph. A compaction pass therefore shortens lines rather than removing them, and a line-count floor measures almost nothing. The measurement that settled it is `skills/ccd-speckit-run/reference/base-branch.md`, which carries **2 non-normative lines out of 38** — it could never have reached 15% on a line basis no matter how much text was cut, and five other large files were arithmetically exempt on the same grounds before anyone read them. A floor that a document passes or fails according to how its author happened to break paragraphs is not measuring compaction.
+
+`scripts/compaction-audit.sh` reports both units — `lines-before`/`lines-after` and `chars-before`/`chars-after` — and computes `reduction-pct`, which the verdict turns on, from the characters.
 
 A document that cannot reach 15% without losing a line R1 classifies as normative is **exempt**. An exemption is recorded in `tasks.md` and reported at Step 5 with the reason and the percentage actually achieved. An exemption is a legitimate outcome, not a failure — FR-030 already requires this and R2 only supplies the number that triggers it.
 
-**Rationale**: 15% is chosen to be large enough that it cannot be met by whitespace and small enough that it does not force rewriting dense reference text that is already at its information floor. The survey behind this feature found the largest documents are prose-heavy — `ccd-speckit-run/reference/evaluations.md` at 379 lines, `ship.md` at 246, `worktree.md` and `claude-md.md` at 186 — where 15% is comfortable; while the tightest, `constitution.md` at 37 and `tooling.md` at 42, are the ones most likely to claim the exemption, which is the correct outcome for them.
+**Rationale**: 15% is chosen to be large enough that it cannot be met by whitespace and small enough that it does not force rewriting dense reference text that is already at its information floor.
+
+The Phase 5 rationale predicted that the large prose-heavy documents — `ccd-speckit-run/reference/evaluations.md` at 379 lines, `ship.md` at 246, `worktree.md` and `claude-md.md` at 186 — would clear 15% comfortably, while only the tightest, `constitution.md` at 37 lines and `tooling.md` at 42, would claim the exemption.
+
+**That prediction is not what happened, and the record says so rather than being quietly corrected.** Two files were compacted by hand and measured in characters: `tooling.md` reached **8%** and `reference/verify.md` **6%**, neither clearing the floor. The prediction was that size predicts compressibility; the measurement says density does, and these documents are already dense because this rule set forbids padding and requires a recorded rationale beside anything surprising, so nearly every line carries a backticked identifier, a number or a `because`. Whether 15% is therefore the wrong number is a separate question this feature has deliberately not answered — it is recorded here as an open finding, not resolved by lowering the floor to whatever the two samples happened to reach.
 
 **Alternatives considered**:
 
-- _A token target rather than a line target_ — rejected. No tool in this repository counts tokens, so the criterion would be unmeasurable by the same argument that produced this decision.
+- _A token target rather than a percentage_ — rejected. No tool in this repository counts tokens, so the criterion would be unmeasurable by the same argument that produced this decision. Characters are the closest measurable proxy and need only `wc`.
 - _A fixed absolute target (e.g. "at least 20 lines")_ — rejected. It is trivial for a 379-line file and impossible for a 37-line one.
+- _A percentage of lines_ — this was the Phase 5 decision, amended at Phase 8 for the reason recorded above. Kept in the list because a later reader proposing it again should find it already answered.
 - _No threshold, reviewer judgement_ — rejected; that is the status quo CHK011 flagged.
 
 ## R3 — How "establishable by comparison" is actually established

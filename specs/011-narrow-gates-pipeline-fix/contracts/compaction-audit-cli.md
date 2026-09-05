@@ -57,12 +57,16 @@ path        .claude/rules/repository-docs.md
 baseline    a96e95f
 lines-before        61
 lines-after         49
+chars-before        4233
+chars-after         3421
 reduction-pct       19
 normative-before    38
 normative-after     38
 normative-lost      0
 verdict     pass
 ```
+
+**`reduction-pct` is computed from the characters, not from the lines.** `chars-before` and `chars-after` are the pair the verdict turns on; `lines-before` and `lines-after` are reported for orientation and nothing reads them. The unit is characters because this repository forbids hard-wrapping prose, so a compaction pass shortens lines rather than removing them — the reasoning and the measurement that forced the change are in [`../research.md`](../research.md) decision R2.
 
 When `normative-lost` is non-zero, each lost line follows, one per line, prefixed `lost<TAB>`:
 
