@@ -12,6 +12,7 @@ Sources are the official documentation at <https://code.claude.com/docs>. Where 
 - Skills, rules and memory — choosing between them
 - Settings and hooks
 - Writing an instruction that is actually followed
+- Working efficiently: the one constraint everything else follows from
 - Plugin structure
 
 ## Where instructions live, and which file wins
@@ -124,6 +125,26 @@ Two rules, both from the documentation, and both worth more than any amount of e
 
 Structure matters too: Markdown headers and bullets grouped by topic, not dense paragraphs — "Claude scans structure the same way readers do".
 
+## Working efficiently: the one constraint everything else follows from
+
+The [best practices](https://code.claude.com/docs/en/best-practices.md) page states the constraint plainly, and every practice on that page is downstream of it: "Most best practices are based on one constraint: Claude's context window fills up fast, and performance degrades as it fills. Claude's context window holds your entire conversation, including every message, every file Claude reads, and every command output."
+
+That framing is worth keeping in mind because it makes the practices predictable rather than arbitrary. Each is a way of spending less context, or of spending it on something that survives.
+
+**Separate exploring from building.** The documented workflow has four phases — explore in plan mode, plan, implement, commit — and the point of the split is that a wrong plan is cheap to discard while wrong code is not. Plan mode reads files and answers questions without making changes.
+
+**Delegate research to subagents.** "When Claude researches a codebase it reads lots of files, all of which consume your context. Subagents run in separate context windows and report back summaries." A sweep that reads thirty files and returns a page costs a page.
+
+**Give a check that closes the loop.** "Give Claude a check it can run: tests, a build, a screenshot to compare. It's the difference between a session you watch and one you walk away from." This is the same rule as the previous section's, seen from the efficiency side: a verifiable check lets the work iterate without a human in each cycle.
+
+**Reset rather than accumulate.** "After two failed corrections, `/clear` and write a better initial prompt incorporating what you learned." A conversation that has already failed twice is carrying the failures forward as context, and each retry starts from a worse position than the last.
+
+**Be specific about what to look at.** Referencing particular files, naming constraints, and pointing at an example pattern all cost far less context than the exploration they replace.
+
+**In this repository**, two of these are load-bearing rather than aspirational. `sh scripts/lint.sh` is the pass-or-fail check, and the constitution requires it to have passed before review. And `ccd-speckit-run` formalises the delegation rule in `reference/subagents.md`: sweeps are dispatched in one batch, capped at ten, evidence comes back but conclusions do not, and no phase and no decision is ever handed to an agent. The cap exists because the dispatch itself costs context — below a certain repository size, reading inline is cheaper than delegating.
+
+The compaction budget is the same constraint applied to a skill's own prose, and it is why `ccd-speckit-run` and `ccd-speckit-bug-run` both keep their run facts in a state file rather than in their bodies. See [`skill-authoring-practices.md`](./skill-authoring-practices.md).
+
 ## Plugin structure
 
 `.claude-plugin/plugin.json` requires only `name`, in kebab-case. Optional fields cover metadata (`description`, `version`, `author`, `license`, `keywords`) and paths (`skills`, `commands`, `agents`, `hooks`, `mcpServers`) ([plugins reference](https://code.claude.com/docs/en/plugins-reference.md)).
@@ -137,3 +158,4 @@ Auto-discovery defaults: skills in `skills/`, commands in `commands/`, agents in
 ## Recorded gaps
 
 - **Nested `CLAUDE.md` depth.** The four-hop limit applies to `@path` imports. No equivalent limit is documented for the filesystem hierarchy of `CLAUDE.md` files themselves; the documentation says only that files above the working directory load at launch and subdirectories load on demand.
+- **Auto memory versus `CLAUDE.md`, when they disagree.** The [memory](https://code.claude.com/docs/en/memory.md) page describes both loading into context and says who writes each, but does not state which takes precedence when the two carry contradictory instructions, or whether they are weighed equally. Re-checked 2026-09-05.
