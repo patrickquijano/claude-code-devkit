@@ -1128,7 +1128,132 @@ fi
 gh_says install-second 'gpg.format'
 gh_says install-second 'user.signingkey'
 
-say "$PROG: $EXERCISED standards exercised, $HOOK_CASES format-hook cases, $GH_CASES git-hook cases"
+# --- compaction-audit.sh -------------------------------------------------
+#
+# The audit is what makes "nothing normative was dropped" checkable rather than
+# a judgement, so a fixture proving only the pass case proves nothing. Cases 1
+# and 4 are the ones that matter: a removed rule and an altered code block are
+# the two losses the whole compaction pass exists to prevent, and if either
+# reports `pass` the audit is worse than useless -- it certifies the loss.
+#
+# Contract: specs/011-narrow-gates-pipeline-fix/contracts/compaction-audit-cli.md
+
+CA_CASES=0
+CA_FAILURES=''
+
+CA_FIX="$WORK/compaction-fixture"
+mkdir -p "$CA_FIX"
+git -C "$CA_FIX" init -q
+git -C "$CA_FIX" config user.email selftest@example.invalid
+git -C "$CA_FIX" config user.name selftest
+
+# The baseline document: enough non-normative prose that a 20% cut is possible
+# without touching a rule, one MUST line, and one fenced code block.
+cat > "$CA_FIX/doc.md" << 'CA_DOC'
+# Fixture
+
+Every script MUST exit non-zero on the first failing check.
+
+This paragraph carries no rule at all and exists to be removed.
+Neither does this one, which is filler of the same kind.
+Nor this third line of ordinary descriptive prose.
+A fourth line, equally free of obligation.
+A fifth, and this is the last of the padding.
+
+```sh
+printf 'unchanged\n'
+```
+CA_DOC
+
+git -C "$CA_FIX" add doc.md
+git -C "$CA_FIX" commit -q -m 'baseline'
+CA_BASE=$(git -C "$CA_FIX" rev-parse HEAD)
+
+# ca_run CASE EXPECTED_VERDICT EXPECTED_EXIT -- runs the audit inside the fixture repo.
+ca_run() {
+	CA_CASES=$((CA_CASES + 1))
+	CAOUT="$WORK/compaction-$1.out"
+	CAST=0
+	(cd "$CA_FIX" && sh "$SCRIPT_DIR/compaction-audit.sh" "$CA_BASE" doc.md) \
+		> "$CAOUT" 2>&1 || CAST=$?
+	CAVERDICT=$(awk -F'\t' '$1 == "verdict" { print $2 }' "$CAOUT")
+	if [ "$CAVERDICT" != "$2" ]; then
+		say "compaction/$1: verdict '$CAVERDICT', expected '$2'"
+		CA_FAILURES="$CA_FAILURES $1"
+		return 0
+	fi
+	if [ "$CAST" -ne "$3" ]; then
+		say "compaction/$1: exit $CAST, expected $3"
+		CA_FAILURES="$CA_FAILURES $1"
+		return 0
+	fi
+	say "compaction/$1: as required (verdict $CAVERDICT, exit $CAST)"
+}
+
+# 1. A MUST line removed. The one failure the audit exists to catch.
+cat > "$CA_FIX/doc.md" << 'CA_DOC'
+# Fixture
+
+This paragraph carries no rule at all and exists to be removed.
+
+```sh
+printf 'unchanged\n'
+```
+CA_DOC
+ca_run removed-must fail-lost 1
+if ! grep -q 'exit non-zero on the first failing check' "$WORK/compaction-removed-must.out"; then
+	say 'compaction/removed-must: fail-lost, but the output never names the lost line'
+	CA_FAILURES="$CA_FAILURES removed-must-unnamed"
+fi
+
+# 2. Only blank lines removed: nothing lost, but nothing shortened either.
+cat > "$CA_FIX/doc.md" << 'CA_DOC'
+# Fixture
+Every script MUST exit non-zero on the first failing check.
+This paragraph carries no rule at all and exists to be removed.
+Neither does this one, which is filler of the same kind.
+Nor this third line of ordinary descriptive prose.
+A fourth line, equally free of obligation.
+A fifth, and this is the last of the padding.
+```sh
+printf 'unchanged\n'
+```
+CA_DOC
+ca_run blank-only fail-short 1
+
+# 3. Non-normative prose cut past the floor, every rule and the code block intact.
+cat > "$CA_FIX/doc.md" << 'CA_DOC'
+# Fixture
+
+Every script MUST exit non-zero on the first failing check.
+
+This paragraph carries no rule at all and exists to be removed.
+
+```sh
+printf 'unchanged\n'
+```
+CA_DOC
+ca_run prose-trimmed pass 0
+
+# 4. Code block altered by one character, prose untouched.
+cat > "$CA_FIX/doc.md" << 'CA_DOC'
+# Fixture
+
+Every script MUST exit non-zero on the first failing check.
+
+This paragraph carries no rule at all and exists to be removed.
+
+```sh
+printf 'altered\n'
+```
+CA_DOC
+ca_run altered-code fail-lost 1
+
+# 5. The document is gone.
+rm -f "$CA_FIX/doc.md"
+ca_run missing-path unreadable 3
+
+say "$PROG: $EXERCISED standards exercised, $HOOK_CASES format-hook cases, $GH_CASES git-hook cases, $CA_CASES compaction-audit cases"
 
 if [ -n "$SKIPPED" ]; then
 	say "$PROG: not exercised, because no tool was reachable:$SKIPPED"
@@ -1146,8 +1271,12 @@ if [ -n "$GH_FAILURES" ]; then
 	die "$PROG: these git-hook cases did not behave as required:$GH_FAILURES. Each is a rule the commit-msg or pre-push hook is supposed to enforce, not a broken test." 1
 fi
 
+if [ -n "$CA_FAILURES" ]; then
+	die "$PROG: these compaction-audit cases did not behave as required:$CA_FAILURES. An audit that certifies a lost rule is worse than no audit, so treat each as a broken check, not a broken test." 1
+fi
+
 if [ -n "$SKIPPED" ]; then
 	die "$PROG: every reachable check rejected its fixture, but$SKIPPED could not be exercised at all, so SC-002 is unproven for them." 1
 fi
 
-say "$PROG: every check rejected its bad fixture, and the format hook held every safety property"
+say "$PROG: every check rejected its bad fixture, the format hook held every safety property, and the compaction audit refused to certify a lost rule"

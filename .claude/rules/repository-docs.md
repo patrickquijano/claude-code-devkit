@@ -38,6 +38,50 @@ and nothing catches the drift afterwards.
 - The trigger for adding an entry is documented: Claude made the same mistake twice, a review
   caught something Claude should have known, or you typed the same correction again.
 
+## The one exception: a deliberate compaction pass
+
+Everything above forbids revising a file as a side effect of other work, and that stays forbidden.
+A **compaction pass** is different and is permitted: a deliberate, reviewed change whose entire
+purpose is to make a document cost less to read. The distinction is not the size of the diff, it is
+what the change is for — a pass that IS the change cannot bury the line that mattered, because
+there is no other line.
+
+A compaction pass MUST satisfy all of the following. A change meeting none of them is drive-by
+tidying, which the rules above still forbid.
+
+- It is the stated purpose of the change, not incidental to a feature touching the same file.
+- It is audited: `sh scripts/compaction-audit.sh <baseline-ref> <path>` reports `pass`, or the
+  document is recorded exempt with its reason and its actual percentage.
+- It drops **no** normative content. A `fail-lost` verdict is fixed, never waived — an exemption
+  covers failing the length floor and never covers losing a rule.
+- Section order is still not reordered, and section titles are still not rewritten, unless the
+  section itself is being removed as redundant.
+
+### What "normative content" means
+
+Mechanical, so that it is not decided under time pressure. Outside fenced code blocks and YAML
+frontmatter, a line is normative if it carries any of: a modal obligation (`MUST`, `MUST NOT`,
+`MAY`, `SHOULD`, `SHOULD NOT`); a prohibition or absolute (`never`, `always`, `only`, `forbidden`,
+`no exception`, `zero`); a rationale marker (`Rationale:`, `because`, `the reason`, `which is why`,
+`so that`); a named failure mode (`WARNING`, `defect`, `regression`, `silently`, `breaks`, `fails`,
+`wrong`); a backticked identifier; or a numeric threshold.
+
+**Every fenced code block is normative in its entirety** and is compared byte-for-byte.
+
+The definition is deliberately over-broad. Flagging a line that did not need preserving costs a
+reviewer a glance; missing one loses an invariant that no check in this repository would ever catch
+again. Rationale markers are included because several files here record _why_ an odd-looking rule
+exists precisely so a later contributor does not "fix" it, and that reasoning is the first thing a
+naive compaction deletes as padding.
+
+### The length floor
+
+A compacted document loses **at least 15%** of its non-code, non-frontmatter, non-blank lines. A
+document that cannot reach 15% without dropping a normative line is exempt, and the exemption is
+recorded with the percentage actually achieved. Reasoning and the alternatives rejected:
+[`specs/011-narrow-gates-pipeline-fix/research.md`](../../specs/011-narrow-gates-pipeline-fix/research.md)
+decisions R1, R2 and R3.
+
 ## `docs/`
 
 - Every claim of fact about Claude Code names the source it came from. Where no authoritative
