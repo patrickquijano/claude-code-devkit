@@ -244,6 +244,29 @@ The number 15 is unchanged in all four, so nothing already audited needs re-audi
 
 ---
 
+## Phase 10: Closing the requirements-quality gaps (T099–T106)
+
+The review recorded at `checklists/quality.md` left 33 items open. This phase closes all of them. 18 needed an existing requirement amended; 12 needed a new requirement **and** the behaviour that satisfies it; 3 closed as unvalidated, moot, or a spec gap the shipped skill already handled.
+
+- [x] T099 Amend 18 existing requirements and criteria in `spec.md` — FR-001, FR-002, FR-007, FR-009, FR-010, FR-011b, FR-013, FR-018, FR-019, FR-020, FR-023, FR-027a, FR-031, FR-032, FR-034, SC-001, SC-009, SC-010
+- [x] T100 Add FR-037 in `spec.md` recording what this feature cannot verify about itself — no pipeline here, and the bug-workflow-fitness assumption unvalidated
+- [x] T101 Add FR-038 – FR-049 in `spec.md`, each naming the checklist item that produced it
+- [x] T102 Add SC-013, SC-014 and SC-015 in `spec.md` for the new failure paths, the per-phase record, and approvals not surviving interruption
+- [x] T103 Implement FR-039, FR-040, FR-042, FR-046, FR-047 and FR-049 in `skills/ccd-pipeline-fix/SKILL.md` — including a new Step 5, which implements FR-016's loop-back the skill never had
+- [x] T104 Implement FR-038, FR-044 and FR-048 in `skills/ccd-speckit-run/SKILL.md`, and add the `gates` field to `skills/ccd-speckit-run/reference/run-state.md`
+- [x] T105 Implement FR-043 and FR-045 in `.claude/rules/repository-docs.md`
+- [x] T106 Mark all 45 checklist items satisfied, keeping each item's `**Open**:` line alongside its `**Closed**:` line
+
+### What changed in behaviour, not only in prose
+
+Eleven of the twelve new requirements demanded something the skills did not do. The largest is **FR-039 with FR-016**: `ccd-pipeline-fix` dispatched to the bug workflow and stopped, so FR-016's required return to diagnosis existed in the specification and nowhere else. Step 5 now reads what came back and branches three ways — the workflow stopped (report it, never call it a verified fix, never run its remaining stages here), validation failed (offer a return, uncapped, never taken unprompted), or it verified.
+
+The second is **FR-048**: an approval given before an interruption was implicitly still held when a run resumed. The `gates` field's `approved` flag is written when the approved step _completes_, not when the approval is given, so an interrupted boundary reads as unapproved and is proposed again.
+
+**One item was a specification gap rather than a behaviour gap.** CHK031 — evidence retrieved but empty, truncated or expired — was already handled at Step 1; FR-041 makes the requirement match what ships rather than adding anything.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase dependencies
