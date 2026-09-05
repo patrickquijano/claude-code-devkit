@@ -76,9 +76,15 @@ naive compaction deletes as padding.
 
 ### The length floor
 
-A compacted document loses **at least 15%** of its non-code, non-frontmatter, non-blank lines. A
-document that cannot reach 15% without dropping a normative line is exempt, and the exemption is
-recorded with the percentage actually achieved. Reasoning and the alternatives rejected:
+A compacted document loses **at least 15%** of its non-code, non-frontmatter, non-blank
+**characters**. The unit is characters and not lines because the rules above forbid hard-wrapping
+prose, so a document here is one line per paragraph and a compaction pass shortens lines rather
+than removing them — measured in lines the floor registered almost nothing, and several of the
+largest files were arithmetically exempt before anyone read them. A document that cannot reach 15%
+without dropping a normative line is exempt, and the exemption is recorded with the percentage
+actually achieved. `scripts/compaction-audit.sh` is what measures this, and it reports both units —
+`lines-before`/`lines-after` for orientation, `chars-before`/`chars-after` for the verdict.
+Reasoning and the alternatives rejected:
 [`specs/011-narrow-gates-pipeline-fix/research.md`](../../specs/011-narrow-gates-pipeline-fix/research.md)
 decisions R1, R2 and R3.
 
