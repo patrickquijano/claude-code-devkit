@@ -16,9 +16,12 @@ Reasoning and sources: [`docs/skill-authoring-practices.md`](../../docs/skill-au
   resolves to whichever copy the session picks when a personal skill shares the name.
 - **No skill carries `disable-model-invocation`**, and none may. Adding the field to a skill that
   another skill dispatches breaks that dispatch silently, at the end of a long workflow —
-  `ccd-speckit-run` dispatches four of the other five. It dropped the field itself in feature 006
-  once every phase became separately gated: the gate is in the workflow, not the frontmatter. The
-  count is a contract: `specs/006-claude-code-guidance/contracts/skill-names.md`.
+  `ccd-speckit-run` dispatches four of the other six, and `ccd-speckit-bug-run` dispatches three of
+  them too, so `ccd-commit-push`, `ccd-github-pr` and `ccd-gitlab-mr` each have two callers that
+  the field would break. `ccd-speckit-run` dropped the field itself in feature 006 once every phase
+  became separately gated, and `ccd-speckit-bug-run` never carried it for the same reason: the gate
+  is in the workflow, not the frontmatter. The count is a contract:
+  `specs/010-bug-run-ship/contracts/skill-names.md`.
 - No skill carries `user-invocable`. Its absence is what leaves a skill user-invocable; `false`
   would hide it from the `/` menu.
 
@@ -28,8 +31,9 @@ Reasoning and sources: [`docs/skill-authoring-practices.md`](../../docs/skill-au
   `${CLAUDE_SKILL_DIR}` does not spell out the skill's directory name, so a rename touches the
   frontmatter and the directory and nothing else.
 - Files genuinely shared between skills:
-  `sh "${CLAUDE_PLUGIN_ROOT}/skills/<owner>/scripts/<name>.sh"`. Only `branch-options.sh` qualifies
-  today, and it exists once, in `ccd-branch-push`.
+  `sh "${CLAUDE_PLUGIN_ROOT}/skills/<owner>/scripts/<name>.sh"`. Three qualify today, each existing
+  exactly once: `branch-options.sh` in `ccd-branch-push`, and `forge-detect.sh` and
+  `cleanup-plan.sh` in `ccd-speckit-run`. A fork of any of them is the regression, not the sharing.
 - Always `sh <path>`, never direct execution — nothing documents that the executable bit survives
   installation. Always quote the variable, so a plugin root containing a space does not split.
 

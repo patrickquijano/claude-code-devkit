@@ -122,9 +122,18 @@ GitHub exposes no per-collaborator access level to a read-only token, so the scr
 1. `header: "Base"` — the top four from Step 2. The `default`-tagged branch first with `(Recommended)`; each `description` gives the last-commit date and local/remote/both. Skip this question when the invocation already names a base that Step 2 confirms exists.
 2. `header: "Assignee"` — exactly four options: the current user first with `(Recommended)` (they opened it, so they own it), the next **two** `user` rows from Step 3, then `Unassigned` as the escape option. Never offer a `team` row here — `--assignee` rejects teams. Each `description` gives the handle's name and whether it is a CODEOWNERS entry or a recent committer. Omit this question entirely when Step 1 found `viewerPermission: READ`.
 3. `header: "Reviewers"` — `multiSelect: true`, exactly four options: the top **three** from Step 3 **excluding the current user** (GitHub rejects a review request from the PR author, so including them fails the whole create), CODEOWNERS entries first as `(Recommended)`, then `No reviewers`. `team` rows are valid here as `org/team`.
-4. `header: "PR opts"` — `multiSelect: true`, exactly two options: `Enable auto-merge — squash + delete branch (Recommended)` (the base branch keeps a one-commit-per-PR history and dead branches don't accumulate; skipping it means merging by hand later) and `Open as draft` (unselected by default: a draft blocks CI-gated auto-merge and suppresses the CODEOWNERS auto-request, so pick it only when the work wants early feedback rather than merge approval). Selected means enabled.
+4. `header: "PR opts"` — `multiSelect: true`, **four independent options**, each selectable on its own:
+   - `Delete source branch on merge (Recommended)` — selected by default. Dead branches do not accumulate, and the branch survives until the merge actually happens, so nothing is lost while review is still open.
+   - `Squash commits on merge (Recommended)` — selected by default. One commit per PR keeps the base branch's history readable; skipping it preserves the individual commits.
+   - `Enable auto-merge` — selected by default. Merges the moment required checks pass. **Unlike the other three this one can act after this run ends and without a human having read the PR**, so it is the one to deselect when the work wants a reviewer's eyes before it lands.
+   - `Open as draft` — **unselected** by default. A draft blocks CI-gated auto-merge and suppresses the CODEOWNERS auto-request, so pick it only when the work wants early feedback rather than merge approval.
 
-Step 1's `squashMergeAllowed: false` → drop the squash half of option 4 and say the repo forbids it; `deleteBranchOnMerge: true` already → say the delete half is the repo default and needs no flag.
+   Selected means enabled. **These four were one bundled option until feature 010.** Welding branch deletion to auto-merge meant a maintainer who wanted the finished branch tidied up but wanted a human to merge it could ask for neither — the two are unrelated decisions and are now asked as such.
+
+Step 1 already probed the repository, so use what it found rather than offering a choice that changes nothing:
+
+- `squashMergeAllowed: false` → **drop the squash option** and say the repository forbids squash merges.
+- `deleteBranchOnMerge: true` → **drop the delete option** and say the repository already deletes source branches on merge, so no flag is needed. This is a statement about the repository's default, not a refusal.
 
 **Update mode changes what may be asked here.** Exactly five fields can change on an existing pull request: **title, description, base branch, reviewers, assignees.** Nothing else — not draft state, not auto-merge, not labels, not milestone — whether or not `gh` has a flag for it.
 
@@ -132,7 +141,7 @@ So in update mode:
 
 - Question 1 `Base` still applies. Its **default is the base the pull request already has**, not the repo default branch. A different pick is a change like any other: it appears in Step 8's summary with both values and is applied only on approval, never on the strength of the selection.
 - Questions 2 and 3 `Assignee` and `Reviewers` still apply, and they **add**. See below.
-- Question 4 `PR opts` is **not asked**. Draft state and auto-merge are outside the five fields, and a question whose answer this run cannot act on is worse than no question — it implies a change that will not happen.
+- Question 4 `PR opts` is **not asked**. Draft state, auto-merge, squash and source-branch deletion are all outside the five fields, and a question whose answer this run cannot act on is worse than no question — it implies a change that will not happen. Splitting that question into four independent options in feature 010 did not widen what update mode may change: four excluded options are as excluded as one was.
 
 **Reviewers and assignees are added, never substituted.** Naming someone adds them to whoever is already on the pull request. `gh pr edit --add-reviewer` and `--add-assignee` are additive by construction, which is why GitHub cannot strip anyone here by accident — but the rule is about the outcome, not the flag: never replace the existing set as a side effect of naming a different one. Removal is available and is always an explicit choice by the user, offered only when they ask for it, and it goes through Step 0's hard exception. Re-naming a reviewer who is already requested is how GitHub re-requests review, so it is harmless rather than an error.
 
@@ -271,13 +280,23 @@ Omit `--assignee` entirely for `Unassigned`, and `--reviewer` for `No reviewers`
 
 `gh pr create` is all-or-nothing on its metadata: one unknown reviewer handle, one label that does not exist in the base repo, or a review requested from the PR author fails the whole call and creates nothing. Every handle passed here came from Step 3's live listing for exactly that reason — never pass a handle the user typed without confirming it appears in that listing.
 
-**Auto-merge, when selected.** It is a separate call, because GitHub has no per-PR squash or delete-branch flag at create time — those are repo settings and merge-time choices, unlike GitLab's MR checkboxes.
+**The merge options, when any is selected.** They need a separate call, because GitHub has no per-PR squash or delete-branch flag at create time — those are repository settings and merge-time choices, unlike GitLab's MR checkboxes.
+
+Build the call from **exactly the options that were selected**, never from a fixed string:
 
 ```bash
 gh pr merge '<url>' --auto --squash --delete-branch
 ```
 
-This fails when the repo has auto-merge disabled, when no branch protection requires a check (GitHub rejects auto-merge with nothing to wait for), or when the PR is a draft. The PR is already created and safe at that point, so treat a failure as a reportable outcome, not a run failure: report the created PR URL **first**, then that auto-merge could not be armed and the exact reason.
+| Selected                        | Flag              |
+| ------------------------------- | ----------------- |
+| `Enable auto-merge`             | `--auto`          |
+| `Squash commits on merge`       | `--squash`        |
+| `Delete source branch on merge` | `--delete-branch` |
+
+**Deletion wanted, auto-merge declined** is the case the old bundled option could not express, and it is now the interesting one. `gh pr merge` without `--auto` merges **immediately**, which is not what was asked for — so do not run this command at all in that case. Instead, report that the branch will not be deleted automatically and name the two ways to get it: select auto-merge, or pass `--delete-branch` when merging by hand later. Never merge a pull request to honour a branch-deletion preference.
+
+Auto-merge fails when the repository has it disabled, when no branch protection requires a check (GitHub rejects auto-merge with nothing to wait for), or when the PR is a draft. The PR is already created and safe at that point, so treat a failure as a reportable outcome, not a run failure: report the created PR URL **first**, then that auto-merge could not be armed and the exact reason.
 
 Report the returned PR URL either way.
 
@@ -305,7 +324,8 @@ GitHub's squash merge takes the commit subject from the PR title and the commit 
 - Never open a second PR for a branch that already has an open one — that is what Step 1b exists to prevent, and GitHub would reject it anyway when the base matches.
 - Never replace a PR body that contains content a person wrote without an explicit answer to Step 7's question. There is no undo.
 - Never remove a reviewer or an assignee as a side effect of naming a different set.
-- Never change draft state, auto-merge, labels or the milestone on an existing PR. Five fields, no others.
+- Never change draft state, auto-merge, squash, source-branch deletion, labels or the milestone on an existing PR. Five fields, no others.
+- Never run `gh pr merge` without `--auto` in order to honour a branch-deletion preference. That merges the pull request immediately, which nobody asked for.
 - Never rewrite the branch's published history when the PR carries review activity.
 - Never read a failed detection call as "no PR exists".
 
@@ -361,4 +381,4 @@ Regression scenarios for this skill live in [evaluations.md](evaluations.md). No
 
 `branch-options.sh` is **not** this skill's file and no longer exists in it. It ships once, in `ccd-branch-push`, and this skill invokes that copy through `${CLAUDE_PLUGIN_ROOT}`. There is nothing left to keep in step: the four consumers see identical candidates by construction rather than by comparison. Adding a copy back here is the regression — see evaluations.md for the check.
 
-**Never add `disable-model-invocation: true` to this skill's frontmatter.** No skill in this plugin carries it, and none may — the count is a contract at `specs/006-claude-code-guidance/contracts/skill-names.md`. The field blocks the `Skill` tool, not merely automatic loading, so any skill or pipeline dispatching this one through that tool breaks silently. `ccd-speckit-run` dispatches this skill at its Step 6b on a GitHub remote — a GitLab one gets `claude-code-devkit:ccd-gitlab-mr` — so setting the field breaks that handoff at the very end of a full pipeline run. The same applies to `user-invocable: false`, which would take away the `/ccd-github-pr` invocation this skill is designed around.
+**Never add `disable-model-invocation: true` to this skill's frontmatter.** No skill in this plugin carries it, and none may — the count is a contract at `specs/010-bug-run-ship/contracts/skill-names.md`. The field blocks the `Skill` tool, not merely automatic loading, so any skill or pipeline dispatching this one through that tool breaks silently. **Two** callers now dispatch this skill on a GitHub remote — `ccd-speckit-run` at its Step 6b, and `ccd-speckit-bug-run` at its Step 4b; a GitLab remote sends both to `claude-code-devkit:ccd-gitlab-mr` instead — so setting the field breaks either handoff at the very end of a long run. The same applies to `user-invocable: false`, which would take away the `/ccd-github-pr` invocation this skill is designed around.

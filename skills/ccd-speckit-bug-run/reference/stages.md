@@ -65,8 +65,9 @@ Closed sets. A value outside its set is an error condition, not a fourth branch.
 | after Stage 2 | Status `not-applied`                       | —                                    | **skipped**                | closing report                                  |
 | after Stage 2 | Status `partial`                           | —                                    | → , status carried forward | —                                               |
 | after Stage 2 | Status `applied`                           | —                                    | →                          | —                                               |
-| after Stage 3 | Result `verified`                          | —                                    | —                          | closing report, run complete                    |
+| after Stage 3 | Result `verified`                          | —                                    | —                          | → Steps 4a, 4b, 4c, then closing report         |
 | after Stage 3 | Result `partial` or `failed`               | —                                    | —                          | **stop and ask**; never described as successful |
+| after Stage 3 | Result `partial`/`failed`, return chosen   | re-run after Stage 1                 | re-run after Stage 2       | loops to Stage 1; `cycles` increments, no cap   |
 | any boundary  | maintainer chooses Stop                    | not invoked                          | not invoked                | closing report of what exists so far            |
 | any stage     | outcome `unknown` on a report that exists  | —                                    | —                          | **stop**; report extraction drift, never guess  |
 
@@ -93,4 +94,6 @@ It prints `assessment`/`fix`/`test` as `present` or `absent`, and `verdict`/`sev
 - **Never rewrite, summarise or "clean up" the bug report** before Stage 1. It goes through byte-identical.
 - **Never invoke a stage whose precondition is unmet.** That is what the branch table is for, and a refusal at the end of a sequence the maintainer approved in good faith teaches them to distrust the boundaries.
 - **Never branch on a guessed value.** `unknown` is a stop.
-- **Never create a branch, commit, or open a review request.** The closing report names the commit obligation and the skill that discharges it; the run does neither.
+- **Never create a commit or a review request itself.** The run creates neither. Step 4a asks and dispatches `claude-code-devkit:ccd-commit-push`; Step 4b asks and dispatches whichever review skill the remote calls for. No `git add`, no `git commit`, no forge API called by hand — not even when the sub-skill turns out to be missing, which is a skip with a reason rather than a licence to improvise.
+- **Never re-enter a stage on the run's own initiative.** A `partial` or `failed` validation offers the return to Stage 1; taking that offer is the maintainer's decision, every time, however many cycles have already happened.
+- **Never create or destroy a branch or a workspace outside Steps 1 and 4c**, and never past either guard: a branch is deleted only when its commits are pushed, a worktree removed only when nothing in it is uncommitted, whatever the origin of that work.

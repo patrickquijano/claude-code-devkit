@@ -76,7 +76,7 @@ That names the tool, with no "automatically" qualifier, against the field's own 
 
 Two readings are available and only one is safe. Under the strict reading, setting the field on a skill that another skill dispatches would break that dispatch — silently, at the end of a long workflow. Under the permissive reading, omitting it costs nothing at all. So **the strict reading binds**: a skill that another skill dispatches does not carry the field.
 
-**In this repository**, **none** of the six skills carries it, and the count is a committed contract at [`specs/006-claude-code-guidance/contracts/skill-names.md`](../specs/006-claude-code-guidance/contracts/skill-names.md).
+**In this repository**, **none** of the seven skills carries it, and the count is a committed contract at [`specs/010-bug-run-ship/contracts/skill-names.md`](../specs/010-bug-run-ship/contracts/skill-names.md).
 
 Five of the six omit it under the rule above: `ccd-speckit-run` dispatches four of them — `ccd-commit-push` at Step 6a, `ccd-github-pr` or `ccd-gitlab-mr` at Step 6b, and `ccd-conflict-resolve` at every step and phase boundary — and the field's effect on such a call is the unresolved question above.
 

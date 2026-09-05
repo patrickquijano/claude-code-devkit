@@ -15,6 +15,7 @@ Sources are the upstream repository at <https://github.com/github/spec-kit> — 
 - The bug triage workflow
 - The three outcome vocabularies
 - Untrusted input
+- Git and review requests: what the extension system does not do
 - Corrections to the published record
 - Recorded gaps
 
@@ -60,6 +61,8 @@ Templates and scripts always replace. The development guide: "Extension-provided
 ## Hooks, events, and the two different priorities
 
 An extension may register hooks against `before_` and `after_` events for `specify`, `plan`, `tasks`, `implement`, `analyze`, `checklist`, `clarify`, `constitution` and `taskstoissues`. There is no `before_bug*` or `after_bug*` event.
+
+**The documented inventory and the installed one differ by two.** Those nine commands give eighteen events, which is what `docs/reference/extensions.md` documents and what `.specify/extensions.yml` declares. The installed 1.0.2.dev0 core skills check **twenty**: `before_converge` and `after_converge` also appear, matching the `speckit-converge` command present in `.claude/skills/`. No upstream document describes those two. Re-checked 2026-09-05.
 
 A hook's `priority` must be an integer of at least 1 (`__init__.py:428-439`), and lower runs first — `__init__.py:981` documents "Lower priority number = higher precedence (checked first)". Equal priorities keep authoring order.
 
@@ -147,6 +150,16 @@ That last one is worth stating plainly, because it changes what `partial` means:
 
 **In this repository**, any wrapper around this workflow must hand the URL over untouched and must not pre-fetch it. Fetching first and passing the text along would launder the fetch past that policy — the assess stage would receive prose rather than a URL, and its host rules would never fire. `skills/ccd-speckit-bug-run/reference/stages.md` states this as a prohibition and `evaluations.md` treats a failure of it as blocking.
 
+## Git and review requests: what the extension system does not do
+
+Nothing in Spec Kit opens or updates a pull or merge request. There is no hook event for it, no extension API for it, and no CLI command for it. `speckit.git.remote` only detects the remote's URL, and the one forge-facing core command, `speckit.taskstoissues`, creates **issues**.
+
+The consequence for bug work is sharper than it first looks, and it follows from two facts already stated above: the eighteen hook events are core spec-driven-development events only, and the `bug` extension registers no hooks — its own README says "This extension registers no hooks." **So installing the `git` extension produces no branching and no committing around `speckit.bug.*` at all.** The events that would carry those hooks do not exist. Any branch, commit or review-request behaviour around a bug run has to be supplied by whatever is driving it.
+
+The closest thing to guidance is `AGENTS.md` in the spec-kit repository, which is contributor policy for **that** repository — not extension-authoring guidance, and not binding downstream. Three of its rules are worth knowing anyway: an agent must not open a pull request without explicit permission and must preserve the work on a branch instead when nobody is available to give it (L509); every agent-authored commit should carry an `Assisted-by:` trailer naming the agent and whether it acted autonomously (L513-517); and "Never push solo-authored commits that hide agent authorship behind the operator's git identity" (L520).
+
+**In this repository**, that gap is what `ccd-speckit-bug-run` fills, from feature 010 onward: it asks for a workspace before the first stage, and after validation succeeds it dispatches `claude-code-devkit:ccd-commit-push` and then the review-request skill matching the remote. It performs neither itself. The permission rule is satisfied structurally rather than by policy — every stage and every step is gated, so a step whose gate goes unanswered does not proceed. The `Assisted-by:` trailer is **not** adopted; that would be a repository-wide commit-message policy, and it is recorded as a gap below rather than silently dropped.
+
 ## Corrections to the published record
 
 | Claim                                                | Where                                                                                                                                | Correction                                                                                                                                                                                                                            |
@@ -154,6 +167,13 @@ That last one is worth stating plainly, because it changes what `partial` means:
 | The bundled extensions are `agent-context` and `git` | [Extensions reference](https://github.github.com/spec-kit/reference/extensions.html), which names those two and never mentions `bug` | The installed 1.0.2.dev0 bundles **four** under `specify_cli/core_pack/extensions/`: `agent-context`, `assess`, `bug` and `git`. The published site appears stale relative to `main`; the installed copy is what this repository runs |
 
 The upstream `extensions/bug/README.md` on `main` and the installed `.specify/extensions/bug/README.md` were compared and are byte-identical, as are the two `extension.yml` files. The discrepancy above is confined to the published documentation site.
+
+Two further corrections, both found in feature 010:
+
+| Claim                                                                      | Where                                                                | Correction                                                                                                                                                                                                                                                     |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The project extension config lives at `.specify/extensions/extensions.yml` | `EXTENSION-API-REFERENCE.md:884`                                     | It is `.specify/extensions.yml`, as `docs/reference/extensions.md:200` says. Verified on disk and against `EXTENSIONS_CONFIG` in `specify_cli/extensions/__init__.py`. That API-reference block is self-stamped "Spec Kit Version: 0.1.0" at L896 and is stale |
+| There are eighteen hook events                                             | `docs/reference/extensions.md`, and this document before feature 010 | Eighteen are documented and declared; the installed 1.0.2.dev0 core skills check twenty, adding `before_converge` and `after_converge`                                                                                                                         |
 
 ## Recorded gaps
 
@@ -163,3 +183,5 @@ Collected for convenience; each is explained where it appears above or in `specs
 - **Whether the reports' field labels are a stable contract.** `**Verdict**:`, `**Status**:` and `**Result**:` come from output templates inside the command bodies, not from a published schema. Nothing upstream commits to keeping them, so any tool extracting them is depending on Markdown.
 - **Why `check-prerequisites.sh --template checklist-template` requires `plan.md`.** The documented phase order runs `checklist` before `plan`, yet that script errors with "plan.md not found. Run /speckit-plan first". No document explains the ordering assumption. It belongs to Spec Kit rather than to this repository.
 - **Whether the published documentation site tracks `main`.** The bundled-extension discrepancy above suggests not, but nothing states a publication cadence.
+- **What `before_converge` and `after_converge` do.** The installed core skills check them; no upstream document describes them and no changelog entry introducing them was found.
+- **Whether this repository should adopt an `Assisted-by:` commit trailer.** Spec Kit's own `AGENTS.md` requires one of contributors to that repository. It is not binding here, and adopting it would be a repository-wide commit-message policy — a matter for the constitution and for `ccd-commit-push`, not for a skill that dispatches them. Left open rather than decided by feature 010.

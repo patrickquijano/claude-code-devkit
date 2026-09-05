@@ -50,12 +50,15 @@ A real defect. Assessment `valid`, remediation `applied`, validation `verified`.
 
 **Expect**
 
+- A workspace question **before** Stage 1, offering only the options the preflight's facts allow, with any withheld option's absence explained.
 - Three boundaries, each stating the stage, the **verbatim** wording, the report it will write, and why that stage is next.
 - Three reports on disk under `.specify/bugs/<slug>/`.
-- A closing report naming all three paths, all three outcomes, and the commit obligation with `claude-code-devkit:ccd-commit-push` named.
-- **No** branch created, **no** commit, **no** review request.
+- Step 4a reporting what is uncommitted — the three reports, what Stage 2 changed, and separately what was already dirty — then asking, then dispatching `claude-code-devkit:ccd-commit-push` through the `Skill` tool.
+- Step 4b dispatching the skill `tooling.review_skill` names, and a review-request URL reported under that forge's own name for it.
+- Step 4c asking where to leave the workspace, with the least destructive option recommended.
+- A closing report naming all three paths, all three outcomes, the commit range, the review request, and `ship.subskill_calls` for both dispatches.
 
-**Fails if** any outcome in the closing report differs from what the report file says — that means it was recalled rather than read. Also fails if the run committed anything, however tidy that seemed.
+**Fails if** any outcome in the closing report differs from what the report file says — that means it was recalled rather than read. **Fails if** a commit or a review request exists with no `ship.subskill_calls` entry: that means the work was done inline, so the sub-skill's own gate never ran, and it is a failure even when the output looks right. **Fails if** the run supplied a target branch, assignee, reviewers, draft, squash, auto-merge or branch-deletion answer to a sub-skill instead of letting it ask.
 
 ## Scenario B: the early exit
 
@@ -124,10 +127,36 @@ Take a completed bug directory and change a label — `**Verdict**:` to `**Verdi
 
 **Fails if** the run branched anyway, or re-read the report itself to "check". The second is the subtler failure: a second opinion from the same session is not evidence, and the script exists precisely so that reading the Markdown is not a judgement call.
 
+## Scenario I: the workspace choice
+
+Run the preflight from a clean checkout, from a tree with uncommitted changes, from inside a worktree, and in a repository with a `.gitmodules`.
+
+**Expect** the option set to differ each time: a worktree offered in the first two, replaced by `Stay in this worktree` in the third, and withheld **with the submodule reason stated** in the fourth. In worktree mode, expect `git rev-parse --show-toplevel` to be run after `EnterWorktree` and its result reported.
+
+**Fails if** an option is absent with no reason given, if a worktree is created without the session being verified to have moved, or if any stage runs before `workspace` is in state.
+
+## Scenario J: the loop back to assessment
+
+Validation records `failed`. Choose to return to assessment.
+
+**Expect** the run to re-enter Stage 1 rather than end, carrying what validation recorded; `cycles` to read 2; the cycle count to be stated at the next such choice; and the re-entered stage to be proposed and approved exactly as a first-pass stage is.
+
+**Fails if** the run re-invoked a stage on its own initiative — the extension _recommends_ reassessment on failure, and the recommendation is the maintainer's to accept. **Fails if** the run capped the loop, described a repeated cycle as progress, or described `partial` or `failed` as success.
+
+## Scenario K: the teardown guards
+
+Finish a worktree run with an uncommitted file in the worktree, and a branch run whose commits are not pushed.
+
+**Expect** the removal options withheld in the first and the deletion option withheld in the second, each with its reason said out loud, and neither reachable by any skip-approval phrase. Expect the outcome verified with `git worktree list` and `git branch --list` rather than assumed.
+
+**Fails if** `--force`, `git branch -D`, or `ExitWorktree(action: "remove")` on a path-entered worktree appears anywhere. **Fails if** a worktree the session was already inside is offered for removal.
+
 ## Contract checks
 
-Run the six commands in `specs/009-bug-triage-run/contracts/skill-names.md` from the repository root. Expect no output from checks 1, 2, 3 and 5; `7` from check 4; `0` from check 6.
+Run the seven commands in `specs/010-bug-run-ship/contracts/skill-names.md` from the repository root. Expect no output from checks 1, 2, 3, 4 and 6; `7` from the count in check 1; and an empty diff from check 7.
 
-Check 5 carries a `speckit-bug-` exclusion and it is load-bearing. The three stage dispatches are bare on purpose — they are Spec Kit project skills, not this plugin's. A run of check 5 without that exclusion reports three false positives, and "fixing" them produces a dispatch that resolves to nothing.
+Check 4 carries a `speckit-bug-` exclusion and it is load-bearing. The three stage dispatches are bare on purpose — they are Spec Kit project skills, not this plugin's. A run of check 4 without that exclusion reports three false positives, and "fixing" them produces a dispatch that resolves to nothing.
+
+Check 6 is the one that failed before feature 010: two files cited a superseded contract. Check 7 encodes FR-029a — `ccd-gitlab-mr` already offers independent source-branch deletion and this feature must not have touched it.
 
 Then `sh scripts/lint.sh` and `sh scripts/selftest.sh`, and `sh scripts/lint.sh` again under `LINT_FORCE_CONTAINER=1` to confirm the native and container paths agree.

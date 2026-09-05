@@ -61,11 +61,53 @@ reproduction` / `invalid`; status `applied` / `partial` / `not-applied`; result 
   of a URL and its rules never fire.
 - Never do a stage's work in place of invoking it. If a stage cannot run, its work does not happen.
 
+## Looping back to assessment
+
+- A `partial` or `failed` validation result offers three choices: return to the assessment stage
+  carrying what validation found, accept the result and stop, or stop and hand back. Returning
+  re-enters the assessment stage; it does not end the run and it does not add a fourth stage.
+- **Never take that choice on the run's own initiative.** Offering it is the run's job every time;
+  taking it is the maintainer's, however many cycles have already happened.
+- The cycle count is **not capped**. State it with the question instead, so the choice is made in
+  view of the loop's own history rather than blind. A maintainer converging on a fix is not
+  interrupted by an arbitrary limit, and a maintainer going in circles can see that they are.
+- A re-entered stage is proposed and approved on exactly the terms a first-pass stage is. Nothing
+  about a second cycle is lighter than the first.
+
+## Branching, committing and shipping
+
+- The run does not create commits or review requests itself. It asks, and dispatches the skill that
+  owns the answer: `claude-code-devkit:ccd-commit-push` for the commit, and the review-request skill
+  matching the remote for the pull or merge request. No `git add`, no `git commit`, no forge API
+  called by hand — not even when the sub-skill turns out to be missing, which is a skip with a
+  stated reason rather than a licence to improvise.
+- Dispatch is a `Skill` tool call. Writing the skill's name in prose invokes nothing, so its own
+  questions and its approval gate never run and the work happens under none of its rules.
+- Hand a sub-skill facts, never answers. The target branch, assignee, reviewers, draft state,
+  squash, auto-merge and source-branch deletion are all its own questions; supplying one suppresses
+  the question it belongs to, which is how that value silently becomes wrong.
+- The forge is decided once, at preflight, from the remote — never re-detected at shipping time and
+  never inferred from the bug report's wording. An unsupported forge or no remote is an ordinary
+  outcome: the review-request step is skipped with the reason named and the run still finishes.
+- The workspace question comes **before** the first stage, because the remediation stage edits
+  source files. Offer only the options that apply, and say why one is missing rather than letting it
+  be silently absent. In worktree mode, verify the session actually moved before any stage runs;
+  creating a directory does not move it, and an unverified worktree runs every stage in the old tree
+  while reporting isolation.
+- The teardown question comes after a review request exists, and is skipped with a reason when none
+  was raised. The least destructive option is the recommended one in both option sets, because
+  nobody has reviewed the change yet.
+- Two guards, and they are not the same. A branch is deleted only when its commits are pushed; a
+  worktree is removed only when nothing in it is uncommitted, **whatever the origin of that work**.
+  A guarded-out option is not offered, and the reason is said out loud. No skip-approval phrase
+  reaches either — a skip phrase covers approval of proposed content, never a deletion.
+
 ## The artifacts
 
 - `.specify/bugs/<slug>/` is **committed project history**, not working state — FR-027 of feature
   001, and `.gitignore`'s own comment block. Do not add it to an ignore file.
-- The run does not commit them. It names their paths, states the obligation, and names
-  `claude-code-devkit:ccd-commit-push` as the way to discharge it.
+- The run commits them by dispatching the commit skill once validation has recorded the defect
+  resolved. A run that stops before that step leaves them uncommitted and says so, naming
+  `claude-code-devkit:ccd-commit-push` as the way to discharge the obligation by hand.
 - The slug is flat and user-named. There is no `NNN-` prefix and no `specs/` root; that convention
   belongs to mainline Spec Kit features, not to bugs.
