@@ -2,7 +2,7 @@
 
 > A Claude Code plugin that takes a feature from one sentence to a reviewed pull request, and checks its own repository.
 
-Installing the plugin gives you seven skills. `ccd-speckit-run` drives the eight [GitHub Spec Kit](https://github.com/github/spec-kit) phases from a single task description and ships the result; `ccd-speckit-bug-run` drives Spec Kit's bug-triage workflow from one bug report to a verified fix; four others handle the git and forge work those two hand off, and each is equally usable on its own; `ccd-conflict-resolve` walks you through resolving a merge conflict.
+Installing the plugin gives you eight skills. `ccd-speckit-run` drives the eight [GitHub Spec Kit](https://github.com/github/spec-kit) phases from a single task description and ships the result; `ccd-speckit-bug-run` drives Spec Kit's bug-triage workflow from one bug report to a verified fix; `ccd-pipeline-fix` takes a failed CI pipeline to a validated fix by handing it to that bug workflow; four others handle the git and forge work those three hand off, and each is equally usable on its own; `ccd-conflict-resolve` walks you through resolving a merge conflict.
 
 The repository also carries its own quality gate — one command, seven checks, no tool to install first.
 
@@ -10,7 +10,7 @@ The repository also carries its own quality gate — one command, seven checks, 
 
 - [Install](#install)
 - [Usage](#usage)
-  - [The seven skills](#the-seven-skills)
+  - [The eight skills](#the-eight-skills)
   - [Running the pipeline](#running-the-pipeline)
   - [Running the quality checks](#running-the-quality-checks)
   - [Formatting on edit](#formatting-on-edit)
@@ -40,19 +40,20 @@ To work on the plugin itself rather than use it, clone the repository and run `s
 
 ## Usage
 
-### The seven skills
+### The eight skills
 
 Each resolves as `claude-code-devkit:<name>`, and each is also reachable by its bare name.
 
-| Skill                  | What it does                                                                                                               |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `ccd-speckit-run`      | Drives the eight Spec Kit phases from one task description, then verifies and ships the result                             |
-| `ccd-speckit-bug-run`  | Drives Spec Kit's three bug-triage stages from one bug report — assess, fix, test — approving each stage separately        |
-| `ccd-branch-push`      | Creates a branch off a chosen base and pushes it, with the branch name and collisions settled first                        |
-| `ccd-commit-push`      | Commits the working tree — message convention, how the change splits, whether to push                                      |
-| `ccd-github-pr`        | Opens a GitHub pull request: base, assignee, reviewers, draft, auto-merge                                                  |
-| `ccd-gitlab-mr`        | Opens a GitLab merge request: target, assignee, reviewers, squash, delete-source-branch                                    |
-| `ccd-conflict-resolve` | Resolves an in-progress merge conflict: lists what is conflicted, proposes a resolution per path, applies what you approve |
+| Skill                  | What it does                                                                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ccd-speckit-run`      | Drives the eight Spec Kit phases from one task description, then verifies and ships the result                                               |
+| `ccd-speckit-bug-run`  | Drives Spec Kit's three bug-triage stages from one bug report — assess, fix, test — approving each stage separately                          |
+| `ccd-pipeline-fix`     | Takes a failed GitHub Actions or GitLab CI pipeline to a validated fix, by gathering the failing evidence and handing it to the bug workflow |
+| `ccd-branch-push`      | Creates a branch off a chosen base and pushes it, with the branch name and collisions settled first                                          |
+| `ccd-commit-push`      | Commits the working tree — message convention, how the change splits, whether to push                                                        |
+| `ccd-github-pr`        | Opens a GitHub pull request: base, assignee, reviewers, draft, auto-merge                                                                    |
+| `ccd-gitlab-mr`        | Opens a GitLab merge request: target, assignee, reviewers, squash, delete-source-branch                                                      |
+| `ccd-conflict-resolve` | Resolves an in-progress merge conflict: lists what is conflicted, proposes a resolution per path, applies what you approve                   |
 
 The `ccd-` prefix is deliberate and is not redundant with the namespace. The namespace disambiguates `claude-code-devkit:ccd-github-pr`; nothing disambiguates a **bare** name, and the bare name is what you type. These skills grew out of personal skills with unprefixed names, which may still be installed on the same machine — the prefix is what keeps the two apart.
 

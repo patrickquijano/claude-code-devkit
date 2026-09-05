@@ -6,6 +6,13 @@ paths:
 
 # The Spec Kit bug triage workflow
 
+`ccd-speckit-bug-run` has **two callers** since feature 011. A maintainer invokes it directly with a
+bug report, and `ccd-pipeline-fix` dispatches it with a report it composed from a failed CI
+pipeline's evidence. Everything below governs both: a pipeline defect arrives as an ordinary bug
+report and gets the ordinary three stages, the ordinary outcome vocabularies and the ordinary
+artifacts. Nothing in this file has a pipeline-specific branch, and adding one would be the
+duplication `ccd-pipeline-fix` exists to avoid.
+
 Reasoning and sources: [`docs/spec-kit-extensions.md`](../../docs/spec-kit-extensions.md).
 
 ## Dispatching the three stages

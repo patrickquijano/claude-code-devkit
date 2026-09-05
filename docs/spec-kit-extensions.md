@@ -127,6 +127,10 @@ Note what that is **not**. It is neither under `specs/` nor prefixed `NNN-`, unl
 
 **It registers no hooks.** `README.md:80` — "This extension registers no hooks. The three commands are always invoked explicitly by the user." Nothing in the three command bodies creates a branch or commits.
 
+**In this repository**, the bug workflow now has **two drivers**, both plugin skills rather than extension commands. `ccd-speckit-bug-run` is invoked by a maintainer with a bug report. `ccd-pipeline-fix`, added by feature 011, is invoked with a failed CI pipeline: it retrieves the failing run's evidence through `gh` or `glab`, proposes a root cause, takes a choice of remediation approach, composes those into an ordinary bug report and dispatches `claude-code-devkit:ccd-speckit-bug-run`. It runs none of the three `speckit-bug-*` commands itself. The reasoning for making it a caller rather than a mode of the existing skill is recorded at `specs/011-narrow-gates-pipeline-fix/research.md` R6: the three stages are governed by `.claude/rules/spec-kit-bug-workflow.md`, and a second driver reaching past the wrapper would fork that governance.
+
+**GAP.** No authoritative source was found describing an upstream pattern for driving the bug extension from a CI failure, or any `before_bug*`/`after_bug*` hook event that such a driver could register against. The extension registers no hooks at all, which is why both drivers supply their own branching, committing and shipping.
+
 **In this repository**, these reports are committed project history rather than working state, settled twice: `specs/001-quality-gate-plugin/spec.md:168` (FR-027) requires the bug extension's per-item artifacts be committed "on the same footing as the feature artifacts under the specification directory", and `.gitignore:16-19` states that `.specify/extensions.yml`, `.specify/extensions/`, `.specify/assessments/` and `.specify/bugs/` "are project history, not state". The plugin skill `ccd-speckit-bug-run` drives the three commands but commits nothing itself — it names the obligation and the commit skill that discharges it.
 
 ## The three outcome vocabularies
