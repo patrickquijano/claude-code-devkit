@@ -10,6 +10,7 @@
 # Spec Kit: machine-local run state and per-checkout feature pointer
 .specify/.speckit-run-state.json
 .specify/.speckit-dirty-snapshot
+.specify/.speckit-bug-run-state.json
 .specify/feature.json
 
 # Spec Kit extensions: machine-local working state only. Everything else the six

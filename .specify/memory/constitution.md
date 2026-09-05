@@ -1,6 +1,36 @@
 <!--
 Sync Impact Report
 
+Version change: 1.2.0 → 1.3.0 (MINOR — one existing principle is materially expanded to govern a
+second change path; no principle removed, and nothing redefined in a way that invalidates prior
+compliance)
+
+Modified principles:
+  - VI. Spec-Driven Change — the principle governed one change path and was silent on the other.
+    Its requirement for feature work is unchanged, and a clause is added stating that a change
+    adding or altering a requirement is feature work whatever prompted it, which closes the reading
+    that calling something a bug exempts it. What is new is the second path: a defect fix that adds
+    or alters no requirement MAY proceed without a spec, a plan and a task list, and MUST instead
+    leave an assessment, a record of what was changed, and a verification result on disk before it
+    is proposed for review. Reason: the repository holds itself to the workflow it ships, and the
+    workflow it ships now includes a bug-remediation path whose evidence trail is three reports
+    rather than three planning artifacts. Before this amendment that path had no governed status at
+    all — a defect fix either violated Principle VI or relied on the principle being read as not
+    meaning what it says. Naming the three artifacts keeps the property Principle VI exists to
+    guarantee, that a change reaching review carries written evidence of what was decided, without
+    requiring a specification for a requirement that already exists and is being restored. Nothing
+    that complied before this amendment stops complying: the feature path is untouched, and the new
+    path only permits what was previously unaddressed.
+
+Added sections: none
+Removed sections: none
+Deferred items: none
+
+Prior reports
+-------------
+
+Sync Impact Report
+
 Version change: 1.1.0 → 1.2.0 (MINOR — existing guidance materially expanded in two places; no
 principle removed, and nothing redefined in a way that invalidates prior compliance)
 
@@ -28,9 +58,6 @@ Modified sections:
 Added sections: none
 Removed sections: none
 Deferred items: none
-
-Prior reports
--------------
 
 Sync Impact Report
 
@@ -132,10 +159,21 @@ keeps it declared, which is the property that matters, without pretending it was
 ### VI. Spec-Driven Change
 
 Feature work MUST pass through the Spec Kit phases and MUST NOT reach implementation without a
-spec, a plan, and a task list on disk.
+spec, a plan, and a task list on disk. A change that adds or alters a requirement is feature work
+whatever prompted it.
+
+Bug remediation is a distinct path. A defect fix that adds or alters no requirement MAY proceed
+without a spec, a plan, and a task list, and MUST instead leave three artifacts on disk before it
+is proposed for review: an assessment of the defect, a record of what was changed, and a
+verification result. The artifacts of both paths MUST be committed.
 
 Rationale: this repository is a toolkit for building agent workflows. It holds itself to the
-workflow it ships.
+workflow it ships. The two paths differ in what is unsettled at the start — a feature's
+requirements are the thing being decided, whereas a defect's requirement already exists and is
+being restored — so demanding a specification for a defect fix asks for a document whose content
+was settled before the defect was reported. What does not differ is that a change reaching review
+MUST carry written evidence of what was decided and whether it worked, which is why the second
+path's three artifacts are named here rather than left to judgement on the day.
 
 ## Quality Gate Requirements
 
@@ -189,4 +227,4 @@ Versioning policy:
 All reviews MUST verify compliance with these principles. Added complexity MUST be justified
 against them; where it cannot be, the simpler alternative is taken.
 
-**Version**: 1.2.0 | **Ratified**: 2026-09-02 | **Last Amended**: 2026-09-02
+**Version**: 1.3.0 | **Ratified**: 2026-09-02 | **Last Amended**: 2026-09-05
