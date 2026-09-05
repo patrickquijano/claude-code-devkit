@@ -19,6 +19,8 @@ Four things about them are load-bearing and easy to undo by tidying:
 - `branch-options.sh` exists **once**, in `ccd-branch-push`, reached by all four consumers through `${CLAUDE_PLUGIN_ROOT}`. Its header comment records the three defects of the fork that was rejected.
 - **No skill carries `disable-model-invocation`**, and none may. Adding it to any of the four `ccd-speckit-run` dispatches breaks that dispatch silently, at the end of a full run. `ccd-speckit-run` itself dropped it in feature 006 once every phase became separately gated — the gate is in the workflow, not the frontmatter. `skills/ccd-speckit-run/SKILL.md`'s authoring note says why the strict reading binds, and the count is a contract at `specs/006-claude-code-guidance/contracts/skill-names.md`.
 
+**Bump `version` in `.claude-plugin/plugin.json` in any feature that changes `skills/`** — minor for a behaviour change, patch for wording. It is the only cache key a consumer has, and a stale copy is served silently: features 002 through 007 all shipped under an unchanged `0.1.0`, and feature 008 caught `/claude-code-devkit:ccd-speckit-run` executing an older workflow than the byte-identical file on disk. Evidence and the alternatives considered are in `specs/008-commit-hooks/research.md`.
+
 Their own history is in `specs/002-vendor-plugin-skills/`, which distributed them, and `specs/003-ccd-skill-rename/`, which gave them the `ccd-` prefix and supersedes 002's two interface contracts. `specs/005-merge-conflict-resolution/` added the sixth skill and supersedes 003's name contract.
 
 ## Agent instructions
@@ -36,9 +38,10 @@ The repository is initialized for GitHub Spec Kit (`.specify/`), with the phase 
 There is no build step and no separate test runner. The checks are the tests.
 
 ```sh
-scripts/lint.sh       # all seven checks; exits non-zero at the first failure
-scripts/lint.sh --fix # rewrite what can be rewritten
-scripts/selftest.sh   # prove each check still rejects bad input
+scripts/lint.sh          # all seven checks; exits non-zero at the first failure
+scripts/lint.sh --fix    # rewrite what can be rewritten
+scripts/selftest.sh      # prove each check still rejects bad input
+scripts/install-hooks.sh # arm the commit-message and signature git hooks; --status just reports
 ```
 
 Run one check in isolation with `scripts/lint-<standard>.sh`, where `<standard>` is one of `citations`, `editorconfig`, `format`, `markdown`, `yaml`, `shell`, `python`. `citations` runs first and needs no tool at all: it checks that every governance quotation in `.github/` still matches the document it cites.
@@ -50,5 +53,6 @@ Non-obvious things about these:
 - Each check declares its excluded paths in **one** place: the configuration file that already drives it — `.prettierignore`, `ignores` in `.markdownlint-cli2.jsonc`, `ignore` in `.yamllint.yml`, `exclude` in `ruff.toml`, `Exclude` (regexes, not globs) in `.editorconfig-checker.json`, and a marked comment block in `.shellcheckrc` for the one tool with no exclusion mechanism of its own. The runner reads that same declaration to build the file list, so a contributor invoking a tool by hand gets the exclusions the runner applies. There is no central list and no check comparing copies; feature 004 deleted both. Adding an excluded path means editing the declaration of each check that should skip it, and two checks legitimately differing is now expressible rather than a build failure.
 - **Your own edits are reformatted under you.** `.claude/settings.json` registers a committed `PostToolUse` hook, `scripts/format-file.sh`, which runs after `Edit`, `Write`, `MultiEdit` and `NotebookEdit` and rewrites the edited file through the three checks that can rewrite — `format`, then `markdown`, then `python`, in that order. A file no check governs is left untouched and reports nothing. Re-read a file after editing it if the exact bytes matter; a formatting failure arrives on stderr naming the file and the check, and never undoes the edit. Details: `specs/004-format-hook-scope/contracts/format-file-cli.md`.
 - `.github/pull_request_template.md` and `.github/PULL_REQUEST_TEMPLATE/` are change-proposal templates that quote the constitution; nothing excludes `.github/`, so they are formatted and linted like any other Markdown, and `scripts/lint-citations.sh` fails when a quotation goes stale. The specialised two repeat every section of the general one rather than referring to it, because only the general one is applied automatically.
+- **The shell check's glob list carries two extensionless paths, and they are not redundant.** `scripts/lint-shell.sh` collects `'*.sh' '.husky/commit-msg' '.husky/pre-push'`. Git names a hook by its filename, so a hook file cannot end in `.sh`, and `'*.sh'` alone skips both dispatchers silently while still reporting success. Removing them stops checking the hooks. The hook logic itself lives in `scripts/hooks/*.sh` so the ordinary glob finds it and `selftest.sh` can invoke it with a fixture; details in [`.claude/rules/husky-git-hooks.md`](.claude/rules/husky-git-hooks.md) and [`docs/husky-git-hooks.md`](docs/husky-git-hooks.md).
 - Shell scripts are POSIX `sh`, checked with `shell=sh`, and indent with tabs. The full dialect rules, the four opt-in ShellCheck checks and the fail-fast requirement are in [`.claude/rules/shell-scripts.md`](.claude/rules/shell-scripts.md), which loads when you open a `.sh` file — they are stated once, there, rather than copied here where the two copies would drift. `.claude/rules/skill-authoring.md` does the same for `skills/`.
 - Every setting that departs from its tool's default has a written reason in `specs/001-quality-gate-plugin/research.md`. Check there before "fixing" one.

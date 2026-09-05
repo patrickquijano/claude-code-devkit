@@ -823,7 +823,312 @@ rm -f "$HOOK_OUTSIDE"
 
 # --- verdict ----------------------------------------------------------------
 
-say "$PROG: $EXERCISED standards exercised, $HOOK_CASES format-hook cases"
+#
+# Not "checks" in the lint.sh sense -- they are git hooks -- but the obligation
+# is identical and comes from the same place: a hook that has never been shown
+# to reject bad input is not a hook anyone should trust.
+#
+# The message cases need no repository at all. scripts/hooks/commit-msg.sh takes
+# a message-file path and git passes it one, so this script passes it one too
+# and the code under test is reached exactly as git reaches it. That is why the
+# logic lives in scripts/hooks/*.sh rather than in .husky/ -- research.md
+# section 8.
+#
+# The push cases do need a repository, because the thing under test is a
+# property of commits. One is built here, unsigned by construction, and the
+# signed case is conditional on the machine having a signing identity: a fixture
+# cannot manufacture a signature out of nothing, and skipping loudly is better
+# than asserting something weaker and calling it proof.
+
+GH_CASES=0
+GH_FAILURES=''
+GHST=0
+GHOUT=''
+GHERR=''
+
+# gh_expect NAME WANT-STATUS -- recorded rather than fatal, matching verdict()
+# and hook_expect(), so one broken case does not hide the state of the rest.
+gh_expect() {
+	GH_CASES=$((GH_CASES + 1))
+	if [ "$GHST" -ne "$2" ]; then
+		say "githook/$1: exit $GHST, expected $2"
+		GH_FAILURES="$GH_FAILURES $1"
+		return 0
+	fi
+	say "githook/$1: as required (exit $GHST)"
+}
+
+# gh_names NAME NEEDLE -- FR-003 and the Quality Gate Requirements both demand
+# that a refusal name what it is about. An exit status alone is not a message.
+gh_names() {
+	if ! grep -q -- "$2" "$GHERR"; then
+		say "githook/$1: stderr never names \"$2\""
+		GH_FAILURES="$GH_FAILURES $1"
+	fi
+}
+
+# gh_says NAME NEEDLE -- the same assertion against stdout, for the installer,
+# whose report is its product rather than a refusal.
+gh_says() {
+	if ! grep -q -- "$2" "$GHOUT"; then
+		say "githook/$1: stdout never says \"$2\""
+		GH_FAILURES="$GH_FAILURES $1"
+	fi
+}
+
+# gh_repeat CHAR COUNT -- POSIX sh has no string multiplication.
+gh_repeat() {
+	_ghr=''
+	_ghi=0
+	while [ "$_ghi" -lt "$2" ]; do
+		_ghr="$_ghr$1"
+		_ghi=$((_ghi + 1))
+	done
+	printf '%s' "$_ghr"
+}
+
+# msg_run SUBJECT BODY -- BODY may be empty.
+msg_run() {
+	GHOUT="$WORK/githook.out"
+	GHERR="$WORK/githook.err"
+	GHST=0
+	printf '%s\n' "$1" > "$WORK/COMMIT_EDITMSG"
+	if [ -n "$2" ]; then
+		printf '\n%s\n' "$2" >> "$WORK/COMMIT_EDITMSG"
+	fi
+	sh "$SCRIPT_DIR/hooks/commit-msg.sh" "$WORK/COMMIT_EDITMSG" \
+		> "$GHOUT" 2> "$GHERR" || GHST=$?
+}
+
+# T007: a subject in no recognised shape at all.
+msg_run 'add the thing' ''
+gh_expect msg-not-conventional 1
+gh_names msg-not-conventional 'add the thing'
+
+# T012: correct shape, type outside the permitted set.
+msg_run 'wibble: something' ''
+gh_expect msg-unknown-type 1
+gh_names msg-unknown-type 'wibble'
+
+# T008: 73 characters. `feat: ` is six, so sixty-seven more overshoots by one.
+# The MEASURED length must appear, not just the limit -- a contributor told
+# "too long" and not "73" has to count the line themselves.
+GH_D67=$(gh_repeat x 67)
+msg_run "feat: $GH_D67" ''
+gh_expect msg-too-long 1
+gh_names msg-too-long '73'
+
+# T009: 72 characters exactly. The boundary, on the accepting side.
+GH_D66=$(gh_repeat x 66)
+msg_run "feat: $GH_D66" ''
+gh_expect msg-at-limit 0
+
+# T010: a conforming subject with a 140-character body line. The limit governs
+# the first line alone (FR-002); this is the case a per-line rule would fail.
+GH_B140=$(gh_repeat y 140)
+msg_run 'feat: short subject' "$GH_B140"
+gh_expect msg-long-body 0
+
+# T011: the generated-message exemption (FR-005).
+msg_run "Merge branch 'main' into feature" ''
+gh_expect msg-merge-exempt 0
+
+# T057: FR-005a -- a revert is acceptable in either shape, and the two reach
+# acceptance by different routes: the exemption, and the permitted type.
+msg_run 'Revert "feat: the thing"' ''
+gh_expect msg-revert-generated 0
+
+msg_run 'revert: undo the thing' ''
+gh_expect msg-revert-typed 0
+
+# Scoped and breaking, which is the shape this repository's history already uses.
+msg_run 'refactor(skills)!: rename the five plugin skills' ''
+gh_expect msg-scoped-breaking 0
+
+# A missing configuration file is exit 2, distinct from exit 1. A contributor
+# whose configuration is gone must not read that as "my message was bad".
+GH_NOCONF="$WORK/noconf"
+mkdir -p "$GH_NOCONF/scripts/hooks"
+printf 'feat: a perfectly fine subject\n' > "$GH_NOCONF/msg"
+if [ -f "$SCRIPT_DIR/hooks/commit-msg.sh" ]; then
+	cp "$SCRIPT_DIR/hooks/commit-msg.sh" "$GH_NOCONF/scripts/hooks/commit-msg.sh"
+	GHOUT="$WORK/githook.out"
+	GHERR="$WORK/githook.err"
+	GHST=0
+	sh "$GH_NOCONF/scripts/hooks/commit-msg.sh" "$GH_NOCONF/msg" \
+		> "$GHOUT" 2> "$GHERR" || GHST=$?
+	gh_expect msg-missing-config 2
+	gh_names msg-missing-config 'commit-msg.conf'
+else
+	skip githook-missing-config 'scripts/hooks/commit-msg.sh is not present'
+fi
+
+PP_FIX="$WORK/prepush-fixture"
+PP_ZERO='0000000000000000000000000000000000000000'
+mkdir -p "$PP_FIX"
+git -C "$PP_FIX" init -q
+git -C "$PP_FIX" config user.email selftest@example.invalid
+git -C "$PP_FIX" config user.name selftest
+git -C "$PP_FIX" config commit.gpgsign false
+printf 'base\n' > "$PP_FIX/base"
+git -C "$PP_FIX" add base
+git -C "$PP_FIX" commit -q -m 'chore: base'
+PP_BASE=$(git -C "$PP_FIX" rev-parse HEAD)
+printf 'next\n' > "$PP_FIX/next"
+git -C "$PP_FIX" add next
+git -C "$PP_FIX" commit -q -m 'chore: unsigned on purpose'
+PP_TIP=$(git -C "$PP_FIX" rev-parse HEAD)
+PP_SHORT=$(git -C "$PP_FIX" rev-parse --short HEAD)
+
+# pp_run LINE -- LINE may be empty, meaning git found nothing to push.
+pp_run() {
+	GHOUT="$WORK/githook.out"
+	GHERR="$WORK/githook.err"
+	GHST=0
+	if [ -n "$1" ]; then
+		printf '%s\n' "$1" > "$WORK/prepush.in"
+	else
+		: > "$WORK/prepush.in"
+	fi
+	(cd "$PP_FIX" && sh "$SCRIPT_DIR/hooks/pre-push.sh" \
+		origin https://example.invalid/r.git < "$WORK/prepush.in") \
+		> "$GHOUT" 2> "$GHERR" || GHST=$?
+}
+
+# T028: one unsigned commit in the outgoing range.
+pp_run "refs/heads/main $PP_TIP refs/heads/main $PP_BASE"
+gh_expect push-unsigned 1
+gh_names push-unsigned "$PP_SHORT"
+
+# T030: nothing to push.
+pp_run ''
+gh_expect push-empty 0
+
+# T031: a deletion. The local oid is all zeroes and there is nothing to examine.
+pp_run "(delete) $PP_ZERO refs/heads/gone $PP_BASE"
+gh_expect push-delete 0
+
+# T032: FR-008 -- nothing was rewritten by the refused run.
+#
+# What this proves, and what it does not. selftest invokes pre-push.sh directly
+# with synthesised stdin, so the script never had the opportunity to rewrite
+# anything, and this case cannot catch a design that rewrites during a real
+# push. It is a regression guard against a future edit that adds an amend or a
+# rebase here, which is worth having and costs almost nothing. The actual proof
+# of FR-008 is quickstart.md scenario 5, driven through a real `git push`.
+PP_AFTER=$(git -C "$PP_FIX" rev-parse HEAD)
+GH_CASES=$((GH_CASES + 1))
+if [ "$PP_AFTER" != "$PP_TIP" ]; then
+	say "githook/push-no-rewrite: HEAD moved from $PP_TIP to $PP_AFTER"
+	GH_FAILURES="$GH_FAILURES push-no-rewrite"
+else
+	say 'githook/push-no-rewrite: HEAD unchanged by the refused run'
+fi
+
+# T029: a present-but-unverifiable signature is accepted (research section 6).
+#
+# Conditional, and loudly so. A fixture cannot manufacture a signature, so this
+# case needs the machine to have a signing identity. A loud skip says the case
+# was not exercised; asserting something weaker and calling it proof would not.
+PP_SIGNKEY=$(git config --get user.signingkey 2> /dev/null || true)
+PP_SIGNFMT=$(git config --get gpg.format 2> /dev/null || true)
+if [ -n "$PP_SIGNKEY" ]; then
+	git -C "$PP_FIX" config user.signingkey "$PP_SIGNKEY"
+	if [ -n "$PP_SIGNFMT" ]; then
+		git -C "$PP_FIX" config gpg.format "$PP_SIGNFMT"
+	fi
+	PP_SIGNED=0
+	printf 'signed\n' > "$PP_FIX/signed"
+	git -C "$PP_FIX" add signed
+	git -C "$PP_FIX" commit -q -S -m 'chore: signed on purpose' \
+		2> /dev/null || PP_SIGNED=$?
+	if [ "$PP_SIGNED" -eq 0 ]; then
+		PP_STIP=$(git -C "$PP_FIX" rev-parse HEAD)
+		pp_run "refs/heads/main $PP_STIP refs/heads/main $PP_TIP"
+		gh_expect push-signed-accepted 0
+	else
+		skip githook-signed "signing is configured but produced no signature (exit $PP_SIGNED)"
+	fi
+else
+	skip githook-signed 'no user.signingkey is configured, so no signed fixture can be produced'
+fi
+
+# The installer never touches this repository: it resolves its target from
+# `git rev-parse --show-toplevel` in the CURRENT directory, so a fixture
+# repository is a complete and safe target. If that ever changes, this block
+# starts configuring the repository it is testing.
+
+IH_FIX="$WORK/installer-fixture"
+mkdir -p "$IH_FIX/.husky"
+git -C "$IH_FIX" init -q
+git -C "$IH_FIX" config user.email selftest@example.invalid
+git -C "$IH_FIX" config user.name selftest
+for _ihh in commit-msg pre-push; do
+	if [ -f "$REPO_ROOT/.husky/$_ihh" ]; then
+		cp "$REPO_ROOT/.husky/$_ihh" "$IH_FIX/.husky/$_ihh"
+	fi
+done
+
+# ih_run ARG -- ARG may be empty.
+ih_run() {
+	GHOUT="$WORK/githook.out"
+	GHERR="$WORK/githook.err"
+	GHST=0
+	if [ -n "$1" ]; then
+		(cd "$IH_FIX" && sh "$SCRIPT_DIR/install-hooks.sh" "$1") \
+			> "$GHOUT" 2> "$GHERR" || GHST=$?
+	else
+		(cd "$IH_FIX" && sh "$SCRIPT_DIR/install-hooks.sh") \
+			> "$GHOUT" 2> "$GHERR" || GHST=$?
+	fi
+}
+
+# T020: --status reports without writing, and its last line answers FR-013.
+ih_run --status
+gh_expect install-status-inactive 0
+gh_says install-status-inactive 'state: inactive'
+
+# T021: idempotence. Two runs, identical local configuration afterwards, and the
+# second says so rather than silently redoing the work.
+ih_run ''
+gh_expect install-first 0
+IH_CFG1=$(git -C "$IH_FIX" config --local --list | sort)
+ih_run ''
+gh_expect install-second 0
+IH_CFG2=$(git -C "$IH_FIX" config --local --list | sort)
+GH_CASES=$((GH_CASES + 1))
+if [ "$IH_CFG1" = "$IH_CFG2" ]; then
+	say 'githook/install-idempotent: the second run changed no local configuration'
+else
+	say 'githook/install-idempotent: the second run altered the local configuration'
+	GH_FAILURES="$GH_FAILURES install-idempotent"
+fi
+gh_says install-second 'already set'
+gh_says install-second 'state: active'
+
+# T056: the gap between FR-012 and the non-goal disclaiming key provision. With
+# no signing identity in the fixture, the installer reports it and exits 0. It
+# must not invent one: guessing a key produces commits signed by the wrong
+# identity, which is worse than no signature at all.
+GH_CASES=$((GH_CASES + 1))
+IH_KEY=$(git -C "$IH_FIX" config --local --get user.signingkey 2> /dev/null || true)
+IH_FMT=$(git -C "$IH_FIX" config --local --get gpg.format 2> /dev/null || true)
+if [ -n "$IH_KEY" ] || [ -n "$IH_FMT" ]; then
+	say 'githook/install-no-key: the installer wrote a signing identity, which it must never do'
+	GH_FAILURES="$GH_FAILURES install-no-key"
+else
+	say 'githook/install-no-key: wrote neither user.signingkey nor gpg.format'
+fi
+# Both signing settings must be REPORTED, whatever their state. Asserting the
+# literal "not configured" here was wrong and is worth recording: `git config
+# --get gpg.format` falls back to the contributor's global configuration, so on
+# a machine that signs commits the honest answer is "already set". The
+# requirement is that the installer says where the identity stands, not that it
+# finds one missing.
+gh_says install-second 'gpg.format'
+gh_says install-second 'user.signingkey'
+
+say "$PROG: $EXERCISED standards exercised, $HOOK_CASES format-hook cases, $GH_CASES git-hook cases"
 
 if [ -n "$SKIPPED" ]; then
 	say "$PROG: not exercised, because no tool was reachable:$SKIPPED"
@@ -835,6 +1140,10 @@ fi
 
 if [ -n "$HOOK_FAILURES" ]; then
 	die "$PROG: these format-hook cases did not behave as required:$HOOK_FAILURES. Each is a safety property of scripts/format-file.sh, not a broken test." 1
+fi
+
+if [ -n "$GH_FAILURES" ]; then
+	die "$PROG: these git-hook cases did not behave as required:$GH_FAILURES. Each is a rule the commit-msg or pre-push hook is supposed to enforce, not a broken test." 1
 fi
 
 if [ -n "$SKIPPED" ]; then

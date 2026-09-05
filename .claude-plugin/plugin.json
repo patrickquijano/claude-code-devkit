@@ -1,8 +1,8 @@
 {
   "name": "claude-code-devkit",
   "displayName": "Claude Code Devkit",
-  "description": "A developer toolkit for building custom agents, commands, skills, and MCP servers, with templates, patterns, and workflows for AI-powered automation and context engineering.",
-  "version": "0.1.0",
+  "description": "A spec-driven-development toolkit for Claude Code: six git and forge skills that take a feature from one task description through GitHub Spec Kit's eight phases to a reviewed pull or merge request, plus a seven-check quality gate that runs on POSIX sh and digest-pinned containers.",
+  "version": "0.2.0",
   "author": {
     "name": "Patrick Quijano",
     "url": "https://github.com/patrickquijano"

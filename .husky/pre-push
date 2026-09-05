@@ -1,0 +1,12 @@
+#!/bin/sh
+# Dispatcher. The rules live in scripts/hooks/pre-push.sh, where the shell
+# check's '*.sh' glob finds them and where the self-test can invoke them
+# directly with synthesised stdin. See specs/008-commit-hooks/research.md
+# section 8.
+#
+# The root comes from git rather than from $0, for the reason given in
+# .husky/commit-msg. `exec` passes this script's stdin through unchanged, which
+# is where git writes the ref-update lines the check reads.
+set -eu
+root=$(git rev-parse --show-toplevel)
+exec "$root/scripts/hooks/pre-push.sh" "$@"
