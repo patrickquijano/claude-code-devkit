@@ -190,6 +190,19 @@ After any edit to `SKILL.md`: walk E1–E10 against the changed text. Any edit t
 
 After any edit to the scripts: `sh -n` both, then run `scripts/branch-options.sh` in a work tree, in a commit-less repo (silent exit 0), detached (no `current` tag), and outside a repo (exit 1). Run `scripts/member-options.sh` with a stub `glab` on `PATH` emitting 20 ndjson members and confirm recent committers sort first, then access level descending, then username; confirm exit 1 with no `glab` and exit 2 with no `jq`. With a stub emitting more than 500 records, confirm the listing stops at 500 and a `truncated:` note reaches stderr — a silent cap would misreport coverage.
 
+Then assert the `glab api` call carries **no** `--per-page`, and that the page size is in the endpoint's query string:
+
+```sh
+# Comments are stripped first: the explanatory comment above the call names the
+# flag on purpose, so a bare grep for it matches the very line documenting why
+# it is absent.
+grep -v '^[[:space:]]*#' skills/ccd-gitlab-mr/scripts/member-options.sh \
+  | grep -c -- '--per-page'                                                       # expect 0
+grep -c 'members/all?per_page=100' skills/ccd-gitlab-mr/scripts/member-options.sh # expect 1
+```
+
+`glab api` defines no `--per-page`, so the flag form fails argument parsing before any request is made — and the script reports that as `glab-api-failed: … Unknown flag: --per-page`, which reads as an API or auth problem and is why the defect survived from the skill's first commit to `.specify/bugs/glab-api-per-page/`. The trap for a later reader is `skills/ccd-pipeline-fix/scripts/pipeline-evidence.sh`, where `glab ci list --per-page` is **correct**: that subcommand does define the flag. A sweep that normalises the two breaks the working one. Against a real GitLab remote, the end-to-end check is exit 0 and a non-empty ranked listing — a stub cannot catch a flag `glab` itself rejects.
+
 E1 and E2 need a real GitLab project for a true end-to-end run. When that is unavailable, walk them against the text and report them as walked, not passed. Re-read the diff for rules softened from imperative into description. Test on the models that will run it — terse enough for Opus can be too terse for a smaller model.
 
 ## The question standard

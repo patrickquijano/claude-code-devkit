@@ -31,7 +31,13 @@ trap 'rm -rf "$tmpdir"' EXIT INT TERM
 # much of the project was considered.
 MAX_MEMBERS=500
 
-if ! glab api projects/:id/members/all --paginate --per-page 100 \
+# The page size rides in the query string, not in a flag. `glab api` defines no
+# --per-page — `glab ci list` does, which is why the two must not be normalised
+# to each other — and passing one fails argument parsing before any request is
+# made, surfacing here as a misleading "glab-api-failed: … Unknown flag". A
+# --field would reach the API but flip the method to POST, which glab documents
+# for any request carrying a field.
+if ! glab api "projects/:id/members/all?per_page=100" --paginate \
 	--output ndjson > "$tmpdir/all" 2> "$tmpdir/err"; then
 	err=$(tr '\n' ' ' < "$tmpdir/err") || err="(stderr unreadable)"
 	echo "glab-api-failed: $err" >&2
