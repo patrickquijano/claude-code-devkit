@@ -10,8 +10,10 @@
 # Exit statuses. Documented in specs/001-quality-gate-plugin/contracts/cli.md;
 # a caller is entitled to rely on these.
 #
-# EX_NOGIT is read by lib/scope.sh, which is sourced separately, so ShellCheck
-# cannot see the use from here.
+# Every one is referenced by name at the site that returns it, rather than as a
+# bare literal, so the contract and the code cannot drift apart. Some are read
+# from lib/scope.sh and lib/checks.sh, which are sourced separately, so
+# ShellCheck cannot see those uses from here.
 # shellcheck disable=SC2034
 EX_OK=0
 # shellcheck disable=SC2034
@@ -121,7 +123,7 @@ parse_args() {
 				;;
 			-h | --help)
 				usage "$PROG"
-				exit 0
+				exit "$EX_OK"
 				;;
 			--)
 				# Bare `--` with nothing after it names no paths and so
@@ -130,7 +132,7 @@ parse_args() {
 				while [ "$#" -gt 0 ]; do
 					case "$1" in
 						*"$LF"*)
-							die "$PROG: path contains a newline: $1" 2
+							die "$PROG: path contains a newline: $1" "$EX_USAGE"
 							;;
 						*)
 							# A path with no newline needs no handling.
@@ -143,7 +145,7 @@ parse_args() {
 				;;
 			*)
 				usage "$PROG" >&2
-				die "$PROG: unrecognised argument: $1" 2
+				die "$PROG: unrecognised argument: $1" "$EX_USAGE"
 				;;
 		esac
 		shift
@@ -230,7 +232,7 @@ filter_list() {
 	fl_nuls=$(tr -dc '\0' < "$LIST" | wc -c | tr -d ' ')
 	fl_lines=$(tr '\0' '\n' < "$LIST" | wc -l | tr -d ' ')
 	if [ "$fl_nuls" -ne "$fl_lines" ]; then
-		die "$PROG: a file name contains a newline; refusing to filter" 1
+		die "$PROG: a file name contains a newline; refusing to filter" "$EX_VIOLATION"
 	fi
 
 	# grep exits 1 when nothing matches, which is a legitimate outcome here
@@ -257,7 +259,7 @@ collect() {
 	fi
 	if [ ! -s "$LIST" ]; then
 		say "$PROG: no files in scope"
-		exit 0
+		exit "$EX_OK"
 	fi
 }
 
@@ -281,7 +283,7 @@ collect() {
 # function, so a helper here would look tidy and never execute.
 
 no_tool() {
-	die "$PROG: cannot run this check. Neither the native command \"$1\" nor \"docker\" (which would run $2) is available. Install either one." 3
+	die "$PROG: cannot run this check. Neither the native command \"$1\" nor \"docker\" (which would run $2) is available. Install either one." "$EX_NOTOOL"
 }
 
 # run_files LISTFILE NATIVE IMAGE ARGS...

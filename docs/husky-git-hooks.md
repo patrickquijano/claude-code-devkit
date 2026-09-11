@@ -143,14 +143,16 @@ The hooks are two thin dispatchers and two scripts:
 | Path                                   | What it is                                                                           |
 | -------------------------------------- | ------------------------------------------------------------------------------------ |
 | `.husky/commit-msg`, `.husky/pre-push` | dispatchers; each resolves the repository root from git and `exec`s the script below |
-| `scripts/hooks/commit-msg.sh`          | the message rules; takes a message-file path                                         |
-| `scripts/hooks/pre-push.sh`            | the signature rules; reads ref updates on stdin                                      |
+| `scripts/hooks/commit-msg.sh`          | wrapper; sources the library below and calls it                                      |
+| `scripts/hooks/pre-push.sh`            | wrapper; sources the library below and calls it                                      |
+| `scripts/lib/commit-msg.sh`            | the message rules; takes a message-file path                                         |
+| `scripts/lib/push-check.sh`            | the signature rules; reads ref updates on stdin                                      |
 | `scripts/install-hooks.sh`             | activation and the state report                                                      |
 | `.commit-msg.conf`                     | the rule set                                                                         |
 
-The split is not decoration. Git decides which hook to run from the filename alone, so `.husky/commit-msg` cannot be called `commit-msg.sh` — and `scripts/lint-shell.sh` collects `*.sh`, so hooks written directly in `.husky/` would have been **skipped by the shell check silently**: scripts the constitution requires be checked, that nothing checked, with no error to notice. Putting the logic in `scripts/hooks/*.sh` puts it inside the existing glob, and the two extensionless dispatcher paths are named explicitly in `scripts/lint-shell.sh` alongside it. Removing those two paths stops checking the hooks and still reports success, so do not tidy them away.
+The split is not decoration. Git decides which hook to run from the filename alone, so `.husky/commit-msg` cannot be called `commit-msg.sh` — and `scripts/lint-shell.sh` collects `*.sh`, so hooks written directly in `.husky/` would have been **skipped by the shell check silently**: scripts the constitution requires be checked, that nothing checked, with no error to notice. Putting the logic under `scripts/` puts it inside the existing glob, and the two extensionless dispatcher paths are named explicitly in the shell check's `collect` call alongside it. Removing those two paths stops checking the hooks and still reports success, so do not tidy them away.
 
-The same split is what makes the rules provable. `scripts/selftest.sh` invokes `scripts/hooks/commit-msg.sh` with a fixture file exactly as git invokes it, so twenty cases run with no temporary repository and no real commit. Run them with:
+The rules themselves sit one level further in, in `scripts/lib/`, so that `scripts/selftest.sh` can reach them without executing a sibling script — the same arrangement every entry point under `scripts/` now uses. It calls `commit_msg_main` with a fixture file exactly as git invokes the hook, so twenty cases run with no temporary repository and no real commit. Run them with:
 
 ```sh
 sh scripts/selftest.sh

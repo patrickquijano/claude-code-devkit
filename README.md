@@ -93,6 +93,12 @@ scripts/lint.sh --fix
 
 Nothing needs installing first. Each check prefers the tool on your `PATH` and otherwise runs a digest-pinned container, so a contributor with none of the tools installed gets the same verdict as one with all of them. If neither is available the check fails loudly rather than skipping itself.
 
+Narrow a run to particular paths with a trailing `--`, which never widens it:
+
+```sh
+scripts/lint.sh --fix -- README.md scripts/lint.sh
+```
+
 Individual checks, for re-running one in isolation:
 
 | Command                        | Governs                                        | Configuration                                 |
@@ -107,7 +113,9 @@ Individual checks, for re-running one in isolation:
 
 Formatting and linting are separate concerns, so a content kind may be governed by one configuration for each — never by two of either. Markdown and YAML are formatted by `lint-format.sh` and linted by their own tools, which give up the rules the formatter rewrites.
 
-`scripts/selftest.sh` proves the checks can actually fail: it runs each one against a deliberately broken fixture and succeeds only if every check rejects it.
+Every entry point under `scripts/` is a wrapper with no logic of its own: it resolves the repository root, sources one file from [`scripts/lib/`](scripts/lib/) and calls it. The seven checks live in `scripts/lib/checks.sh`, and the aggregate, the per-standard commands and the edit hook all reach them through the same function. Nothing under `scripts/` executes anything else under `scripts/`, so adding a check means adding it to `CHECKS` and to `run_standard` in that one file.
+
+`scripts/selftest.sh` proves the checks can actually fail: it runs each one against a deliberately broken fixture and succeeds only if every check rejects it. It also drives the edit hook, both git hooks, the installer and the compaction audit through `scripts/lib/` directly, so a failing case names a broken check rather than a broken test.
 
 ### Formatting on edit
 
@@ -122,7 +130,7 @@ Editing a file in Claude Code formats it. `.claude/settings.json` is committed a
 
 The order is not arbitrary. Markdown is governed by two of the three — Prettier formats it and markdownlint lints what Prettier does not rewrite — so running them the other way round would not settle.
 
-**Dependencies: none beyond the checks themselves.** The hook shells out to the same check scripts you would run by hand, so each one prefers the tool on your `PATH` and otherwise runs its digest-pinned container. If a check can run neither way it says so, naming the missing tool and the image, and the edit stands:
+**Dependencies: none beyond the checks themselves.** The hook runs the same check implementations `scripts/lint.sh` runs, so each one prefers the tool on your `PATH` and otherwise runs its digest-pinned container. If a check can run neither way it says so, naming the missing tool and the image, and the edit stands:
 
 ```text
 ==> format-file.sh: notes.md - lint-format.sh skipped: ... Neither the native command "prettier" nor "docker" ... is available.
@@ -136,7 +144,7 @@ It also does nothing, silently, for a path that is outside the repository, delet
 
 **When formatting fails.** The hook exits 2 and puts the file, the check, its exit status and the check's own unmodified output on stderr, where Claude Code shows it to the session — enough to diagnose and retry. It never blocks or reverts the edit: `PostToolUse` runs after the tool has already written, so the edit stands and the report tells you what still needs fixing.
 
-**Extending it to a new file kind.** There is no mapping table in the hook to edit, which is the point of its design. Either add the extension to an existing check's globs in that check's `collect` call, or add another rewriting check to the three calls at the bottom of `scripts/format-file.sh`. A new check needs to follow the existing convention: exit 0 with `no files in scope` when the file is not its business, since that is how the hook knows to stay quiet.
+**Extending it to a new file kind.** There is no mapping table in the hook to edit, which is the point of its design. Either add the extension to an existing check's globs in that check's `collect` call, or add another rewriting check to the three `fh_run_check` calls at the bottom of `scripts/lib/format-hook.sh`. A new check needs to follow the existing convention: exit 0 with `no files in scope` when the file is not its business, since that is how the hook knows to stay quiet.
 
 **One thing it cannot promise.** It is not necessarily the only formatter running. A formatter configured outside this repository — in your user-level Claude Code settings, say — can match the same event, and hooks for one event run in parallel, so two of them may write the same file at once. The repository cannot detect that from inside and must not edit configuration outside its own root. If you have such a hook, stand it down for this repository by adding one line near its top:
 
@@ -168,6 +176,7 @@ Two things worth knowing before you edit:
 
 - Each check declares its excluded paths in **one** place: the configuration file that already drives it. The runner reads that same declaration to build the file list, so running a tool by hand applies the exclusions the runner applies. ShellCheck has no exclusion mechanism of its own, so its declaration is a marked comment block in `.shellcheckrc` — read by the runner, invisible to the tool, which is a limitation stated in that file.
 - Your edits are reformatted as you make them. `.claude/settings.json` registers a committed Claude Code hook, `scripts/format-file.sh`, which runs the rewriting checks over each file the session edits. It never blocks or undoes an edit; a failure is reported with the file and the check named.
+- Shared logic goes in `scripts/lib/`, never in a sibling script. A script that executes another script is a shared component nobody declared, and it is what `scripts/lib/checks.sh` exists to replace. Every script is POSIX `sh`, fails at the first failing step, and is checked by `scripts/lint-shell.sh` — see [`.claude/rules/shell-scripts.md`](.claude/rules/shell-scripts.md).
 - Every setting that departs from its tool's default has a written reason in [`specs/001-quality-gate-plugin/research.md`](specs/001-quality-gate-plugin/research.md), as does every default relied on without being restated. Check there before "fixing" one.
 
 Feature work runs through Spec Kit and leaves its record under `specs/NNN-slug/`. The rules the repository holds itself to are in [`.specify/memory/constitution.md`](.specify/memory/constitution.md).

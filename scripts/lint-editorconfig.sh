@@ -1,29 +1,19 @@
 #!/bin/sh
+# The editorconfig standard, on its own.
+#
+#   scripts/lint-editorconfig.sh                    report violations
+#   scripts/lint-editorconfig.sh --fix              rewrite what the tool can rewrite
+#   scripts/lint-editorconfig.sh [--fix] -- PATH... narrow the run to the named paths
+#
+# Exit statuses are documented in specs/001-quality-gate-plugin/contracts/cli.md
+# and are part of the contract.
 set -eu
 
 PROG=$(basename "$0")
 SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
 
-# shellcheck source=lib/common.sh
-. "$SCRIPT_DIR/lib/common.sh"
-# shellcheck source=lib/images.sh
-. "$SCRIPT_DIR/lib/images.sh"
-# shellcheck source=lib/scope.sh
-. "$SCRIPT_DIR/lib/scope.sh"
+# shellcheck source=lib/checks.sh
+. "$SCRIPT_DIR/lib/checks.sh"
 
-parse_args "$@"
-init_runner
-
-# Every in-scope file: whitespace and line endings are not file-type specific.
-collect editorconfig '*'
-
-if [ "$MODE" = fix ]; then
-	no_automatic_fix editorconfig
-fi
-
-# This image sets no ENTRYPOINT -- its binary is the Cmd -- so the binary has to
-# be named or docker execs the first file as a program.
-CONTAINER_CMD='editorconfig-checker'
-
-run_files "$LIST" editorconfig-checker "$IMAGE_EDITORCONFIG"
+check_main editorconfig "$@"
