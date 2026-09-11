@@ -172,7 +172,7 @@ sh scripts/install-hooks.sh
 
 That points git at the committed hooks in `.husky/`, which refuse a commit message that is not a Conventional Commits subject of at most 72 characters and refuse a push carrying an unsigned or badly signed commit. It needs nothing but POSIX `sh` and git — no `npm install`, no `package.json`, and Husky itself is optional. `sh scripts/install-hooks.sh --status` reports whether the checks are currently on. What each hook enforces, why Husky is optional, and how to bypass a check in an emergency are in [`docs/husky-git-hooks.md`](docs/husky-git-hooks.md).
 
-Two things worth knowing before you edit:
+Four things worth knowing before you edit:
 
 - Each check declares its excluded paths in **one** place: the configuration file that already drives it. The runner reads that same declaration to build the file list, so running a tool by hand applies the exclusions the runner applies. ShellCheck has no exclusion mechanism of its own, so its declaration is a marked comment block in `.shellcheckrc` — read by the runner, invisible to the tool, which is a limitation stated in that file.
 - Your edits are reformatted as you make them. `.claude/settings.json` registers a committed Claude Code hook, `scripts/format-file.sh`, which runs the rewriting checks over each file the session edits. It never blocks or undoes an edit; a failure is reported with the file and the check named.
