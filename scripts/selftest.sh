@@ -557,6 +557,46 @@ ST=0
 lib_run checks.sh lint-citations.sh "$CITE_ROOT" standard_citations > "$OUT" 2>&1 || ST=$?
 verdict citations .github/stale-quotation.md
 
+# The path list narrows this check like every other one. It enumerates .github/
+# with `find` rather than through lib/scope.sh, so nothing else in the suite
+# exercises that narrowing, and the check was non-conforming until it did --
+# 004's check-cli.md exempts only scripts/format-file.sh from the common shape.
+#
+# check_main, not standard_citations: parse_args is what sets REQUESTED_PATHS,
+# so this is the contract's invocation rather than an equivalent of it.
+CITE_CASES=0
+CITE_FAILURES=''
+
+cite_narrow() {
+	CITE_CASES=$((CITE_CASES + 1))
+	_cn_what=$1
+	_cn_want=$2
+	_cn_path=$3
+	_cn_out="$WORK/citations-narrow-$CITE_CASES.out"
+	_cn_st=0
+	lib_run checks.sh lint-citations.sh "$CITE_ROOT" \
+		check_main citations -- "$_cn_path" > "$_cn_out" 2>&1 || _cn_st=$?
+	if [ "$_cn_st" -ne "$_cn_want" ]; then
+		say "citations/$_cn_what: exit $_cn_st, expected $_cn_want"
+		CITE_FAILURES="$CITE_FAILURES $_cn_what"
+		return 0
+	fi
+	say "citations/$_cn_what: as required (exit $_cn_st)"
+}
+
+# A path that is not one of this check's templates reaches none of them, so the
+# run is the documented "matched nothing": `no files in scope`, exit 0.
+cite_narrow outside 0 .specify/memory/constitution.md
+if ! grep -q ': no files in scope$' "$WORK/citations-narrow-1.out"; then
+	say 'citations/outside: narrowed to nothing without saying "no files in scope"'
+	CITE_FAILURES="$CITE_FAILURES outside(message)"
+fi
+CITE_CASES=$((CITE_CASES + 1))
+
+# Naming the stale template still reports it: narrowing must not widen, and
+# must not suppress either.
+cite_narrow named 1 .github/stale-quotation.md
+
 # --- editorconfig: trailing whitespace and no final newline -----------------
 # The fixture needs an .editorconfig of its own: the repository's declares
 # root=true, and the fixture is outside the repository in any case.
@@ -1448,30 +1488,18 @@ ep_usage() {
 # The aggregate and the seven per-standard entry points. The glob, not CHECKS:
 # what this case asserts is that every wrapper on disk was executed, so an eighth
 # one is covered the day it is added rather than the day someone remembers.
-#
-# `citations` is the one check a path list does not narrow: it reads .github/
-# whatever it is given, so a stale governance quotation would fail its case --
-# and the aggregate's -- with the one diagnosis that is not true of it. Exit 1
-# there still means the wrapper reached its library, which is all these cases
-# are for; the citations standard case above is what asserts its verdict.
-ep_expect lint.sh '0 1' "$SCRIPT_DIR/lint.sh" -- "$EP_REL"
+ep_expect lint.sh 0 "$SCRIPT_DIR/lint.sh" -- "$EP_REL"
 for _ep_f in "$SCRIPT_DIR"/lint-*.sh; do
-	_ep_base=$(basename "$_ep_f")
-	case "$_ep_base" in
-		lint-citations.sh)
-			_ep_accept='0 1'
-			;;
-		*)
-			_ep_accept=0
-			;;
-	esac
-	ep_expect "$_ep_base" "$_ep_accept" "$_ep_f" -- "$EP_REL"
+	ep_expect "$(basename "$_ep_f")" 0 "$_ep_f" -- "$EP_REL"
 done
 
-# FR-009, at the surface where the promise is actually made.
-ep_usage lint-citations.sh absent 'Narrow this run'
+# FR-009, at the surface where the promise is actually made. `citations` runs no
+# tool, so it rewrites nothing and cannot reach the no-tool or no-git exits;
+# `markdown` stands for every check that does all three. Both directions,
+# because a default that went blank for everyone would satisfy the negatives.
+ep_usage lint-citations.sh absent 'where the tool supports it'
 ep_usage lint-citations.sh absent '4 not a git tree'
-ep_usage lint-markdown.sh present 'Narrow this run'
+ep_usage lint-markdown.sh present 'where the tool supports it'
 ep_usage lint-markdown.sh present '4 not a git tree'
 
 # The edit hook. A file inside the repository that no check governs, so the hook
@@ -1507,7 +1535,7 @@ ep_expect compaction-audit.sh 2 "$SCRIPT_DIR/compaction-audit.sh"
 EP_CASES=$((EP_CASES + 1))
 say 'entry/selftest.sh: as required (it is the process running these cases)'
 
-say "$PROG: $EXERCISED standards exercised, $LINT_CASES aggregate cases, $HOOK_CASES format-hook cases, $GH_CASES git-hook cases, $CA_CASES compaction-audit cases, $EP_CASES entry-point cases"
+say "$PROG: $EXERCISED standards exercised, $LINT_CASES aggregate cases, $HOOK_CASES format-hook cases, $GH_CASES git-hook cases, $CA_CASES compaction-audit cases, $CITE_CASES citations-scope cases, $EP_CASES entry-point cases"
 
 if [ -n "$SKIPPED" ]; then
 	say "$PROG: not exercised, because no tool was reachable:$SKIPPED"
@@ -1533,6 +1561,10 @@ if [ -n "$CA_FAILURES" ]; then
 	die "$PROG: these compaction-audit cases did not behave as required:$CA_FAILURES. An audit that certifies a lost rule is worse than no audit, so treat each as a broken check, not a broken test." 1
 fi
 
+if [ -n "$CITE_FAILURES" ]; then
+	die "$PROG: the citations path list did not behave as required:$CITE_FAILURES. 004/check-cli.md states one command-line shape for every check and exempts only scripts/format-file.sh." 1
+fi
+
 if [ -n "$EP_FAILURES" ]; then
 	die "$PROG: these entry points did not behave as required:$EP_FAILURES. Each is a wrapper under scripts/ whose call into scripts/lib/, or whose usage text, no linter can check -- not a broken test." 1
 fi
@@ -1541,4 +1573,4 @@ if [ -n "$SKIPPED" ]; then
 	die "$PROG: every reachable check rejected its fixture, but$SKIPPED could not be exercised at all, so SC-002 is unproven for them." 1
 fi
 
-say "$PROG: every check rejected its bad fixture, the aggregate reported a body that failed part way through, the format hook held every safety property, the compaction audit refused to certify a lost rule, and every entry point reached its library and offered only the options it has"
+say "$PROG: every check rejected its bad fixture, the aggregate reported a body that failed part way through, the format hook held every safety property, the compaction audit refused to certify a lost rule, the citations check narrowed on a path list like every other, and every entry point reached its library and offered only the options it has"
