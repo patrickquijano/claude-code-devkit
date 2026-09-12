@@ -77,10 +77,21 @@ A Claude Code plugin, not an application. Real paths: `scripts/` for entry point
 - [x] T027 [P] [US1] Spawn the check as `/bin/sh -c` rather than through `PATH`, and say why (FR-012, `research.md` §11)
 - [x] T028 [US3] Write `plan.md` and this `tasks.md`, completing Principle VI's four artifacts (review round two, H1)
 
+## Phase 4b: Review round three
+
+**Purpose**: Two medium findings and two low ones. M1 and L2 are code; M2 is disclosure; L1 is a test that could fail for a reason its own message denies.
+
+- [x] T035 [US1] Parameterise the three variable lines of `usage()` as `USAGE_FIX`, `USAGE_PATHS` and `USAGE_EXIT` in `scripts/lib/common.sh`, defaulting to the scoped form (M1, FR-009)
+- [x] T036 [US1] Overwrite all three in `check_main` for `citations`, before `parse_args` answers `-h` (M1, FR-009)
+- [x] T037 [US3] Add four `ep_usage` cases asserting both directions of FR-009 at `-h`, and prove they fail when the correction is reverted (SC-005)
+- [x] T038 [US3] Let `ep_expect` take a set of statuses, and accept `0 1` for `lint.sh` and `lint-citations.sh`: `citations` reads `.github/` whatever it is given, so a stale quotation failed those cases with the one diagnosis untrue of them (L1)
+- [x] T039 [P] [US1] Replace the file-wide `# shellcheck disable=SC2310` in `scripts/lib/checks.sh` with one at each of the two call sites, so it cannot silence a later check body (L2)
+- [x] T040 [US3] Disclose the unrelated `CLAUDE.md` `## Working rules` addition in `plan.md` and in the pull request description (M2)
+
 ## Phase 5: Verification
 
 - [x] T029 Run `sh scripts/lint.sh` — all seven checks pass (SC-001)
-- [x] T030 Run `sh scripts/selftest.sh` — 17 standards, 3 aggregate cases, 13 format-hook, 20 git-hook, 5 compaction-audit, 14 entry-point (SC-001)
+- [x] T030 Run `sh scripts/selftest.sh` — 17 standards, 3 aggregate cases, 13 format-hook, 20 git-hook, 5 compaction-audit, 18 entry-point (SC-001)
 - [x] T031 Run `LINT_FORCE_CONTAINER=1 sh scripts/lint.sh` — the container path returns the same verdict (SC-001)
 - [x] T032 Demonstrate SC-002: reinstating the subshell form makes `lint/errexit` fail, and restoring it makes it pass
 - [x] T033 Demonstrate SC-004: `check_main markdwon` in `scripts/lint-markdown.sh` passes `scripts/lint-shell.sh` and fails `scripts/selftest.sh` at `entry/lint-markdown.sh`

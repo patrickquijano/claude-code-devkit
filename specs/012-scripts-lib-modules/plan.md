@@ -16,6 +16,8 @@ Two behaviours changed, both toward an existing contract: `lint.sh` now passes a
 
 Two things this feature added after the first review round: fourteen entry-point smoke cases, because removing the sibling execution removed the only thing that ran the wrappers; and an explicit exemption for `scripts/selftest.sh` from the wrapper rule, because the repository otherwise breaks in the same commit that states it.
 
+Round three added one more: FR-009 was satisfied in the file header comments and not at `-h`, which is the surface a user reads. `usage()` now takes its three variable lines from `USAGE_FIX`, `USAGE_PATHS` and `USAGE_EXIT`, whose defaults describe a check that filters a file list and resolves a tool; `check_main` overwrites all three for `citations`, which does neither. Four self-test cases assert both directions.
+
 ## Technical Context
 
 **Language/Version**: POSIX `sh` (IEEE Std 1003.1). No language runtime is introduced.
@@ -35,6 +37,8 @@ Two things this feature added after the first review round: fourteen entry-point
 **Constraints**: No new runtime dependency. Every documented CLI — arguments, output and all five exit statuses — unchanged, so the contracts under `specs/` still describe what ships. `skills/` is untouched, so `.claude-plugin/plugin.json` needs no version bump.
 
 **Scale/Scope**: 14 entry points under `scripts/`, 9 files under `scripts/lib/`, 7 checks. No file outside `scripts/`, `.husky/`, `README.md`, `CLAUDE.md`, `docs/husky-git-hooks.md` and `.claude/rules/husky-git-hooks.md` changes.
+
+**One change in that list is not part of this feature.** `CLAUDE.md` gains a `## Working rules` section — four instructions to any agent working in this repository, about re-running slow checks, comment length, simplicity and token spend. It rode in on commit `50c92de`, whose message describes the subshell fix and nothing else. It is unrelated to `scripts/lib/`, it is named here rather than left for a reviewer to find in a diff, and it is the one thing in this branch a reader should judge on its own merits. Review round three raised it (M2); the decision was to disclose it rather than strip it, because it is correct and already in force.
 
 ## Constitution Check
 

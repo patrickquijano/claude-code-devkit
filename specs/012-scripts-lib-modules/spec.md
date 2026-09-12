@@ -25,6 +25,7 @@ A contributor adding an eighth standard edits one file. They add the name to the
 1. **Given** a new check registered in one place, **When** the aggregate runs, **Then** it runs the new check in its declared position.
 2. **Given** an entry point under `scripts/`, **When** it is read, **Then** it resolves the repository root, sources one file from `scripts/lib/`, and calls it — and contains no other logic.
 3. **Given** a wrapper that names a check that does not exist, **When** the self-test runs, **Then** it fails and names that entry point.
+4. **Given** a check that reads a fixed location, **When** `-h` is asked of its entry point, **Then** the path-list, `--fix` and exit-status lines describe what that check actually does.
 
 ### User Story 2 - A check fails part way through its body (Priority: P1)
 
@@ -57,7 +58,7 @@ A command inside a check body fails. The check stops there, the aggregate stops 
 - **FR-006**: The aggregate MUST pass a trailing `-- PATH...` through to every check, per `specs/004-format-hook-scope/contracts/check-cli.md`.
 - **FR-007**: Every documented CLI — arguments, output and all five exit statuses — MUST be unchanged.
 - **FR-008**: The self-test MUST cover FR-004 and FR-005 against the committed invocation, not a stand-in for it.
-- **FR-009**: A usage header MUST NOT promise a behaviour its check does not have — neither a `--fix` that rewrites nothing nor a `-- PATH...` that narrows nothing.
+- **FR-009**: A usage text MUST NOT promise a behaviour its check does not have — neither a `--fix` that rewrites nothing, nor a `-- PATH...` that narrows nothing, nor an exit status the check cannot return. This binds the `-h` output as well as the file header comment: `-h` is where the promise reaches a user.
 - **FR-010**: Dead implementations MUST be removed, not left unreferenced.
 - **FR-011**: Every entry point under `scripts/` MUST be executed by at least one self-test case, so that a wrapper whose call into its library is wrong fails a gate rather than only a run.
 - **FR-012**: A check MUST run under the same shell its entry point declares.
@@ -68,3 +69,4 @@ A command inside a check body fails. The check stops there, the aggregate stops 
 - **SC-002**: Reverting the invocation to the subshell form makes the self-test fail, and naming the case that caught it.
 - **SC-003**: `grep` for a `scripts/` path being executed from another `scripts/` file returns nothing outside `scripts/selftest.sh`, whose only such lines are smoke cases.
 - **SC-004**: Renaming the check a wrapper asks for — `check_main markdwon` — passes `scripts/lint-shell.sh` and fails `scripts/selftest.sh`.
+- **SC-005**: Reverting the `citations` usage correction makes `scripts/selftest.sh` fail, naming `lint-citations.sh(-h)`.

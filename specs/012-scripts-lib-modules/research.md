@@ -95,3 +95,11 @@ A wrapper is three assignments, one `.` and one call, and the call is the part n
 ## 11. `/bin/sh`, not a `PATH` lookup
 
 `run_standard_isolated` spawns the child as `/bin/sh -c`. Every entry point declares `#!/bin/sh`, so resolving the child through `PATH` would let a check run under a different shell than the wrapper that invoked it on any machine where `PATH`'s `sh` is not `/bin/sh`. For a repository whose fourth principle is POSIX shell only, that is the one thing not to leave to the environment, and the absolute path costs nothing.
+
+## 12. Why `usage()` takes three variables rather than one text per check
+
+FR-009 was written against the file header comments and satisfied there; `scripts/lint-citations.sh -h` went on offering `-- PATH... Narrow this run to the named paths`, a `--fix` described in terms of a tool it does not run, and exit statuses 3 and 4 it cannot return. `-h` is where a user is actually told what a command does, so that is where the requirement had to be met.
+
+Only three lines differ, and only one check differs on them. A second heredoc would duplicate the four lines that do not differ, and two copies of a usage text agree the day they are written. A per-check usage function would put seven near-identical texts where there is one. So `usage()` interpolates `USAGE_FIX`, `USAGE_PATHS` and `USAGE_EXIT`, whose defaults in `lib/common.sh` describe a check that filters a file list and resolves a tool — what `lint.sh` and six of the seven do — and `check_main` overwrites them for `citations`.
+
+The assignment has to happen in `check_main` rather than in `standard_citations`: `parse_args` answers `-h` and exits, so anything `run_standard` sets is too late. `lint_main` never touches them, which is correct — the aggregate does narrow, and it can return both 3 and 4.
