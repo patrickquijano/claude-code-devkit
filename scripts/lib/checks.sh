@@ -132,6 +132,14 @@ standard_citations() {
 	fi
 
 	while IFS= read -r _ct_template; do
+		# `find` separates names with newlines, so a name containing one
+		# arrives as two records and neither of them names a file. Refused
+		# rather than half-checked: filter_list refuses the same input for the
+		# same reason, and a citation check that silently skipped a template
+		# would report a pass it never established (Principle II).
+		[ -f "$_ct_template" ] \
+			|| die "$PROG: $_ct_dir holds a name this check cannot enumerate (a newline in it, or it vanished mid-run): $_ct_template" "$EX_VIOLATION"
+
 		_ct_files=$((_ct_files + 1))
 		citations_extract "$_ct_template" > "$_ct_work/citations"
 

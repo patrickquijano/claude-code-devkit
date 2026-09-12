@@ -597,6 +597,26 @@ CITE_CASES=$((CITE_CASES + 1))
 # must not suppress either.
 cite_narrow named 1 .github/stale-quotation.md
 
+# This check builds its list with `find`, which separates names with newlines,
+# so a name containing one arrives as two records and neither is a file. Refused
+# by name rather than half-checked -- filter_list refuses the same input for the
+# same reason, and a citations run that silently skipped a template would report
+# a pass it never established.
+CITE_NL="$CITE_ROOT/.github/two${LF}lines.md"
+printf '# no citations here\n' > "$CITE_NL"
+CITE_CASES=$((CITE_CASES + 1))
+CITE_NL_ST=0
+lib_run checks.sh lint-citations.sh "$CITE_ROOT" standard_citations \
+	> "$WORK/citations-newline.out" 2>&1 || CITE_NL_ST=$?
+if [ "$CITE_NL_ST" -eq 1 ] \
+	&& grep -q 'cannot enumerate' "$WORK/citations-newline.out"; then
+	say 'citations/newline-in-name: as required (exit 1, refused by name)'
+else
+	say "citations/newline-in-name: exit $CITE_NL_ST, and the refusal was not reported"
+	CITE_FAILURES="$CITE_FAILURES newline-in-name"
+fi
+rm -f -- "$CITE_NL"
+
 # --- editorconfig: trailing whitespace and no final newline -----------------
 # The fixture needs an .editorconfig of its own: the repository's declares
 # root=true, and the fixture is outside the repository in any case.
@@ -1573,4 +1593,4 @@ if [ -n "$SKIPPED" ]; then
 	die "$PROG: every reachable check rejected its fixture, but$SKIPPED could not be exercised at all, so SC-002 is unproven for them." 1
 fi
 
-say "$PROG: every check rejected its bad fixture, the aggregate reported a body that failed part way through, the format hook held every safety property, the compaction audit refused to certify a lost rule, the citations check narrowed on a path list like every other, and every entry point reached its library and offered only the options it has"
+say "$PROG: every check rejected its bad fixture, the aggregate reported a body that failed part way through, the format hook held every safety property, the compaction audit refused to certify a lost rule, the citations check narrowed on a path list like every other and refused a name it cannot enumerate, and every entry point reached its library and offered only the options it has"
