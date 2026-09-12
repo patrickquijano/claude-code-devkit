@@ -92,14 +92,16 @@ say() {
 	printf '%s==>%s %s\n' "$C_BOLD" "$C_RESET" "$1"
 }
 
-# The three lines of the usage text that are not true of every check. A check
-# that reads a fixed location rather than a filtered file list narrows nothing
-# and resolves no tool, so it overwrites both in check_main before parse_args
-# answers -h. The defaults describe the scoped form, which is what the aggregate
-# and six of the seven checks do -- FR-009 forbids a usage text promising a
-# behaviour its check does not have, and -h is where that promise is made.
+# The two lines of the usage text that are not true of every check. `citations`
+# runs no tool, so it rewrites nothing and can reach neither the no-tool nor the
+# no-git exit; check_main overwrites both before parse_args answers -h. FR-009
+# forbids a usage text promising a behaviour its check does not have, and -h is
+# where that promise reaches a user.
+#
+# The path-list line is NOT among them. Every check narrows on a path list --
+# 004's check-cli.md states one shape for all of them -- and a check that did
+# not would be a defect to fix rather than a line to reword.
 USAGE_FIX='--fix         Rewrite files into conformance where the tool supports it.'
-USAGE_PATHS='-- PATH...    Narrow this run to the named paths. Never widens it.'
 USAGE_EXIT='Exit: 0 pass, 1 violations, 2 usage, 3 no tool and no container, 4 not a git tree.'
 
 # The heredoc body is flush left on purpose. Leading spaces here are printed
@@ -112,7 +114,7 @@ Usage: $1 [--fix] [-- PATH...]
 
 no arguments  Report violations. Modifies no file.
 $USAGE_FIX
-$USAGE_PATHS
+-- PATH...    Narrow this run to the named paths. Never widens it.
 -h, --help    This message.
 
 $USAGE_EXIT

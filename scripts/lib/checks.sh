@@ -438,14 +438,14 @@ check_main() {
 	_chk_name=$1
 	shift
 
-	# `citations` reads .github/ rather than a filtered file list: it calls
-	# neither init_runner nor collect, runs no tool and rewrites nothing, so no
-	# path list narrows it and it can return neither EX_NOTOOL nor EX_NOGIT.
-	# Corrected here because parse_args answers -h, so anything set after it is
-	# too late (FR-009).
+	# `citations` runs no tool at all: it compares committed text against
+	# committed text. So it rewrites nothing under --fix, and it can return
+	# neither EX_NOTOOL nor EX_NOGIT -- it never resolves a tool and never asks
+	# git for a file list. It narrows on a path list like every other check, so
+	# that line is the shared default. Corrected here because parse_args answers
+	# -h, so anything set after it is too late (FR-009).
 	if [ "$_chk_name" = citations ]; then
 		USAGE_FIX='--fix         Accepted and ignored: this check rewrites nothing.'
-		USAGE_PATHS='-- PATH...    Accepted and ignored: this check reads .github/, which no path list narrows.'
 		USAGE_EXIT='Exit: 0 pass, 1 violations, 2 usage.'
 	fi
 
