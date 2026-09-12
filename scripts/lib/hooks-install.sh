@@ -284,15 +284,14 @@ install_hooks_main() {
 	done
 
 	# THE FORGE'S SIGNING-KEY LIST IS A SEPARATE LIST FROM ITS AUTHENTICATION
-	# KEYS, and only the first one it consults when it verifies a commit. A key
-	# that pushes successfully therefore proves nothing about whether the forge
-	# will recognise the signature it just carried: every commit reads
-	# "Unverified" with reason unknown_key, and nothing local can tell. The
-	# local checks cannot see this -- `git verify-commit` answers from
-	# allowed_signers on this machine and says "Good signature" either way --
-	# so the gap survived until someone read the forge's API. Reported here
-	# because this is the one command the repository already tells a
-	# contributor to run.
+	# KEYS, and the signing list is the only one it consults when it verifies a
+	# commit. A key that pushes successfully therefore proves nothing about
+	# whether the forge will recognise the signature it just carried: every
+	# commit reads "Unverified" with reason unknown_key. The local checks cannot
+	# see this -- `git verify-commit` answers from allowed_signers on this
+	# machine and says "Good signature" either way -- so the gap survived until
+	# someone read the forge's API. Reported here because this is the one
+	# command the repository already tells a contributor to run.
 	ih_forge_signing_key "${_ih_format:-}" "${_ih_key:-}"
 
 	# git silently skips a hook that is not executable, which is the quietest
