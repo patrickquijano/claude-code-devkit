@@ -29,6 +29,114 @@ ih_report() {
 	printf '  %-18s %-24s %s\n' "$1" "$2" "$3"
 }
 
+# ih_fingerprint PATH -- the key's SHA256 fingerprint on stdout, nothing when it
+# cannot be read. A `-` PATH reads the key from stdin.
+ih_fingerprint() {
+	_ih_fp=''
+	_ih_fp=$(ssh-keygen -lf "$1" 2> /dev/null) || _ih_fp=''
+	[ -n "$_ih_fp" ] || return 0
+	printf '%s\n' "$_ih_fp" | cut -d ' ' -f 2
+}
+
+# ih_forge_signing_key GPG_FORMAT SIGNING_KEY -- reports whether the forge has
+# the signing key registered FOR SIGNING. Report only: it writes nothing, it
+# never fails the run, and every condition it cannot judge reports `not checked`
+# rather than guessing. An optional tool, so Principle I still holds -- without
+# `gh` the script needs nothing but POSIX sh and git.
+ih_forge_signing_key() {
+	_ih_fsk_format=$1
+	_ih_fsk_key=$2
+	_ih_fsk_why=''
+
+	# Only SSH signing is judged. A GPG key lives in a different list behind a
+	# different endpoint, and reporting it unregistered on the strength of an
+	# SSH lookup would be a confident wrong answer.
+	if [ "$_ih_fsk_format" != ssh ] || [ -z "$_ih_fsk_key" ]; then
+		_ih_fsk_why='no ssh signing key configured'
+	fi
+
+	_ih_fsk_remote=''
+	if [ -z "$_ih_fsk_why" ]; then
+		_ih_fsk_remote=$(git remote get-url origin 2> /dev/null) || _ih_fsk_remote=''
+		case "$_ih_fsk_remote" in
+			*github.com*) ;;
+			'') _ih_fsk_why='no origin remote' ;;
+			# GitLab keeps the same distinction under a usage_type field, but
+			# reading it needs a JSON parser this script does not require. Left
+			# unjudged rather than half-judged.
+			*) _ih_fsk_why='origin is not github' ;;
+		esac
+	fi
+
+	if [ -z "$_ih_fsk_why" ]; then
+		command -v gh > /dev/null 2>&1 || _ih_fsk_why='gh is not installed'
+	fi
+
+	# The configured key may be a path -- possibly `~`-prefixed, which git
+	# expands and `ssh-keygen` does not -- or the literal key material.
+	_ih_fsk_mine=''
+	if [ -z "$_ih_fsk_why" ]; then
+		case "$_ih_fsk_key" in
+			ssh-* | ecdsa-* | sk-*) _ih_fsk_path='' ;;
+			*) _ih_fsk_path=$_ih_fsk_key ;;
+		esac
+		# git expands a leading `~` in this setting and ssh-keygen does not, so
+		# the path git signs with is not always a path ssh-keygen can open. The
+		# character is held in a variable because a literal one cannot be
+		# written as a glob pattern without ShellCheck reading it as a bug.
+		_ih_fsk_tilde='~'
+		case "$_ih_fsk_path" in
+			"$_ih_fsk_tilde"/*) _ih_fsk_path="$HOME/${_ih_fsk_path#*/}" ;;
+			*) ;;
+		esac
+		if [ -n "$_ih_fsk_path" ]; then
+			_ih_fsk_mine=$(ih_fingerprint "$_ih_fsk_path") || _ih_fsk_mine=''
+		else
+			_ih_fsk_mine=$(printf '%s\n' "$_ih_fsk_key" | ih_fingerprint -) || _ih_fsk_mine=''
+		fi
+		[ -n "$_ih_fsk_mine" ] || _ih_fsk_why='signing key is unreadable'
+	fi
+
+	_ih_fsk_listed=''
+	if [ -z "$_ih_fsk_why" ]; then
+		_ih_fsk_listed=$(gh api user/ssh_signing_keys --jq '.[].key' 2> /dev/null) || _ih_fsk_why='github could not be reached'
+	fi
+
+	if [ -n "$_ih_fsk_why" ]; then
+		ih_report 'forge signing key' "($_ih_fsk_why)" 'not checked'
+		return 0
+	fi
+
+	_ih_fsk_found=no
+	# A heredoc, not a pipeline: a pipeline runs this loop in a subshell and the
+	# answer comes back `no` however many keys matched (Principle II).
+	while read -r _ih_fsk_line; do
+		[ -n "${_ih_fsk_line:-}" ] || continue
+		_ih_fsk_theirs=''
+		_ih_fsk_theirs=$(printf '%s\n' "$_ih_fsk_line" | ih_fingerprint -) || _ih_fsk_theirs=''
+		if [ -n "$_ih_fsk_theirs" ] && [ "$_ih_fsk_theirs" = "$_ih_fsk_mine" ]; then
+			_ih_fsk_found=yes
+		fi
+	done << EOF
+$_ih_fsk_listed
+EOF
+
+	if [ "$_ih_fsk_found" = yes ]; then
+		ih_report 'forge signing key' 'github: registered' 'already set'
+		return 0
+	fi
+
+	# Not a failure, and deliberately so: the contributor can commit, the
+	# signature is real, and only the forge's view of it is wrong. Naming the
+	# remedy is worth more than a non-zero exit that would block the one
+	# command that diagnoses the problem.
+	ih_report 'forge signing key' 'github: NOT registered' 'not configured'
+	printf '    Commits will read "Unverified" on GitHub. An authentication key is\n'
+	printf '    not a signing key; the two lists are separate. To register it:\n'
+	printf '      gh ssh-key add %s --type signing\n' "$_ih_fsk_key"
+	return 0
+}
+
 # install_hooks_main [--status]
 install_hooks_main() {
 	_ih_mode=install
@@ -109,15 +217,34 @@ install_hooks_main() {
 	# worse than no signature: an unsigned commit is visibly unattributed, a
 	# wrongly signed one is confidently misattributed. Reporting them absent is
 	# not a failure and does not affect the exit status.
+	_ih_format=''
+	_ih_key=''
 	for _ih_setting in gpg.format user.signingkey; do
 		_ih_value=''
 		_ih_value=$(git config --get "$_ih_setting" 2> /dev/null) || _ih_value=''
+		case "$_ih_setting" in
+			gpg.format) _ih_format=$_ih_value ;;
+			user.signingkey) _ih_key=$_ih_value ;;
+			*) ;;
+		esac
 		if [ -n "$_ih_value" ]; then
 			ih_report "$_ih_setting" "$_ih_value" 'already set'
 		else
 			ih_report "$_ih_setting" '(unset)' 'not configured'
 		fi
 	done
+
+	# THE FORGE'S SIGNING-KEY LIST IS A SEPARATE LIST FROM ITS AUTHENTICATION
+	# KEYS, and only the first one it consults when it verifies a commit. A key
+	# that pushes successfully therefore proves nothing about whether the forge
+	# will recognise the signature it just carried: every commit reads
+	# "Unverified" with reason unknown_key, and nothing local can tell. The
+	# local checks cannot see this -- `git verify-commit` answers from
+	# allowed_signers on this machine and says "Good signature" either way --
+	# so the gap survived until someone read the forge's API. Reported here
+	# because this is the one command the repository already tells a
+	# contributor to run.
+	ih_forge_signing_key "${_ih_format:-}" "${_ih_key:-}"
 
 	# git silently skips a hook that is not executable, which is the quietest
 	# possible way for this whole feature to stop working.

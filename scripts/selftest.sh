@@ -1297,6 +1297,15 @@ fi
 gh_says install-second 'gpg.format'
 gh_says install-second 'user.signingkey'
 
+# The forge signing-key report. The fixture has no remote, so the honest answer
+# is that the question cannot be judged -- which is the case worth asserting:
+# this report must never need the network to reach exit 0, and must never be
+# silently absent. Asserting the registered/NOT-registered verdicts would need a
+# live forge and an account, so they are exercised by hand and documented in the
+# contract instead.
+gh_says install-second 'forge signing key'
+gh_says install-second 'not checked'
+
 # --- compaction-audit.sh -------------------------------------------------
 #
 # The audit is what makes "nothing normative was dropped" checkable rather than
