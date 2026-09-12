@@ -113,9 +113,11 @@ Individual checks, for re-running one in isolation:
 
 Formatting and linting are separate concerns, so a content kind may be governed by one configuration for each — never by two of either. Markdown and YAML are formatted by `lint-format.sh` and linted by their own tools, which give up the rules the formatter rewrites.
 
-Every entry point under `scripts/` is a wrapper with no logic of its own: it resolves the repository root, sources one file from [`scripts/lib/`](scripts/lib/) and calls it. The seven checks live in `scripts/lib/checks.sh`, and the aggregate, the per-standard commands and the edit hook all reach them through the same function. Nothing under `scripts/` executes anything else under `scripts/`, so adding a check means adding it to `CHECKS` and to `run_standard` in that one file.
+Every entry point under `scripts/` is a wrapper with no logic of its own: it resolves the repository root, sources one file from [`scripts/lib/`](scripts/lib/) and calls it. The seven checks live in `scripts/lib/checks.sh`, and the aggregate, the per-standard commands and the edit hook all reach them through the same function. No entry point reaches a shared component by executing another script, so adding a check means adding it to `CHECKS` and to `run_standard` in that one file.
 
-`scripts/selftest.sh` proves the checks can actually fail: it runs each one against a deliberately broken fixture and succeeds only if every check rejects it. It also drives the edit hook, both git hooks, the installer and the compaction audit through `scripts/lib/` directly, so a failing case names a broken check rather than a broken test.
+[`scripts/selftest.sh`](scripts/selftest.sh) is the one exception, and deliberately: it holds its own body and it is the only script that executes an entry point. Moving its body under `scripts/lib/` would give the tester a wrapper that nothing tests, and it shares nothing with anything — it has one caller, a person or a CI job. Executing an entry point there is not a component dependency either; it is the thing under test.
+
+`scripts/selftest.sh` proves the checks can actually fail: it runs each one against a deliberately broken fixture and succeeds only if every check rejects it. It also drives the edit hook, both git hooks, the installer and the compaction audit through `scripts/lib/` directly, so a failing case names a broken check rather than a broken test. One smoke case per entry point runs the wrapper itself, because a wrapper's call into its library is three tokens no linter can check.
 
 ### Formatting on edit
 
