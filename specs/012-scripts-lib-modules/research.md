@@ -14,6 +14,9 @@ Every decision below that departs from a default carries its reason here, follow
 6. How the self-test reaches the invocation
 7. The `-- PATH...` passthrough
 8. Usage headers that over-promised
+9. Why `scripts/selftest.sh` is exempt from the wrapper rule
+10. Why every entry point now has a smoke case, and why not `-h`
+11. `/bin/sh`, not a `PATH` lookup
 
 ---
 
@@ -70,3 +73,25 @@ The three libraries `checks.sh` sources are symlinked rather than copied, becaus
 ## 8. Usage headers that over-promised
 
 `citations`, `editorconfig`, `yaml` and `shell` call `no_automatic_fix` and rewrite nothing; `citations` has no tool at all. Their new usage headers promised `--fix   rewrite what the tool can rewrite`. The shared `usage()` already words it correctly. The four headers now say what they do.
+
+## 9. Why `scripts/selftest.sh` is exempt from the wrapper rule
+
+The rule as first written — "every entry point under `scripts/` is a wrapper with no logic of its own" — was broken by `scripts/selftest.sh` in the same commit that stated it: it is an entry point, it sources three libraries, and it holds the whole suite.
+
+Moving its body to `scripts/lib/selftest.sh` would satisfy the letter and buy nothing. The rule exists because a shared component reached by executing a sibling is a dependency declared nowhere, and because a body inside an entry point cannot be tested without executing that entry point. Neither applies here: the suite has exactly one caller — a person or a CI job — and the thing that would test it behind a wrapper is itself.
+
+So the exemption is stated instead, in `README.md` and in FR-001/FR-002, with its reason. A rule the repository visibly breaks teaches contributors that the rules are decorative.
+
+## 10. Why every entry point now has a smoke case, and why not `-h`
+
+Removing the sibling execution removed the only thing that ran the wrappers. `lint.sh` used to execute all seven `lint-<standard>.sh` and `selftest.sh` used to execute six entry points; afterwards twelve of the fourteen had no automated caller at all.
+
+A wrapper is three assignments, one `.` and one call, and the call is the part no static check can reach. Demonstrated: changing `scripts/lint-markdown.sh`'s last line to `check_main markdwon "$@"` passes `scripts/lint-shell.sh` with this repository's own `.shellcheckrc` — `external-sources=true` follows the source, and nothing there knows the argument is wrong — and fails only when the script is run.
+
+`-h` was rejected as the smoke invocation: `parse_args` answers it and exits before any check is named, so the typo above would still pass. Each lint case instead narrows the run to a path inside `.lint-selftest-tmp/`, which every check's exclusion declaration names. The check is reached and dispatched, finds nothing in scope, and exits 0 — no tool and no container. The seven are enumerated by globbing `scripts/lint-*.sh` rather than by reading `CHECKS`, so an eighth wrapper is covered the day it is added.
+
+`compaction-audit.sh` is the one case that asserts a non-zero status: it takes its documented usage exit for missing arguments, because a real run needs a baseline commit and a document, and the property under test is the wrapper's call — a wrong function name ends at 127 and a wrong argument ends somewhere other than 2.
+
+## 11. `/bin/sh`, not a `PATH` lookup
+
+`run_standard_isolated` spawns the child as `/bin/sh -c`. Every entry point declares `#!/bin/sh`, so resolving the child through `PATH` would let a check run under a different shell than the wrapper that invoked it on any machine where `PATH`'s `sh` is not `/bin/sh`. For a repository whose fourth principle is POSIX shell only, that is the one thing not to leave to the environment, and the absolute path costs nothing.
