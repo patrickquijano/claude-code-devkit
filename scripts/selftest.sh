@@ -1362,7 +1362,91 @@ ca_run altered-code fail-lost 1
 rm -f "$CA_FIX/doc.md"
 ca_run missing-path unreadable 3
 
-say "$PROG: $EXERCISED standards exercised, $LINT_CASES aggregate cases, $HOOK_CASES format-hook cases, $GH_CASES git-hook cases, $CA_CASES compaction-audit cases"
+# --- the entry points ---------------------------------------------------------
+#
+# Every case above reaches a library directly, and nothing above executes a
+# script. That is what keeps a failure naming a broken check rather than a
+# broken test, and it leaves the fourteen wrappers under scripts/ with no
+# automated caller at all: lint.sh stopped executing its siblings in this
+# change, and this script never executed them.
+#
+# A wrapper is three assignments, one `.` and one call, and the call is the part
+# no linter can check. `check_main markdwon "$@"` passes lint-shell.sh with this
+# repository's own .shellcheckrc -- external-sources=true follows the source and
+# nothing there knows the argument is wrong -- and fails only when the script is
+# run. One case per entry point, executing the wrapper, closes that.
+#
+# `-h` would not do: parse_args answers it before any check is named, so the
+# typo above would pass. Each lint case narrows the run to a path inside the
+# fixture directory, which every check's exclusion declaration names, so the
+# check is reached, dispatched, and finds nothing to do -- no tool required.
+
+EP_CASES=0
+EP_FAILURES=''
+
+EP_SCOPE="$WORK/entry-scope.md"
+printf '# Nothing here is checked\n' > "$EP_SCOPE"
+EP_REL=${EP_SCOPE#"$REPO_ROOT"/}
+
+# ep_expect NAME WANT-STATUS CMD... -- executes CMD and compares its status.
+ep_expect() {
+	EP_CASES=$((EP_CASES + 1))
+	_ep_name=$1
+	_ep_want=$2
+	shift 2
+	_ep_out="$WORK/entry-$_ep_name.out"
+	_ep_st=0
+	"$@" > "$_ep_out" 2>&1 || _ep_st=$?
+	if [ "$_ep_st" -ne "$_ep_want" ]; then
+		say "entry/$_ep_name: exit $_ep_st, expected $_ep_want"
+		EP_FAILURES="$EP_FAILURES $_ep_name"
+		return 0
+	fi
+	say "entry/$_ep_name: as required (exit $_ep_st)"
+}
+
+# The aggregate and the seven per-standard entry points. The glob, not CHECKS:
+# what this case asserts is that every wrapper on disk was executed, so an eighth
+# one is covered the day it is added rather than the day someone remembers.
+ep_expect lint.sh 0 "$SCRIPT_DIR/lint.sh" -- "$EP_REL"
+for _ep_f in "$SCRIPT_DIR"/lint-*.sh; do
+	ep_expect "$(basename "$_ep_f")" 0 "$_ep_f" -- "$EP_REL"
+done
+
+# The edit hook. A file inside the repository that no check governs, so the hook
+# reaches its three checks, none examines the file, and it says nothing.
+printf '{"tool_name":"Write","tool_input":{"file_path":"%s"}}' "$EP_SCOPE" \
+	> "$WORK/entry-hook.json"
+ep_hook() { "$SCRIPT_DIR/format-file.sh" < "$WORK/entry-hook.json"; }
+ep_expect format-file.sh 0 ep_hook
+
+# The two git hooks, on the fixtures the cases above already built.
+printf 'chore: a conforming subject\n' > "$WORK/entry-msg"
+ep_expect commit-msg.sh 0 "$SCRIPT_DIR/hooks/commit-msg.sh" "$WORK/entry-msg"
+
+: > "$WORK/entry-prepush.in"
+ep_prepush() {
+	(cd "$PP_FIX" && "$SCRIPT_DIR/hooks/pre-push.sh" \
+		origin https://example.invalid/r.git < "$WORK/entry-prepush.in")
+}
+ep_expect pre-push.sh 0 ep_prepush
+
+# --status writes nothing, so the installer fixture is left as the cases above
+# left it.
+ep_status() { (cd "$IH_FIX" && "$SCRIPT_DIR/install-hooks.sh" --status); }
+ep_expect install-hooks.sh 0 ep_status
+
+# The audit's documented usage status. Its real invocation needs a baseline
+# commit and a document, and the fixture's document is deliberately gone by now;
+# what this case is for is the wrapper's call, which a wrong function name ends
+# at 127 and a wrong argument ends somewhere other than 2.
+ep_expect compaction-audit.sh 2 "$SCRIPT_DIR/compaction-audit.sh"
+
+# scripts/selftest.sh is the fourteenth entry point and is running.
+EP_CASES=$((EP_CASES + 1))
+say 'entry/selftest.sh: as required (it is the process running these cases)'
+
+say "$PROG: $EXERCISED standards exercised, $LINT_CASES aggregate cases, $HOOK_CASES format-hook cases, $GH_CASES git-hook cases, $CA_CASES compaction-audit cases, $EP_CASES entry-point cases"
 
 if [ -n "$SKIPPED" ]; then
 	say "$PROG: not exercised, because no tool was reachable:$SKIPPED"
@@ -1388,8 +1472,12 @@ if [ -n "$CA_FAILURES" ]; then
 	die "$PROG: these compaction-audit cases did not behave as required:$CA_FAILURES. An audit that certifies a lost rule is worse than no audit, so treat each as a broken check, not a broken test." 1
 fi
 
+if [ -n "$EP_FAILURES" ]; then
+	die "$PROG: these entry points did not behave as required:$EP_FAILURES. Each is a wrapper under scripts/ whose call into scripts/lib/ no linter can check, not a broken test." 1
+fi
+
 if [ -n "$SKIPPED" ]; then
 	die "$PROG: every reachable check rejected its fixture, but$SKIPPED could not be exercised at all, so SC-002 is unproven for them." 1
 fi
 
-say "$PROG: every check rejected its bad fixture, the aggregate reported a body that failed part way through, the format hook held every safety property, and the compaction audit refused to certify a lost rule"
+say "$PROG: every check rejected its bad fixture, the aggregate reported a body that failed part way through, the format hook held every safety property, the compaction audit refused to certify a lost rule, and every entry point reached its library"
