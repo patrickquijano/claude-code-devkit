@@ -599,9 +599,9 @@ cite_narrow named 1 .github/stale-quotation.md
 
 # This check builds its list with `find`, which separates names with newlines,
 # so a name containing one arrives as two records and neither is a file. Refused
-# by name rather than half-checked -- filter_list refuses the same input for the
-# same reason, and a citations run that silently skipped a template would report
-# a pass it never established.
+# by name rather than left to reach `awk`, which cannot open it and ends the
+# check at exit 2 naming neither the reason nor the file -- which is why this
+# case asserts the message and not the status alone.
 CITE_NL="$CITE_ROOT/.github/two${LF}lines.md"
 printf '# no citations here\n' > "$CITE_NL"
 CITE_CASES=$((CITE_CASES + 1))
