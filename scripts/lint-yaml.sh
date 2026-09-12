@@ -2,7 +2,7 @@
 # The yaml standard, on its own.
 #
 #   scripts/lint-yaml.sh                    report violations
-#   scripts/lint-yaml.sh --fix              rewrite what the tool can rewrite
+#   scripts/lint-yaml.sh --fix              accepted, but this check rewrites nothing
 #   scripts/lint-yaml.sh [--fix] -- PATH... narrow the run to the named paths
 #
 # Exit statuses are documented in specs/001-quality-gate-plugin/contracts/cli.md

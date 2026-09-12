@@ -2,7 +2,7 @@
 # The shell standard, on its own.
 #
 #   scripts/lint-shell.sh                    report violations
-#   scripts/lint-shell.sh --fix              rewrite what the tool can rewrite
+#   scripts/lint-shell.sh --fix              accepted, but this check rewrites nothing
 #   scripts/lint-shell.sh [--fix] -- PATH... narrow the run to the named paths
 #
 # Exit statuses are documented in specs/001-quality-gate-plugin/contracts/cli.md

@@ -5,10 +5,12 @@
 set -eu
 
 PROG=$(basename "$0")
-SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/../.." && pwd)
+# The scripts/ directory, not scripts/hooks/ -- one meaning for SCRIPT_DIR
+# across every entry point, and the one lib/checks.sh already depends on.
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
 
 # shellcheck source=../lib/commit-msg.sh
-. "$SCRIPT_DIR/../lib/commit-msg.sh"
+. "$SCRIPT_DIR/lib/commit-msg.sh"
 
 commit_msg_main "$@"

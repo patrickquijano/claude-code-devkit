@@ -2,7 +2,7 @@
 # The citations standard, on its own.
 #
 #   scripts/lint-citations.sh                    report violations
-#   scripts/lint-citations.sh --fix              rewrite what the tool can rewrite
+#   scripts/lint-citations.sh --fix              accepted, but this check rewrites nothing
 #   scripts/lint-citations.sh [--fix] -- PATH... narrow the run to the named paths
 #
 # Exit statuses are documented in specs/001-quality-gate-plugin/contracts/cli.md

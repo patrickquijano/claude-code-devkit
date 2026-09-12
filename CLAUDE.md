@@ -35,6 +35,15 @@ Their own history is in `specs/002-vendor-plugin-skills/`, which distributed the
 
 `AGENTS.md` holds the shared cross-agent instructions, and `LEAN-CTX.md` holds the full lean-ctx rules. Both are **read on demand, not auto-loaded** — open them when the task touches their subject, rather than importing them here. The short version: lean-ctx shadow mode routes native read/search/shell calls to the `ctx_*` MCP tools automatically, so no tool mapping is needed; `ctx_compose` is the exclusive entry point for understanding unfamiliar code and has no native equivalent.
 
+## Working rules
+
+These bind any agent working in this repository. They are about cost, not style.
+
+- **Do not re-run a check whose inputs have not changed.** `scripts/lint.sh` and `scripts/selftest.sh` are slow and both are already required once before review. Run one again only after editing a file it reads.
+- **Comment briefly.** One to three sentences. A comment earns its place by recording a decision that tidying would otherwise undo, not by restating the code.
+- **Take the simplest approach that is correct.** Add complexity only when something breaks without it, and say what.
+- **Spend fewer tokens for the same result.** Read the part of a file you need, not the whole file; delegate a wide search rather than paging through it.
+
 ## Spec-driven development
 
 The repository is initialized for GitHub Spec Kit (`.specify/`), with the phase commands installed as project skills under `.claude/skills/speckit-*`. Feature work runs through them in order — `speckit-constitution`, `speckit-specify`, `speckit-clarify`, `speckit-checklist`, `speckit-plan`, `speckit-tasks`, `speckit-analyze`, `speckit-implement` — writing artifacts into `specs/NNN-slug/`. Repo-wide governance lives in `.specify/memory/constitution.md` and is read by the `plan` phase's gates at runtime, so amend it through `speckit-constitution` rather than by hand.

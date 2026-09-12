@@ -3,16 +3,15 @@
 # .claude/settings.json. No arguments; one JSON object on stdin.
 # Contract: specs/004-format-hook-scope/contracts/format-file-cli.md
 #
-# Sources NOTHING. The only name it needs from outside is run_standard, which
-# its caller has already sourced from lib/checks.sh -- so a test can substitute
-# a stand-in run_standard without substituting anything else. parse_args is
-# deliberately not used: it would reject what the hook runner sends.
+# Sources NOTHING. The only name it needs from outside is run_standard_isolated,
+# already sourced by its caller from lib/checks.sh, so a test can stand in for
+# that one file and nothing else. parse_args would reject what the hook runner
+# sends, so it is not used.
 #
 # Sourced, not executed. POSIX sh only.
 #
-# SC2034: MODE and REQUESTED_PATHS are set here and read by run_standard, which
-# arrives from lib/checks.sh. ShellCheck analyses one file at a time and cannot
-# see that use from here.
+# SC2034: MODE and REQUESTED_PATHS are set here and read by
+# run_standard_isolated in lib/checks.sh, which ShellCheck cannot see from here.
 # shellcheck disable=SC2034
 
 # REQUESTED_PATHS is newline-terminated, and POSIX sh has no $'\n'.
@@ -56,19 +55,18 @@ fh_emit_msg() {
 #   3                      -> visible skip naming tool and image, continue
 #   1, 2 or 4              -> stop here, exit 2, detail on stderr
 #
-# The subshell with MODE and REQUESTED_PATHS set is the in-process equivalent of
-# the contract's `--fix -- <path>` invocation. The message names the
-# per-standard entry point, so hook output reads the same as check output.
+# MODE and REQUESTED_PATHS become the contract's `--fix -- <path>` invocation.
+# run_standard_isolated rather than a subshell for the reason its own comment
+# gives: `( c ) > f 2>&1 || st=$?` suppresses errexit inside the subshell.
 fh_run_check() {
 	_fh_std=$1
 	_fh_name="lint-$_fh_std.sh"
 	_fh_status=0
 
-	(
-		MODE=fix
-		REQUESTED_PATHS="$FH_RESOLVED$FH_LF"
-		run_standard_as "$_fh_name" "$_fh_std"
-	) > "$FH_OUT" 2>&1 || _fh_status=$?
+	MODE=fix
+	REQUESTED_PATHS="$FH_RESOLVED$FH_LF"
+
+	run_standard_isolated "$_fh_name" "$_fh_std" > "$FH_OUT" 2>&1 || _fh_status=$?
 
 	case "$_fh_status" in
 		0)

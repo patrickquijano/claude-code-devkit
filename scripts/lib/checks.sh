@@ -310,11 +310,11 @@ standard_python() {
 
 # run_standard NAME -- one check, with MODE and REQUESTED_PATHS already set.
 #
-# Every caller runs this in a SUBSHELL, and that is load-bearing: `collect`
-# exits 0 on an empty list, `die` exits non-zero, `init_runner` installs an EXIT
-# trap, and the format check exports LINT_FORCE_CONTAINER. In one process those
-# would end the aggregate at the first empty file list and leak the container
-# routing into every later check.
+# It ends its own process: `collect` exits 0 on an empty list, `die` exits
+# non-zero, `init_runner` traps EXIT, and the format check exports
+# LINT_FORCE_CONTAINER. Anything running more than one check goes through
+# run_standard_isolated; check_main calls this directly because its whole
+# process is the check.
 run_standard() {
 	case "$1" in
 		citations)
@@ -344,14 +344,46 @@ run_standard() {
 	esac
 }
 
-# run_standard_as PROG_NAME CHECK -- run_standard reporting under a different
-# name, so a message reads the same whether the check was reached through
-# scripts/lint.sh, through its own entry point, or through the format hook.
-# Callers run this in a subshell; the assignment sits in a function so its scope
-# is the call rather than a (..) group.
-run_standard_as() {
-	PROG=$1
-	run_standard "$2"
+# run_standard_isolated PROG_NAME CHECK -- one check in an `sh` of its own,
+# reporting under PROG_NAME.
+#
+# A separate PROCESS, not a subshell: `( c ) || st=$?` is an AND-OR list, and
+# POSIX ignores -e for every command of one but the last -- the suppression
+# reaching into the subshell, where nothing re-arms it -- so a body could run
+# past a failing command and be reported as a pass (Principle II).
+#
+# MODE and REQUESTED_PATHS go as ARGUMENTS, not in the environment, because
+# lib/common.sh assigns both as it is sourced and the child would overwrite
+# them. check_main re-parses them, so this IS the contract's invocation.
+run_standard_isolated() {
+	_rsi_prog=$1
+	_rsi_check=$2
+
+	set --
+	if [ "$MODE" = fix ]; then
+		set -- --fix
+	fi
+	if [ -n "$REQUESTED_PATHS" ]; then
+		set -- "$@" --
+		# One path per line; parse_args refuses a path containing a newline.
+		# A heredoc, not a pipe: a pipe loses `set --` to a subshell.
+		while IFS= read -r _rsi_path; do
+			if [ -n "$_rsi_path" ]; then
+				set -- "$@" "$_rsi_path"
+			fi
+		done << REQUESTED
+$REQUESTED_PATHS
+REQUESTED
+	fi
+
+	PROG="$_rsi_prog" SCRIPT_DIR="$SCRIPT_DIR" REPO_ROOT="$REPO_ROOT" \
+		sh -c '
+			set -eu
+			. "$SCRIPT_DIR/lib/checks.sh"
+			_rsi_name=$1
+			shift
+			check_main "$_rsi_name" "$@"
+		' sh "$_rsi_check" "$@"
 }
 
 # check_main NAME "$@" -- the body of scripts/lint-NAME.sh.
@@ -368,12 +400,10 @@ lint_main() {
 
 	for _lm_check in $CHECKS; do
 		_lm_status=0
-		# MODE and REQUESTED_PATHS are inherited, so a path list reaches every
-		# check. The aggregate used to forward --fix and drop the paths, which
-		# contradicted 004's check-cli.md and silently widened a narrowed run.
-		# PROG is the per-standard entry point's own name, so the messages read
-		# the same however the check was reached.
-		(run_standard_as "lint-$_lm_check.sh" "$_lm_check") || _lm_status=$?
+		# The path list reaches every check. The aggregate used to forward
+		# --fix and drop the paths, widening a narrowed run against 004's
+		# check-cli.md.
+		run_standard_isolated "lint-$_lm_check.sh" "$_lm_check" || _lm_status=$?
 
 		if [ "$_lm_status" -ne 0 ]; then
 			# Stop here. A partial result that exits zero is

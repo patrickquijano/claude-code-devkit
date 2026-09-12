@@ -602,10 +602,11 @@ fi
 #     exclude by design, so a real check would answer "no files in scope" for
 #     every case and each would pass for the wrong reason.
 #
-# The stub prints a line and returns, so a rule that fails to fire is visible:
-# its output reaches stdout and the case fails. That is what makes a silent
+# The stub prints a line and exits, so a rule that fails to fire is visible: its
+# output reaches stdout and the case fails. That is what makes a silent
 # expectation testable rather than vacuous. Only `run_standard` is substituted,
-# which is the whole reason lib/format-hook.sh sources nothing.
+# which is the whole reason lib/format-hook.sh sources nothing -- the hook
+# reaches the stand-in through the real run_standard_isolated.
 #
 # The two cases that are about the checks' scope rather than about the hook --
 # an excluded path and an unsupported file kind -- use the real hook and the
@@ -619,30 +620,47 @@ HST=0
 HOUT=''
 HERR=''
 
+# probe_tree DIR -- a scripts/lib/ whose checks.sh is the committed one with the
+# check bodies read from stdin in place of the real ones.
+#
+# run_standard, not its caller: run_standard_isolated is the code under test, and
+# standing in for it would hide the defect these cases exist to catch. The
+# siblings are symlinked because SCRIPT_DIR must name this tree -- that is what
+# run_standard_isolated hands the `sh` it spawns.
+probe_tree() {
+	_pt_dir=$1
+	rm -rf "$_pt_dir"
+	mkdir -p "$_pt_dir/scripts/lib"
+	for _pt_lib in common.sh images.sh scope.sh format-hook.sh; do
+		ln -s "$SCRIPT_DIR/lib/$_pt_lib" "$_pt_dir/scripts/lib/$_pt_lib"
+	done
+	{
+		printf '#!/bin/sh\n'
+		printf '. "%s/lib/checks.sh"\n' "$SCRIPT_DIR"
+		cat
+	} > "$_pt_dir/scripts/lib/checks.sh"
+}
+
 # hook_stub_tree STATUS MESSAGE -- (re)builds the stub tree.
 # MESSAGE must contain no double quote and no percent sign: it is embedded in a
 # printf format string in the generated lib/checks.sh.
+#
+# PROG, not the argument: the body runs in the spawned process, where PROG is the
+# entry point name the assertions read. `exit`, because that process IS the check.
 hook_stub_tree() {
 	HT="$WORK/hook-stub"
-	rm -rf "$HT"
-	mkdir -p "$HT/scripts/lib"
-	cp "$SCRIPT_DIR/lib/format-hook.sh" "$HT/scripts/lib/format-hook.sh"
-	{
-		printf '#!/bin/sh\n'
-		printf 'run_standard_as() {\n'
-		# SC2016: $1 must reach the generated stub literally rather than
-		# expanding while it is written -- the stub names the check that
-		# spoke, which is what the assertions below read.
-		# shellcheck disable=SC2016
-		printf '\tprintf "%%s: %s\\n" "$1"\n' "$2"
-		printf '\treturn %s\n' "$1"
-		printf '}\n'
-	} > "$HT/scripts/lib/checks.sh"
+	probe_tree "$HT" << PROBE
+run_standard() {
+	printf '%s: $2\n' "\$PROG"
+	exit $1
+}
+PROBE
 }
 
 # hook_exec TREE -- the hook body against TREE as its repository root, reading
 # the payload on stdin. Two libraries rather than lib_run's one, because that is
-# what scripts/format-file.sh sources; the stub tree supplies its own checks.sh.
+# what scripts/format-file.sh sources; the probe tree supplies its own checks.sh
+# and symlinks format-hook.sh, so the hook under test is the committed one.
 # pwd -P, matching the wrapper, so the containment test compares physical paths.
 hook_exec() {
 	_he_root=$(CDPATH='' cd -- "$1" && pwd -P)
@@ -840,6 +858,83 @@ else
 fi
 
 rm -f "$HOOK_OUTSIDE"
+
+# --- the aggregate ------------------------------------------------------------
+#
+# Not that a check can fail -- that is the first half of this script -- but that a
+# command failing PART WAY THROUGH a body ends that body. That is a property of
+# how lint_main invokes a check, so a probe body is the right fixture: no real
+# check can be made to fail in the middle on demand.
+#
+# It exists because `(run_standard_as ...) || status=$?` passed every case here
+# while suppressing errexit inside the subshell. No assertion about an invocation
+# existed to catch it.
+
+LINT_CASES=0
+LINT_FAILURES=''
+
+# lint_expect NAME WANT-STATUS FORBIDDEN -- the real lint_main over the probe tree
+# built just above. `-` for FORBIDDEN asserts the status alone.
+lint_expect() {
+	LINT_CASES=$((LINT_CASES + 1))
+	_le_out="$WORK/lint-probe.out"
+	_le_st=0
+	PROG=lint.sh SCRIPT_DIR="$LP/scripts" REPO_ROOT="$REPO_ROOT" sh -c '
+			set -eu
+			. "$SCRIPT_DIR/lib/checks.sh"
+			lint_main
+		' sh > "$_le_out" 2>&1 || _le_st=$?
+
+	if [ "$_le_st" -ne "$2" ]; then
+		say "lint/$1: exit $_le_st, expected $2"
+		LINT_FAILURES="$LINT_FAILURES $1"
+		return 0
+	fi
+	if [ "$3" != '-' ] && grep -q "$3" "$_le_out"; then
+		say "lint/$1: the output contains \"$3\", which it must not"
+		LINT_FAILURES="$LINT_FAILURES $1"
+		return 0
+	fi
+	say "lint/$1: as required (exit $_le_st)"
+}
+
+LP="$WORK/lint-probe"
+
+# `false` is not the body's last command, so a body reached with errexit
+# suppressed runs on and exits 0.
+probe_tree "$LP" << 'PROBE'
+CHECKS='probe'
+run_standard() {
+	false
+	printf 'PROBE: continued past a failing command\n'
+	exit 0
+}
+PROBE
+lint_expect errexit 1 'continued past a failing command'
+
+# The positive control: without it, a lint_main that failed unconditionally would
+# pass the case above.
+probe_tree "$LP" << 'PROBE'
+CHECKS='probe'
+run_standard() {
+	printf 'PROBE: ran to the end\n'
+	exit 0
+}
+PROBE
+lint_expect pass 0 -
+
+# Principle II: the first failure stops the run, and its own status survives.
+probe_tree "$LP" << 'PROBE'
+CHECKS='first second'
+run_standard() {
+	case "$1" in
+		second) printf 'PROBE: the second check ran\n' ;;
+		*) ;;
+	esac
+	exit 3
+}
+PROBE
+lint_expect stops 3 'the second check ran'
 
 # --- verdict ----------------------------------------------------------------
 
@@ -1267,7 +1362,7 @@ ca_run altered-code fail-lost 1
 rm -f "$CA_FIX/doc.md"
 ca_run missing-path unreadable 3
 
-say "$PROG: $EXERCISED standards exercised, $HOOK_CASES format-hook cases, $GH_CASES git-hook cases, $CA_CASES compaction-audit cases"
+say "$PROG: $EXERCISED standards exercised, $LINT_CASES aggregate cases, $HOOK_CASES format-hook cases, $GH_CASES git-hook cases, $CA_CASES compaction-audit cases"
 
 if [ -n "$SKIPPED" ]; then
 	say "$PROG: not exercised, because no tool was reachable:$SKIPPED"
@@ -1275,6 +1370,10 @@ fi
 
 if [ -n "$FAILURES" ]; then
 	die "$PROG: these checks did not fail on bad input:$FAILURES. Treat each as a broken check, not a broken test." 1
+fi
+
+if [ -n "$LINT_FAILURES" ]; then
+	die "$PROG: these aggregate cases did not behave as required:$LINT_FAILURES. Each is a property of how scripts/lint.sh invokes a check, not a broken test." 1
 fi
 
 if [ -n "$HOOK_FAILURES" ]; then
@@ -1293,4 +1392,4 @@ if [ -n "$SKIPPED" ]; then
 	die "$PROG: every reachable check rejected its fixture, but$SKIPPED could not be exercised at all, so SC-002 is unproven for them." 1
 fi
 
-say "$PROG: every check rejected its bad fixture, the format hook held every safety property, and the compaction audit refused to certify a lost rule"
+say "$PROG: every check rejected its bad fixture, the aggregate reported a body that failed part way through, the format hook held every safety property, and the compaction audit refused to certify a lost rule"
