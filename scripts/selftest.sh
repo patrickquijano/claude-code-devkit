@@ -1315,7 +1315,7 @@ gh_says install-second 'not checked'
 IH_KEYDIR="$WORK/forge-key"
 if command -v ssh-keygen > /dev/null 2>&1 \
 	&& mkdir -p "$IH_KEYDIR" \
-	&& ssh-keygen -q -t ed25519 -N '' -f "$IH_KEYDIR/k" -C selftest 2> /dev/null \
+	&& ssh-keygen -q -t ed25519 -N '' -f "$IH_KEYDIR/k" -C selftest < /dev/null 2> /dev/null \
 	&& [ -f "$IH_KEYDIR/k.pub" ]; then
 	GH_CASES=$((GH_CASES + 1))
 	IH_PUB=$(lib_run hooks-install.sh install-hooks.sh '' ih_public_key_file "$IH_KEYDIR/k" 2> /dev/null || true)
