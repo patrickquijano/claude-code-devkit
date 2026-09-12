@@ -1,8 +1,9 @@
 #!/bin/sh
-# Dispatcher. The rules live in scripts/hooks/pre-push.sh, where the shell
-# check's '*.sh' glob finds them and where the self-test can invoke them
-# directly with synthesised stdin. See specs/008-commit-hooks/research.md
-# section 8.
+# Dispatcher. The rules live in scripts/lib/push-check.sh, behind a thin wrapper
+# at scripts/hooks/pre-push.sh: the shell check's '*.sh' glob finds the rules and
+# the self-test calls push_check_main directly with synthesised stdin, executing
+# no script. See specs/008-commit-hooks/research.md section 8 for why the rules
+# are not in this file, and specs/012-scripts-lib-modules/ for the move into lib/.
 #
 # The root comes from git rather than from $0, for the reason given in
 # .husky/commit-msg. `exec` passes this script's stdin through unchanged, which

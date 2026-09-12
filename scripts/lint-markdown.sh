@@ -1,24 +1,19 @@
 #!/bin/sh
+# The markdown standard, on its own.
+#
+#   scripts/lint-markdown.sh                    report violations
+#   scripts/lint-markdown.sh --fix              rewrite what the tool can rewrite
+#   scripts/lint-markdown.sh [--fix] -- PATH... narrow the run to the named paths
+#
+# Exit statuses are documented in specs/001-quality-gate-plugin/contracts/cli.md
+# and are part of the contract.
 set -eu
 
 PROG=$(basename "$0")
 SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
 
-# shellcheck source=lib/common.sh
-. "$SCRIPT_DIR/lib/common.sh"
-# shellcheck source=lib/images.sh
-. "$SCRIPT_DIR/lib/images.sh"
-# shellcheck source=lib/scope.sh
-. "$SCRIPT_DIR/lib/scope.sh"
+# shellcheck source=lib/checks.sh
+. "$SCRIPT_DIR/lib/checks.sh"
 
-parse_args "$@"
-init_runner
-
-collect markdown '*.md' '*.markdown'
-
-if [ "$MODE" = fix ]; then
-	run_files "$LIST" markdownlint-cli2 "$IMAGE_MARKDOWN" --fix
-else
-	run_files "$LIST" markdownlint-cli2 "$IMAGE_MARKDOWN"
-fi
+check_main markdown "$@"

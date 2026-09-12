@@ -2,6 +2,9 @@
 paths:
   - '.husky/**'
   - 'scripts/hooks/**'
+  - 'scripts/lib/commit-msg.sh'
+  - 'scripts/lib/push-check.sh'
+  - 'scripts/lib/hooks-install.sh'
   - 'scripts/install-hooks.sh'
   - '.commit-msg.conf'
 ---
@@ -22,10 +25,12 @@ to the hooks.
   script, `commitlint`, or any `npm`/`npx`/`node` invocation to a hook body. Constitution
   Principle I forbids a check that requires a package manager, and this whole design exists to
   satisfy it rather than to be excused from it.
-- **The logic lives in `scripts/hooks/*.sh`, never in `.husky/`.** Git names hooks by filename, so
+- **The logic lives under `scripts/`, never in `.husky/`.** Git names hooks by filename, so
   `.husky/commit-msg` cannot end in `.sh`, and `scripts/lint-shell.sh` collects `*.sh` — logic
   written directly into `.husky/` is skipped by the shell check silently and still reports success.
-  The dispatchers stay three lines.
+  The dispatchers stay three lines, `scripts/hooks/*.sh` stay thin wrappers, and the rules
+  themselves live in `scripts/lib/commit-msg.sh` and `scripts/lib/push-check.sh`, where
+  `scripts/selftest.sh` can call them without executing a sibling script.
 - **`scripts/lint-shell.sh` names the two extensionless paths explicitly.** Removing
   `'.husky/commit-msg'` and `'.husky/pre-push'` from its `collect` call stops checking the hooks
   with no error. It looks like redundancy next to `'*.sh'` and is not.
@@ -80,8 +85,8 @@ Every rule these files enforce has a case in `scripts/selftest.sh`, asserting on
 shown can reject anything. Assert on the message too: a right failure for the wrong reason is
 indistinguishable from a right one on exit status alone.
 
-The message cases need no repository — `commit-msg.sh` takes a message-file path, so a fixture file
-is enough. Keep it that way; a case that needs a temporary git repository is a case that gets
+The message cases need no repository — `commit_msg_main` takes a message-file path, so a fixture
+file is enough. Keep it that way; a case that needs a temporary git repository is a case that gets
 deleted the first time it is slow.
 
 ## Never

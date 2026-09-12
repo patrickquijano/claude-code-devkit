@@ -1,29 +1,19 @@
 #!/bin/sh
+# The yaml standard, on its own.
+#
+#   scripts/lint-yaml.sh                    report violations
+#   scripts/lint-yaml.sh --fix              accepted, but this check rewrites nothing
+#   scripts/lint-yaml.sh [--fix] -- PATH... narrow the run to the named paths
+#
+# Exit statuses are documented in specs/001-quality-gate-plugin/contracts/cli.md
+# and are part of the contract.
 set -eu
 
 PROG=$(basename "$0")
 SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
 
-# shellcheck source=lib/common.sh
-. "$SCRIPT_DIR/lib/common.sh"
-# shellcheck source=lib/images.sh
-. "$SCRIPT_DIR/lib/images.sh"
-# shellcheck source=lib/scope.sh
-. "$SCRIPT_DIR/lib/scope.sh"
+# shellcheck source=lib/checks.sh
+. "$SCRIPT_DIR/lib/checks.sh"
 
-parse_args "$@"
-init_runner
-
-collect yaml '*.yml' '*.yaml'
-
-if [ "$MODE" = fix ]; then
-	no_automatic_fix yaml
-fi
-
-# yamllint publishes no image. The pinned Docker Official python image installs
-# the exactly-pinned tool version, then execs it over the file list (constitution
-# Principle III, second clause). NATIVE_ARGS is what the native path passes.
-NATIVE_ARGS='--strict'
-run_files_sh "$LIST" yamllint "$IMAGE_YAML" \
-	"pip install --quiet --disable-pip-version-check --root-user-action=ignore 'yamllint==$VERSION_YAMLLINT' >/dev/null && exec yamllint --strict \"\$@\""
+check_main yaml "$@"

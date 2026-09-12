@@ -1,7 +1,9 @@
 #!/bin/sh
-# Dispatcher. The rules live in scripts/hooks/commit-msg.sh, where the shell
-# check's '*.sh' glob finds them and where the self-test can invoke them
-# directly with a fixture. See specs/008-commit-hooks/research.md section 8.
+# Dispatcher. The rules live in scripts/lib/commit-msg.sh, behind a thin wrapper
+# at scripts/hooks/commit-msg.sh: the shell check's '*.sh' glob finds the rules
+# and the self-test calls commit_msg_main directly with a fixture, executing no
+# script. See specs/008-commit-hooks/research.md section 8 for why the rules are
+# not in this file, and specs/012-scripts-lib-modules/ for the move into lib/.
 #
 # The root comes from git rather than from $0. Under Husky, core.hooksPath is
 # .husky/_ and this file is sourced by a shim living there, so $0 points at the

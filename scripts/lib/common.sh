@@ -10,8 +10,10 @@
 # Exit statuses. Documented in specs/001-quality-gate-plugin/contracts/cli.md;
 # a caller is entitled to rely on these.
 #
-# EX_NOGIT is read by lib/scope.sh, which is sourced separately, so ShellCheck
-# cannot see the use from here.
+# Every one is referenced by name at the site that returns it, rather than as a
+# bare literal, so the contract and the code cannot drift apart. Some are read
+# from lib/scope.sh and lib/checks.sh, which are sourced separately, so
+# ShellCheck cannot see those uses from here.
 # shellcheck disable=SC2034
 EX_OK=0
 # shellcheck disable=SC2034
@@ -90,6 +92,18 @@ say() {
 	printf '%s==>%s %s\n' "$C_BOLD" "$C_RESET" "$1"
 }
 
+# The two lines of the usage text that are not true of every check. `citations`
+# runs no tool, so it rewrites nothing and can reach neither the no-tool nor the
+# no-git exit; check_main overwrites both before parse_args answers -h. FR-009
+# forbids a usage text promising a behaviour its check does not have, and -h is
+# where that promise reaches a user.
+#
+# The path-list line is NOT among them. Every check narrows on a path list --
+# 004's check-cli.md states one shape for all of them -- and a check that did
+# not would be a defect to fix rather than a line to reword.
+USAGE_FIX='--fix         Rewrite files into conformance where the tool supports it.'
+USAGE_EXIT='Exit: 0 pass, 1 violations, 2 usage, 3 no tool and no container, 4 not a git tree.'
+
 # The heredoc body is flush left on purpose. Leading spaces here are printed
 # output, not code indentation, but a whitespace checker cannot tell the
 # difference -- and punching a hole in the whitespace standard for the one file
@@ -99,11 +113,11 @@ usage() {
 Usage: $1 [--fix] [-- PATH...]
 
 no arguments  Report violations. Modifies no file.
---fix         Rewrite files into conformance where the tool supports it.
+$USAGE_FIX
 -- PATH...    Narrow this run to the named paths. Never widens it.
 -h, --help    This message.
 
-Exit: 0 pass, 1 violations, 2 usage, 3 no tool and no container, 4 not a git tree.
+$USAGE_EXIT
 USAGE
 }
 
@@ -121,7 +135,7 @@ parse_args() {
 				;;
 			-h | --help)
 				usage "$PROG"
-				exit 0
+				exit "$EX_OK"
 				;;
 			--)
 				# Bare `--` with nothing after it names no paths and so
@@ -130,7 +144,7 @@ parse_args() {
 				while [ "$#" -gt 0 ]; do
 					case "$1" in
 						*"$LF"*)
-							die "$PROG: path contains a newline: $1" 2
+							die "$PROG: path contains a newline: $1" "$EX_USAGE"
 							;;
 						*)
 							# A path with no newline needs no handling.
@@ -143,7 +157,7 @@ parse_args() {
 				;;
 			*)
 				usage "$PROG" >&2
-				die "$PROG: unrecognised argument: $1" 2
+				die "$PROG: unrecognised argument: $1" "$EX_USAGE"
 				;;
 		esac
 		shift
@@ -173,7 +187,7 @@ normalise_status() {
 # bashism, TERM is POSIX.
 init_runner() {
 	LIST=$(mktemp)
-	trap 'rm -f "$LIST" "$LIST.req" "$LIST.raw" "$LIST.out"' EXIT INT TERM
+	trap 'rm -f "$LIST" "$LIST.req" "$LIST.out"' EXIT INT TERM
 }
 
 # repo_relative PATH -- prints PATH relative to the repository root, or nothing
@@ -207,6 +221,33 @@ repo_relative() {
 	esac
 }
 
+# requested_relative FILE -- writes REQUESTED_PATHS to FILE, one
+# repository-relative path per line, dropping anything that does not resolve to
+# something inside the repository.
+#
+# Shared, because two checks narrow two differently-built lists and 004's
+# check-cli.md states one semantics for the path list, not one per check:
+# filter_list narrows a NUL-separated `git ls-files` list, standard_citations
+# narrows a newline-separated `find` list, and this is the half they had in
+# common. A second copy of it is what let `citations` drift out of the contract
+# once before -- research.md section 13.
+requested_relative() {
+	rq_out=$1
+	: > "$rq_out"
+	# A heredoc rather than a pipe: a pipe would put the loop in a subshell,
+	# where repo_relative's `die` would end the subshell only.
+	while IFS= read -r rq_path; do
+		if [ -n "$rq_path" ]; then
+			rq_rel=$(repo_relative "$rq_path")
+			if [ -n "$rq_rel" ]; then
+				printf '%s\n' "$rq_rel" >> "$rq_out"
+			fi
+		fi
+	done << REQUESTED
+$REQUESTED_PATHS
+REQUESTED
+}
+
 # filter_list -- narrows LIST to REQUESTED_PATHS.
 #
 # It filters the list the check already computed; it never treats a requested
@@ -214,14 +255,7 @@ repo_relative() {
 # reach a file outside the check's globs or excluded by its own configuration,
 # which is exactly what FR-006 and FR-007 forbid.
 filter_list() {
-	printf '%s' "$REQUESTED_PATHS" > "$LIST.raw"
-	: > "$LIST.req"
-	while IFS= read -r fl_path; do
-		fl_rel=$(repo_relative "$fl_path")
-		if [ -n "$fl_rel" ]; then
-			printf '%s\n' "$fl_rel" >> "$LIST.req"
-		fi
-	done < "$LIST.raw"
+	requested_relative "$LIST.req"
 
 	# The comparison below is line-oriented, so a file name containing a
 	# newline would match the wrong record. `git ls-files -z` emits names
@@ -230,7 +264,7 @@ filter_list() {
 	fl_nuls=$(tr -dc '\0' < "$LIST" | wc -c | tr -d ' ')
 	fl_lines=$(tr '\0' '\n' < "$LIST" | wc -l | tr -d ' ')
 	if [ "$fl_nuls" -ne "$fl_lines" ]; then
-		die "$PROG: a file name contains a newline; refusing to filter" 1
+		die "$PROG: a file name contains a newline; refusing to filter" "$EX_VIOLATION"
 	fi
 
 	# grep exits 1 when nothing matches, which is a legitimate outcome here
@@ -257,7 +291,7 @@ collect() {
 	fi
 	if [ ! -s "$LIST" ]; then
 		say "$PROG: no files in scope"
-		exit 0
+		exit "$EX_OK"
 	fi
 }
 
@@ -281,7 +315,7 @@ collect() {
 # function, so a helper here would look tidy and never execute.
 
 no_tool() {
-	die "$PROG: cannot run this check. Neither the native command \"$1\" nor \"docker\" (which would run $2) is available. Install either one." 3
+	die "$PROG: cannot run this check. Neither the native command \"$1\" nor \"docker\" (which would run $2) is available. Install either one." "$EX_NOTOOL"
 }
 
 # run_files LISTFILE NATIVE IMAGE ARGS...

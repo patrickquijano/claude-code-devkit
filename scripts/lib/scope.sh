@@ -230,10 +230,3 @@ file_list() {
 		exclude_pathspecs "$_excl"
 	} | xargs -0 git -C "$REPO_ROOT" ls-files -z --cached --others --exclude-standard --
 }
-
-# count_files CHECK GLOB...
-# How many files file_list would emit. Used to detect the empty case, which
-# must report success rather than failing or staying silent.
-count_files() {
-	file_list "$@" | tr -dc '\0' | wc -c | tr -d ' '
-}
