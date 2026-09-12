@@ -23,7 +23,14 @@ CHECKS='citations editorconfig format markdown yaml shell python'
 #
 # Every `<!-- cite: <path> -->` in .github/ must be followed by a blockquote
 # whose text still appears in the cited file (FR-036). Needs no tool and
-# declares no exclusions: it reads one fixed directory, not a filtered list.
+# declares no exclusions.
+#
+# It enumerates .github/ with `find` rather than through lib/scope.sh, because
+# it has no configuration file to read an exclusion declaration from and its
+# fixture in selftest.sh is a plain directory rather than a git tree. That is a
+# different file list, NOT a different command-line contract: 004's check-cli.md
+# states one shape for every check and exempts only scripts/format-file.sh, so a
+# path list narrows this check like any other.
 
 # Whitespace-normalise, applied to both sides. The cited documents hard-wrap, so
 # an exact comparison rejects accurate citations -- research.md section 23.
@@ -93,6 +100,42 @@ standard_citations() {
 	if [ ! -s "$_ct_work/templates" ]; then
 		say "$PROG: no Markdown in $_ct_dir; no citations to check"
 		exit "$EX_OK"
+	fi
+
+	# The same narrowing filter_list applies to a git-derived list, over the
+	# list this check computes for itself. Resolved through repo_relative, so
+	# an absolute path and a relative one behave identically and a path outside
+	# the repository drops out -- 004's check-cli.md, Semantics of the path
+	# list. `if`, not `&&`: under set -e a failing left-hand side would end the
+	# run, and a requested path outside the tree is an ordinary outcome.
+	if [ -n "$REQUESTED_PATHS" ]; then
+		: > "$_ct_work/requested"
+		while IFS= read -r _ct_req; do
+			if [ -n "$_ct_req" ]; then
+				_ct_rel=$(repo_relative "$_ct_req")
+				if [ -n "$_ct_rel" ]; then
+					printf '%s\n' "$_ct_rel" >> "$_ct_work/requested"
+				fi
+			fi
+		done << REQUESTED
+$REQUESTED_PATHS
+REQUESTED
+
+		# grep exits 1 when nothing matches, which is the documented
+		# "matched nothing" outcome rather than a failure.
+		if grep -x -F -f "$_ct_work/requested" \
+			< "$_ct_work/templates" > "$_ct_work/narrowed"; then
+			mv "$_ct_work/narrowed" "$_ct_work/templates"
+		else
+			: > "$_ct_work/templates"
+		fi
+
+		if [ ! -s "$_ct_work/templates" ]; then
+			# The message every other check prints for the same cause, so a
+			# narrowed run that reached nothing reads the same everywhere.
+			say "$PROG: no files in scope"
+			exit "$EX_OK"
+		fi
 	fi
 
 	while IFS= read -r _ct_template; do
