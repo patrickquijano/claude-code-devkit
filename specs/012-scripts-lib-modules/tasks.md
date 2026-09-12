@@ -88,10 +88,22 @@ A Claude Code plugin, not an application. Real paths: `scripts/` for entry point
 - [x] T039 [P] [US1] Replace the file-wide `# shellcheck disable=SC2310` in `scripts/lib/checks.sh` with one at each of the two call sites, so it cannot silence a later check body (L2)
 - [x] T040 [US3] Disclose the unrelated `CLAUDE.md` `## Working rules` addition in `plan.md` and in the pull request description (M2)
 
+## Phase 4c: Review round four
+
+**Purpose**: One high finding with three consequences, one medium, two low. The high one is a contract violation three rounds had read as an exemption.
+
+- [x] T041 [US2] Narrow `standard_citations`' template list by `REQUESTED_PATHS`, resolved through `repo_relative`, reporting `no files in scope` and exit `0` when it reaches none (M1 of round four's table: H1; FR-006a, SC-006)
+- [x] T042 [P] [US1] Delete the claim that `004/check-cli.md` exempts this check from the scope machinery — it does not; its `## Reserved` section names only `scripts/format-file.sh` (H1)
+- [x] T043 [P] [US1] Delete `USAGE_PATHS`: the path-list line no longer differs between checks, so it goes back to being a literal (H1 consequence)
+- [x] T044 [US3] Add the citations path-list cases and return `ep_expect` to a single expected status: round three's L1 diagnosis was wrong, and those cases were reporting this defect rather than being non-hermetic (H1 consequence)
+- [x] T045 [US3] Capture `-h`'s exit status in `ep_usage`: unguarded under `set -eu` it ended the suite with no verdict block, no summary and no failure list (round four M1)
+- [x] T046 [P] [US1] Correct `README.md`'s smoke-case sentence, which explained a count four cases out of date (round four L1)
+- [x] T047 [P] [US1] Note the amendment in `specs/001-quality-gate-plugin/contracts/cli.md`'s citations section, whose omission of the path list was what the phantom exemption was read from (round four L2)
+
 ## Phase 5: Verification
 
 - [x] T029 Run `sh scripts/lint.sh` — all seven checks pass (SC-001)
-- [x] T030 Run `sh scripts/selftest.sh` — 17 standards, 3 aggregate cases, 13 format-hook, 20 git-hook, 5 compaction-audit, 18 entry-point (SC-001)
+- [x] T030 Run `sh scripts/selftest.sh` — 17 standards, 3 aggregate cases, 13 format-hook, 20 git-hook, 5 compaction-audit, 3 citations-scope, 18 entry-point (SC-001)
 - [x] T031 Run `LINT_FORCE_CONTAINER=1 sh scripts/lint.sh` — the container path returns the same verdict (SC-001)
 - [x] T032 Demonstrate SC-002: reinstating the subshell form makes `lint/errexit` fail, and restoring it makes it pass
 - [x] T033 Demonstrate SC-004: `check_main markdwon` in `scripts/lint-markdown.sh` passes `scripts/lint-shell.sh` and fails `scripts/selftest.sh` at `entry/lint-markdown.sh`

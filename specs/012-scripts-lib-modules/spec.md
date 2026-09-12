@@ -25,7 +25,8 @@ A contributor adding an eighth standard edits one file. They add the name to the
 1. **Given** a new check registered in one place, **When** the aggregate runs, **Then** it runs the new check in its declared position.
 2. **Given** an entry point under `scripts/`, **When** it is read, **Then** it resolves the repository root, sources one file from `scripts/lib/`, and calls it — and contains no other logic.
 3. **Given** a wrapper that names a check that does not exist, **When** the self-test runs, **Then** it fails and names that entry point.
-4. **Given** a check that reads a fixed location, **When** `-h` is asked of its entry point, **Then** the path-list, `--fix` and exit-status lines describe what that check actually does.
+4. **Given** a check that runs no tool, **When** `-h` is asked of its entry point, **Then** the `--fix` and exit-status lines describe what that check actually does.
+5. **Given** a path list naming no file a check governs, **When** that check runs, **Then** it reports `no files in scope` and exits `0` — `citations` included.
 
 ### User Story 2 - A check fails part way through its body (Priority: P1)
 
@@ -56,6 +57,7 @@ A command inside a check body fails. The check stops there, the aggregate stops 
 - **FR-004**: A check invoked by the aggregate or by the edit hook MUST run with `set -e` live, so a failing command inside its body ends it.
 - **FR-005**: The aggregate MUST stop at the first failing check and exit with that check's own status.
 - **FR-006**: The aggregate MUST pass a trailing `-- PATH...` through to every check, per `specs/004-format-hook-scope/contracts/check-cli.md`.
+- **FR-006a**: Every check MUST narrow on that path list, `citations` included. `check-cli.md` states one command-line shape for every check and exempts only `scripts/format-file.sh`; building a file list by another route is not an exemption from the shape. A check that cannot narrow is a defect to fix, not a usage line to reword.
 - **FR-007**: Every documented CLI — arguments, output and all five exit statuses — MUST be unchanged.
 - **FR-008**: The self-test MUST cover FR-004 and FR-005 against the committed invocation, not a stand-in for it.
 - **FR-009**: A usage text MUST NOT promise a behaviour its check does not have — neither a `--fix` that rewrites nothing, nor a `-- PATH...` that narrows nothing, nor an exit status the check cannot return. This binds the `-h` output as well as the file header comment: `-h` is where the promise reaches a user.
@@ -70,3 +72,4 @@ A command inside a check body fails. The check stops there, the aggregate stops 
 - **SC-003**: `grep` for a `scripts/` path being executed from another `scripts/` file returns nothing outside `scripts/selftest.sh`, whose only such lines are smoke cases.
 - **SC-004**: Renaming the check a wrapper asks for — `check_main markdwon` — passes `scripts/lint-shell.sh` and fails `scripts/selftest.sh`.
 - **SC-005**: Reverting the `citations` usage correction makes `scripts/selftest.sh` fail, naming `lint-citations.sh(-h)`.
+- **SC-006**: `scripts/lint-citations.sh -- <a path that is not one of its templates>` reports `no files in scope` and exits `0`; reverting the narrowing makes `scripts/selftest.sh` fail at `citations/outside`.

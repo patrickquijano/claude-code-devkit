@@ -100,6 +100,20 @@ A wrapper is three assignments, one `.` and one call, and the call is the part n
 
 FR-009 was written against the file header comments and satisfied there; `scripts/lint-citations.sh -h` went on offering `-- PATH... Narrow this run to the named paths`, a `--fix` described in terms of a tool it does not run, and exit statuses 3 and 4 it cannot return. `-h` is where a user is actually told what a command does, so that is where the requirement had to be met.
 
-Only three lines differ, and only one check differs on them. A second heredoc would duplicate the four lines that do not differ, and two copies of a usage text agree the day they are written. A per-check usage function would put seven near-identical texts where there is one. So `usage()` interpolates `USAGE_FIX`, `USAGE_PATHS` and `USAGE_EXIT`, whose defaults in `lib/common.sh` describe a check that filters a file list and resolves a tool — what `lint.sh` and six of the seven do — and `check_main` overwrites them for `citations`.
+Only three lines differ, and only one check differs on them. A second heredoc would duplicate the four lines that do not differ, and two copies of a usage text agree the day they are written. A per-check usage function would put seven near-identical texts where there is one. So `usage()` interpolates `USAGE_FIX` and `USAGE_EXIT`, whose defaults in `lib/common.sh` describe a check that filters a file list and resolves a tool — what `lint.sh` and six of the seven do — and `check_main` overwrites them for `citations`.
 
 The assignment has to happen in `check_main` rather than in `standard_citations`: `parse_args` answers `-h` and exits, so anything `run_standard` sets is too late. `lint_main` never touches them, which is correct — the aggregate does narrow, and it can return both 3 and 4.
+
+## 13. Why `citations` narrows, rather than being exempted from narrowing
+
+`scripts/lint-citations.sh` carried a comment saying `specs/004-format-hook-scope/contracts/check-cli.md` "exempts it from the scope machinery". It does not. That contract opens by amending the shape for **every** check script, gives one semantics formula for the path list, and its `## Reserved` section names exactly one entry point as outside the shape: `scripts/format-file.sh`. `citations` appears in it once, in the ordering rationale. The belief most likely came from `specs/001-quality-gate-plugin/contracts/cli.md`, whose `lint-citations.sh` section lists two invocations and not the path list — an omission in a superseded document, read as a carve-out in the superseding one.
+
+So the check was non-conforming, not exempt, and FR-006 is what made it visible: once `lint.sh` forwarded the path list, `scripts/lint.sh -- README.md` ran `citations` over all of `.github/` and could fail on a file the caller never named.
+
+Two routes were available.
+
+**Route through `lib/scope.sh`**, so the check computes its list the way the other six do, was rejected. `exclusions_for` would need a `citations` branch declaring no exclusions — defensible — but `file_list` requires a git working tree and enumerates through `git ls-files`, and the fixture in `scripts/selftest.sh` is a plain directory built under `.lint-selftest-tmp/`. Inside a git tree that directory is ignored, so `--others --exclude-standard` would return nothing and the fixture would report a pass where it must report a failure. Making the fixture a repository to satisfy the implementation is the wrong direction; the rule in `.claude/rules/husky-git-hooks.md` — a case that needs a temporary git repository is a case that gets deleted the first time it is slow — points the same way.
+
+**Filter the list the check already builds**, which is what shipped. It is the same operation `filter_list` performs, `repo_relative` and all, over `find` output instead of `git ls-files` output. Roughly twenty lines, no new dependency for the check, and the fixture stays a directory.
+
+What conforming bought is mostly subtraction: the false comment, `USAGE_PATHS`, `check_main`'s third override, the `ep_expect` status set, and two of the four `-h` cases all went. The two `USAGE_*` variables that remain describe the one thing still true of `citations` alone — it runs no tool, so it rewrites nothing and can reach neither the no-tool nor the no-git exit.

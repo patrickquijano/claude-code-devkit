@@ -16,6 +16,8 @@ Two behaviours changed, both toward an existing contract: `lint.sh` now passes a
 
 Two things this feature added after the first review round: fourteen entry-point smoke cases, because removing the sibling execution removed the only thing that ran the wrappers; and an explicit exemption for `scripts/selftest.sh` from the wrapper rule, because the repository otherwise breaks in the same commit that states it.
 
+Round four added the one that mattered most, and it is a deletion. `citations` was not honouring the trailing path list, and a comment in `scripts/lint-citations.sh` said `004/check-cli.md` exempted it. That contract exempts nothing of the kind — it states one command-line shape for every check and names `scripts/format-file.sh` as the single entry point outside it. FR-006, which this feature added, is what made the divergence reachable: before it, `lint.sh` dropped the path list and no caller could see the difference. The check now narrows, and with it go the comment, `USAGE_PATHS`, and the `0 1` status set round three had taught the self-test to accept. Round three's L1 was a wrong diagnosis: those two cases were not impossible to make hermetic, they were reporting this defect.
+
 Round three added one more: FR-009 was satisfied in the file header comments and not at `-h`, which is the surface a user reads. `usage()` now takes its three variable lines from `USAGE_FIX`, `USAGE_PATHS` and `USAGE_EXIT`, whose defaults describe a check that filters a file list and resolves a tool; `check_main` overwrites all three for `citations`, which does neither. Four self-test cases assert both directions.
 
 ## Technical Context

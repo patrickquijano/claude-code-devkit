@@ -120,9 +120,12 @@ A caller that invokes it gets the shell's own "No such file or directory" and a 
 ```text
 scripts/lint-citations.sh
 scripts/lint-citations.sh --fix
+scripts/lint-citations.sh [--fix] -- PATH...
 ```
 
 Exists because FR-036 requires a stale quotation to be detectable by running something. Needs no tool and no container: it reads committed files and compares them.
+
+> **Amended** by [`specs/004-format-hook-scope/contracts/check-cli.md`](../../004-format-hook-scope/contracts/check-cli.md), which gives every check a trailing path list. The omission of that line here was read for a while as an exemption; it was not one. This check builds its file list with `find` rather than through `scripts/lib/scope.sh`, having no configuration file to read an exclusion declaration from, but it narrows on the path list like every other check and reports `no files in scope` with exit `0` when the list reaches none of its templates.
 
 **Guarantees**
 

@@ -117,7 +117,7 @@ Every entry point under `scripts/` is a wrapper with no logic of its own: it res
 
 [`scripts/selftest.sh`](scripts/selftest.sh) is the one exception, and deliberately: it holds its own body and it is the only script that executes an entry point. Moving its body under `scripts/lib/` would give the tester a wrapper that nothing tests, and it shares nothing with anything — it has one caller, a person or a CI job. Executing an entry point there is not a component dependency either; it is the thing under test.
 
-`scripts/selftest.sh` proves the checks can actually fail: it runs each one against a deliberately broken fixture and succeeds only if every check rejects it. It also drives the edit hook, both git hooks, the installer and the compaction audit through `scripts/lib/` directly, so a failing case names a broken check rather than a broken test. One smoke case per entry point runs the wrapper itself, because a wrapper's call into its library is three tokens no linter can check.
+`scripts/selftest.sh` proves the checks can actually fail: it runs each one against a deliberately broken fixture and succeeds only if every check rejects it. It also drives the edit hook, both git hooks, the installer and the compaction audit through `scripts/lib/` directly, so a failing case names a broken check rather than a broken test. One smoke case per entry point runs the wrapper itself, because a wrapper's call into its library is three tokens no linter can check, and four more assert that `-h` offers only what the check it fronts can actually do.
 
 ### Formatting on edit
 
