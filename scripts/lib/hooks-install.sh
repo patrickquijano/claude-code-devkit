@@ -38,6 +38,43 @@ ih_fingerprint() {
 	printf '%s\n' "$_ih_fp" | cut -d ' ' -f 2
 }
 
+# ih_public_key_file PATH -- a path holding PUBLIC key material, on stdout, or
+# nothing. `user.signingkey` may name a PRIVATE key: git accepts one and
+# ssh-keygen fingerprints it happily, so the configured path is not safe to
+# name in a remedy. `gh ssh-key add` validates nothing locally -- it reads the
+# file and POSTs what it finds -- so naming a private key would tell a
+# contributor to upload it. Checked by content, not by extension: the first
+# line of public key material is the key type, and a private key's is a PEM
+# header.
+ih_public_key_file() {
+	[ -n "${1:-}" ] || return 0
+	for _ih_pkf in "$1" "$1.pub"; do
+		[ -f "$_ih_pkf" ] || continue
+		case "$(head -n 1 "$_ih_pkf" 2> /dev/null)" in
+			ssh-* | ecdsa-* | sk-*)
+				printf '%s\n' "$_ih_pkf"
+				return 0
+				;;
+			*) ;;
+		esac
+	done
+}
+
+# ih_signing_keys -- the account's registered signing keys, one per line.
+# Paginated, because the endpoint returns 30 per page and a key past the first
+# page would otherwise be reported unregistered -- the confident wrong answer
+# the rest of this function exists to avoid. Bounded when `timeout` is
+# available: `--status` is the cheap read-only report and must not hang on a
+# stalled network. `timeout` is not POSIX and macOS ships without it, so its
+# absence is not an error, only an unbounded call.
+ih_signing_keys() {
+	if command -v timeout > /dev/null 2>&1; then
+		timeout 10 gh api user/ssh_signing_keys --paginate --jq '.[].key' 2> /dev/null
+	else
+		gh api user/ssh_signing_keys --paginate --jq '.[].key' 2> /dev/null
+	fi
+}
+
 # ih_forge_signing_key GPG_FORMAT SIGNING_KEY -- reports whether the forge has
 # the signing key registered FOR SIGNING. Report only: it writes nothing, it
 # never fails the run, and every condition it cannot judge reports `not checked`
@@ -99,7 +136,7 @@ ih_forge_signing_key() {
 
 	_ih_fsk_listed=''
 	if [ -z "$_ih_fsk_why" ]; then
-		_ih_fsk_listed=$(gh api user/ssh_signing_keys --jq '.[].key' 2> /dev/null) || _ih_fsk_why='github could not be reached'
+		_ih_fsk_listed=$(ih_signing_keys) || _ih_fsk_why='github could not be reached'
 	fi
 
 	if [ -n "$_ih_fsk_why" ]; then
@@ -133,7 +170,19 @@ EOF
 	ih_report 'forge signing key' 'github: NOT registered' 'not configured'
 	printf '    Commits will read "Unverified" on GitHub. An authentication key is\n'
 	printf '    not a signing key; the two lists are separate. To register it:\n'
-	printf '      gh ssh-key add %s --type signing\n' "$_ih_fsk_key"
+	# The command takes a path to a PUBLIC key. `user.signingkey` may hold a
+	# private key's path or the key material itself, and neither can be handed
+	# to it -- one would upload the private half, the other is not a path at
+	# all. When no public key file can be found, the shape is named and the
+	# path is left to the contributor.
+	_ih_fsk_pub=$(ih_public_key_file "${_ih_fsk_path:-}")
+	if [ -n "$_ih_fsk_pub" ]; then
+		printf '      gh ssh-key add %s --type signing\n' "$_ih_fsk_pub"
+	else
+		printf '      gh ssh-key add PATH --type signing\n'
+		printf '    where PATH is the file holding the public half of that key;\n'
+		printf '    user.signingkey does not name one.\n'
+	fi
 	return 0
 }
 

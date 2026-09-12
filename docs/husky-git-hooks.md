@@ -84,6 +84,8 @@ This repository had it: eighteen commits' worth of authored history read `Unveri
 
 The line reports `github: registered`, `github: NOT registered` with the `gh ssh-key add --type signing` remedy, or `not checked` with the reason it could not judge. It never fails the run, and `gh` is optional: without it the script still needs nothing but POSIX `sh` and git.
 
+The remedy names a public key file and never the configured path unread. `user.signingkey` may point at a _private_ key — git accepts one, and `gh ssh-key add` uploads whatever file it is given without checking what is in it — so the installer reads the file, resolves a private-key path to the public half beside it, and where it finds no public key file names the command's shape and leaves the path to you.
+
 ## The commit-message rule
 
 The first line must be:

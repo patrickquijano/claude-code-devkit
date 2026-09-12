@@ -61,6 +61,10 @@ Added after a signing key that pushed successfully for eighteen commits turned o
 
 `gh` is **optional**. Without it the line reports `not checked` and the script still requires nothing but POSIX `sh` and git, so the Principle I guarantee below is unchanged. This check never affects the exit status: the signature is real and the contributor can commit, and a non-zero exit would break the one command that diagnoses the problem.
 
+The remedy line names a **public key file**, and only ever one whose contents it has read. `gh ssh-key add` sends whatever file it is handed without validating it locally, while `user.signingkey` may legitimately name a _private_ key — git accepts one — or hold the key material itself with no file behind it. So the remedy resolves the configured path to the public half beside it when it can, and otherwise names the command's shape and leaves the path to the contributor. It never names the configured path unread.
+
+The account's key list is read with `--paginate`: the endpoint returns 30 per page, and a key past the first page reported as unregistered would be exactly the confident wrong answer the rest of this check is built to avoid. The call is bounded by `timeout` where that command exists, so `--status` cannot hang on a stalled network; `timeout` is not POSIX and its absence is not an error.
+
 GitLab draws the same distinction under a `usage_type` field on `/user/keys`, but reading it needs a JSON parser this script does not require, so a GitLab origin reports `not checked` rather than half an answer.
 
 ## Exit status
