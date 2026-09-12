@@ -1388,7 +1388,9 @@ EP_SCOPE="$WORK/entry-scope.md"
 printf '# Nothing here is checked\n' > "$EP_SCOPE"
 EP_REL=${EP_SCOPE#"$REPO_ROOT"/}
 
-# ep_expect NAME WANT-STATUS CMD... -- executes CMD and compares its status.
+# ep_expect NAME WANT CMD... -- executes CMD and checks its status against WANT,
+# a space-separated set. A set rather than one value because two of these cases
+# cannot be made hermetic: see the citations note below.
 ep_expect() {
 	EP_CASES=$((EP_CASES + 1))
 	_ep_name=$1
@@ -1397,21 +1399,70 @@ ep_expect() {
 	_ep_out="$WORK/entry-$_ep_name.out"
 	_ep_st=0
 	"$@" > "$_ep_out" 2>&1 || _ep_st=$?
-	if [ "$_ep_st" -ne "$_ep_want" ]; then
-		say "entry/$_ep_name: exit $_ep_st, expected $_ep_want"
-		EP_FAILURES="$EP_FAILURES $_ep_name"
+	case " $_ep_want " in
+		*" $_ep_st "*)
+			say "entry/$_ep_name: as required (exit $_ep_st)"
+			;;
+		*)
+			say "entry/$_ep_name: exit $_ep_st, expected one of: $_ep_want"
+			EP_FAILURES="$EP_FAILURES $_ep_name"
+			;;
+	esac
+}
+
+# ep_usage NAME present|absent PATTERN -- FR-009: a check's -h must not promise
+# a behaviour it does not have. `citations` reads .github/ rather than a filtered
+# list, so it narrows on no path list, rewrites nothing and can return neither 3
+# nor 4; every other check does all three. Asserted in both directions, because a
+# default that went blank for everyone would satisfy the negative on its own.
+ep_usage() {
+	EP_CASES=$((EP_CASES + 1))
+	_eu_name=$1
+	_eu_want=$2
+	_eu_pat=$3
+	_eu_out="$WORK/entry-usage-$_eu_name.out"
+	"$SCRIPT_DIR/$_eu_name" -h > "$_eu_out" 2>&1
+	if grep -q "$_eu_pat" "$_eu_out"; then
+		_eu_got=present
+	else
+		_eu_got=absent
+	fi
+	if [ "$_eu_got" != "$_eu_want" ]; then
+		say "entry/$_eu_name -h: \"$_eu_pat\" $_eu_got, expected $_eu_want"
+		EP_FAILURES="$EP_FAILURES $_eu_name(-h:$(printf '%s' "$_eu_pat" | tr ' ' '-'))"
 		return 0
 	fi
-	say "entry/$_ep_name: as required (exit $_ep_st)"
+	say "entry/$_eu_name -h: as required (\"$_eu_pat\" $_eu_got)"
 }
 
 # The aggregate and the seven per-standard entry points. The glob, not CHECKS:
 # what this case asserts is that every wrapper on disk was executed, so an eighth
 # one is covered the day it is added rather than the day someone remembers.
-ep_expect lint.sh 0 "$SCRIPT_DIR/lint.sh" -- "$EP_REL"
+#
+# `citations` is the one check a path list does not narrow: it reads .github/
+# whatever it is given, so a stale governance quotation would fail its case --
+# and the aggregate's -- with the one diagnosis that is not true of it. Exit 1
+# there still means the wrapper reached its library, which is all these cases
+# are for; the citations standard case above is what asserts its verdict.
+ep_expect lint.sh '0 1' "$SCRIPT_DIR/lint.sh" -- "$EP_REL"
 for _ep_f in "$SCRIPT_DIR"/lint-*.sh; do
-	ep_expect "$(basename "$_ep_f")" 0 "$_ep_f" -- "$EP_REL"
+	_ep_base=$(basename "$_ep_f")
+	case "$_ep_base" in
+		lint-citations.sh)
+			_ep_accept='0 1'
+			;;
+		*)
+			_ep_accept=0
+			;;
+	esac
+	ep_expect "$_ep_base" "$_ep_accept" "$_ep_f" -- "$EP_REL"
 done
+
+# FR-009, at the surface where the promise is actually made.
+ep_usage lint-citations.sh absent 'Narrow this run'
+ep_usage lint-citations.sh absent '4 not a git tree'
+ep_usage lint-markdown.sh present 'Narrow this run'
+ep_usage lint-markdown.sh present '4 not a git tree'
 
 # The edit hook. A file inside the repository that no check governs, so the hook
 # reaches its three checks, none examines the file, and it says nothing.
@@ -1473,11 +1524,11 @@ if [ -n "$CA_FAILURES" ]; then
 fi
 
 if [ -n "$EP_FAILURES" ]; then
-	die "$PROG: these entry points did not behave as required:$EP_FAILURES. Each is a wrapper under scripts/ whose call into scripts/lib/ no linter can check, not a broken test." 1
+	die "$PROG: these entry points did not behave as required:$EP_FAILURES. Each is a wrapper under scripts/ whose call into scripts/lib/, or whose usage text, no linter can check -- not a broken test." 1
 fi
 
 if [ -n "$SKIPPED" ]; then
 	die "$PROG: every reachable check rejected its fixture, but$SKIPPED could not be exercised at all, so SC-002 is unproven for them." 1
 fi
 
-say "$PROG: every check rejected its bad fixture, the aggregate reported a body that failed part way through, the format hook held every safety property, the compaction audit refused to certify a lost rule, and every entry point reached its library"
+say "$PROG: every check rejected its bad fixture, the aggregate reported a body that failed part way through, the format hook held every safety property, the compaction audit refused to certify a lost rule, and every entry point reached its library and offered only the options it has"
