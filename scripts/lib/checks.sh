@@ -355,6 +355,9 @@ run_standard() {
 # MODE and REQUESTED_PATHS go as ARGUMENTS, not in the environment, because
 # lib/common.sh assigns both as it is sourced and the child would overwrite
 # them. check_main re-parses them, so this IS the contract's invocation.
+#
+# /bin/sh, not a PATH lookup: every entry point declares #!/bin/sh, and a check
+# must not run under a different shell than the wrapper that invoked it.
 run_standard_isolated() {
 	_rsi_prog=$1
 	_rsi_check=$2
@@ -377,7 +380,7 @@ REQUESTED
 	fi
 
 	PROG="$_rsi_prog" SCRIPT_DIR="$SCRIPT_DIR" REPO_ROOT="$REPO_ROOT" \
-		sh -c '
+		/bin/sh -c '
 			set -eu
 			. "$SCRIPT_DIR/lib/checks.sh"
 			_rsi_name=$1
@@ -388,10 +391,10 @@ REQUESTED
 
 # check_main NAME "$@" -- the body of scripts/lint-NAME.sh.
 check_main() {
-	_cm_name=$1
+	_chk_name=$1
 	shift
 	parse_args "$@"
-	run_standard "$_cm_name"
+	run_standard "$_chk_name"
 }
 
 # lint_main "$@" -- the body of scripts/lint.sh.
