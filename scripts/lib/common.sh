@@ -92,6 +92,16 @@ say() {
 	printf '%s==>%s %s\n' "$C_BOLD" "$C_RESET" "$1"
 }
 
+# The three lines of the usage text that are not true of every check. A check
+# that reads a fixed location rather than a filtered file list narrows nothing
+# and resolves no tool, so it overwrites both in check_main before parse_args
+# answers -h. The defaults describe the scoped form, which is what the aggregate
+# and six of the seven checks do -- FR-009 forbids a usage text promising a
+# behaviour its check does not have, and -h is where that promise is made.
+USAGE_FIX='--fix         Rewrite files into conformance where the tool supports it.'
+USAGE_PATHS='-- PATH...    Narrow this run to the named paths. Never widens it.'
+USAGE_EXIT='Exit: 0 pass, 1 violations, 2 usage, 3 no tool and no container, 4 not a git tree.'
+
 # The heredoc body is flush left on purpose. Leading spaces here are printed
 # output, not code indentation, but a whitespace checker cannot tell the
 # difference -- and punching a hole in the whitespace standard for the one file
@@ -101,11 +111,11 @@ usage() {
 Usage: $1 [--fix] [-- PATH...]
 
 no arguments  Report violations. Modifies no file.
---fix         Rewrite files into conformance where the tool supports it.
--- PATH...    Narrow this run to the named paths. Never widens it.
+$USAGE_FIX
+$USAGE_PATHS
 -h, --help    This message.
 
-Exit: 0 pass, 1 violations, 2 usage, 3 no tool and no container, 4 not a git tree.
+$USAGE_EXIT
 USAGE
 }
 
