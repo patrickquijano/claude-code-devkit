@@ -108,8 +108,9 @@ standard_citations() {
 	# identically and a path outside the repository drops out (004's
 	# check-cli.md, Semantics of the path list). Only the resolution is shared:
 	# filter_list itself operates on a NUL-separated list, and converting this
-	# newline-separated one to reuse it would destroy the very distinction the
-	# guard below exists to make -- research.md section 13.
+	# newline-separated one to reuse it would turn a split name into two
+	# indistinguishable real ones, which is what the guard below catches --
+	# research.md section 13.
 	if [ -n "$REQUESTED_PATHS" ]; then
 		requested_relative "$_ct_work/requested"
 
@@ -133,10 +134,10 @@ standard_citations() {
 
 	while IFS= read -r _ct_template; do
 		# `find` separates names with newlines, so a name containing one
-		# arrives as two records and neither of them names a file. Refused
-		# rather than half-checked: filter_list refuses the same input for the
-		# same reason, and a citation check that silently skipped a template
-		# would report a pass it never established (Principle II).
+		# arrives as two records and neither of them names a file. Refused by
+		# name here rather than left to reach `awk`, which cannot open it and
+		# ends the check at exit 2 naming neither the reason nor the file.
+		# filter_list refuses the same input explicitly, for the same reason.
 		[ -f "$_ct_template" ] \
 			|| die "$PROG: $_ct_dir holds a name this check cannot enumerate (a newline in it, or it vanished mid-run): $_ct_template" "$EX_VIOLATION"
 
