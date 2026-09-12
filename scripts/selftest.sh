@@ -1421,7 +1421,17 @@ ep_usage() {
 	_eu_want=$2
 	_eu_pat=$3
 	_eu_out="$WORK/entry-usage-$_eu_name.out"
-	"$SCRIPT_DIR/$_eu_name" -h > "$_eu_out" 2>&1
+	# Captured, not left to set -e. An entry point whose `.` line is wrong
+	# exits non-zero here, and an unguarded call would end the whole suite at
+	# this line -- no verdict block, no summary, no failure list, and the
+	# ep_expect failure already recorded for the same wrapper lost with it.
+	_eu_st=0
+	"$SCRIPT_DIR/$_eu_name" -h > "$_eu_out" 2>&1 || _eu_st=$?
+	if [ "$_eu_st" -ne 0 ]; then
+		say "entry/$_eu_name -h: exit $_eu_st, expected 0"
+		EP_FAILURES="$EP_FAILURES $_eu_name(-h:exit-$_eu_st)"
+		return 0
+	fi
 	if grep -q "$_eu_pat" "$_eu_out"; then
 		_eu_got=present
 	else
