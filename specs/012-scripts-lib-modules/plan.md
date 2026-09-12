@@ -12,13 +12,15 @@ No script under `scripts/` executes another script under `scripts/`. Every entry
 
 One decision carries the change: a check runs in a **separate process**, not a subshell. `( body ) || status=$?` is an AND-OR list, POSIX ignores `-e` for every command of one but the last, and the suppression reaches into the subshell — so a body could run past a failing command and be reported as a pass. `run_standard_isolated` spawns `/bin/sh -c` per check, which is what each check had before the bodies moved.
 
-Two behaviours changed, both toward an existing contract: `lint.sh` now passes a trailing `-- PATH...` through to every check, and four usage headers stopped promising a `--fix` that rewrites nothing. One dead function, `count_files`, was removed.
+Three behaviours changed, all toward an existing contract: `lint.sh` now passes a trailing `-- PATH...` through to every check, `citations` narrows on that list like every other check, and four usage headers stopped promising a `--fix` that rewrites nothing. One dead function, `count_files`, was removed.
 
 Two things this feature added after the first review round: fourteen entry-point smoke cases, because removing the sibling execution removed the only thing that ran the wrappers; and an explicit exemption for `scripts/selftest.sh` from the wrapper rule, because the repository otherwise breaks in the same commit that states it.
 
+Round five is subtraction of a different kind: three places still described the behaviour round four replaced — `ep_usage`'s header in `scripts/selftest.sh` said `citations` narrows on no path list, `ep_expect`'s justified a status set that no longer exists, and two sentences here outlived what they described. The duplicated half of the narrowing became `requested_relative` in `lib/common.sh`, shared with `filter_list`, and the split-name case `find` can produce is now refused by name rather than reaching `awk` as an unopenable file.
+
 Round four added the one that mattered most, and it is a deletion. `citations` was not honouring the trailing path list, and a comment in `scripts/lint-citations.sh` said `004/check-cli.md` exempted it. That contract exempts nothing of the kind — it states one command-line shape for every check and names `scripts/format-file.sh` as the single entry point outside it. FR-006, which this feature added, is what made the divergence reachable: before it, `lint.sh` dropped the path list and no caller could see the difference. The check now narrows, and with it go the comment, `USAGE_PATHS`, and the `0 1` status set round three had taught the self-test to accept. Round three's L1 was a wrong diagnosis: those two cases were not impossible to make hermetic, they were reporting this defect.
 
-Round three added one more: FR-009 was satisfied in the file header comments and not at `-h`, which is the surface a user reads. `usage()` now takes its three variable lines from `USAGE_FIX`, `USAGE_PATHS` and `USAGE_EXIT`, whose defaults describe a check that filters a file list and resolves a tool; `check_main` overwrites all three for `citations`, which does neither. Four self-test cases assert both directions.
+Round three added one more: FR-009 was satisfied in the file header comments and not at `-h`, which is the surface a user reads. `usage()` takes its variable lines from `USAGE_FIX` and `USAGE_EXIT`, whose defaults describe a check that rewrites what its tool can rewrite and resolves that tool; `check_main` overwrites both for `citations`, which runs no tool at all. Round three parameterised a third line, the path list, as `USAGE_PATHS`; round four deleted it again, because once `citations` narrowed there was nothing left for that line to differ about. Four self-test cases assert both directions.
 
 ## Technical Context
 
@@ -135,7 +137,7 @@ Each entry point keeps `PROG`, `SCRIPT_DIR`, `REPO_ROOT`, one `.` and one call. 
 
 ### 3. Restore the contracts the move exposed (FR-006, FR-007, FR-009, FR-010)
 
-The `-- PATH...` passthrough, four over-promising usage headers, one that promised a path narrowing `standard_citations` does not do, and the dead `count_files`.
+The `-- PATH...` passthrough, four over-promising usage headers, the path narrowing `check-cli.md` required of `standard_citations` and the check did not do, and the dead `count_files`.
 
 ### 4. Test the invocation and the wrappers (FR-008, FR-011)
 

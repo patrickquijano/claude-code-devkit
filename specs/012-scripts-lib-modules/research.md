@@ -17,6 +17,9 @@ Every decision below that departs from a default carries its reason here, follow
 9. Why `scripts/selftest.sh` is exempt from the wrapper rule
 10. Why every entry point now has a smoke case, and why not `-h`
 11. `/bin/sh`, not a `PATH` lookup
+12. Why `usage()` takes variables rather than one text per check
+13. Why `citations` narrows, rather than being exempted from narrowing
+14. Where a relative path in `-- PATH...` is resolved
 
 ---
 
@@ -96,7 +99,7 @@ A wrapper is three assignments, one `.` and one call, and the call is the part n
 
 `run_standard_isolated` spawns the child as `/bin/sh -c`. Every entry point declares `#!/bin/sh`, so resolving the child through `PATH` would let a check run under a different shell than the wrapper that invoked it on any machine where `PATH`'s `sh` is not `/bin/sh`. For a repository whose fourth principle is POSIX shell only, that is the one thing not to leave to the environment, and the absolute path costs nothing.
 
-## 12. Why `usage()` takes three variables rather than one text per check
+## 12. Why `usage()` takes variables rather than one text per check
 
 FR-009 was written against the file header comments and satisfied there; `scripts/lint-citations.sh -h` went on offering `-- PATH... Narrow this run to the named paths`, a `--fix` described in terms of a tool it does not run, and exit statuses 3 and 4 it cannot return. `-h` is where a user is actually told what a command does, so that is where the requirement had to be met.
 
@@ -114,6 +117,26 @@ Two routes were available.
 
 **Route through `lib/scope.sh`**, so the check computes its list the way the other six do, was rejected. `exclusions_for` would need a `citations` branch declaring no exclusions — defensible — but `file_list` requires a git working tree and enumerates through `git ls-files`, and the fixture in `scripts/selftest.sh` is a plain directory built under `.lint-selftest-tmp/`. Inside a git tree that directory is ignored, so `--others --exclude-standard` would return nothing and the fixture would report a pass where it must report a failure. Making the fixture a repository to satisfy the implementation is the wrong direction; the rule in `.claude/rules/husky-git-hooks.md` — a case that needs a temporary git repository is a case that gets deleted the first time it is slow — points the same way.
 
-**Filter the list the check already builds**, which is what shipped. It is the same operation `filter_list` performs, `repo_relative` and all, over `find` output instead of `git ls-files` output. Roughly twenty lines, no new dependency for the check, and the fixture stays a directory.
+**Filter the list the check already builds**, which is what shipped. It is the same operation `filter_list` performs, over `find` output instead of `git ls-files` output. No new dependency for the check, and the fixture stays a directory.
+
+Round five asked why `filter_list` itself was not reused, since — unlike `file_list` — it needs no git working tree. The answer is that only half of it is reusable. `filter_list` operates on a NUL-separated list and carries a guard that refuses to filter when the NUL count and the line count disagree, which is how it detects a name containing a newline. This check's list comes from `find`, which separates with newlines; converting it to NUL form would make those two counts agree by construction and turn the guard into decoration. So the half that is genuinely common — resolving `REQUESTED_PATHS` to repository-relative paths through `repo_relative`, dropping what falls outside — is now `requested_relative` in `lib/common.sh`, called by both, and each keeps the comparison its own list shape requires.
+
+The newline case is guarded here too, and differently: every record must name an existing file. Before that guard a split name reached `citations_extract`, where `awk` could not open it and the check ended at exit 2 with the tool's own message — not a silent pass, but a refusal that named neither the check's reason nor the file that caused it. `scripts/selftest.sh`'s `citations/newline-in-name` case asserts the named refusal, and reports `exit 2, and the refusal was not reported` when the guard is removed.
 
 What conforming bought is mostly subtraction: the false comment, `USAGE_PATHS`, `check_main`'s third override, the `ep_expect` status set, and two of the four `-h` cases all went. The two `USAGE_*` variables that remain describe the one thing still true of `citations` alone — it runs no tool, so it rewrites nothing and can reach neither the no-tool nor the no-git exit.
+
+## 14. Where a relative path in `-- PATH...` is resolved
+
+`specs/004-format-hook-scope/contracts/check-cli.md` says a relative path is "resolved against the repository root". `repo_relative` resolves it against the caller's working directory, by `cd`-ing to the path's own directory part and comparing `pwd -P` with the root. The two coincide whenever a check is invoked from the repository root, which `specs/001-quality-gate-plugin/contracts/cli.md` states as the common shape, so nothing in this repository has ever been able to tell them apart.
+
+`standard_citations` can: it `cd`s to `REPO_ROOT` before filtering, so it alone matches the contract's wording.
+
+```text
+$ cd .github && ../scripts/lint-citations.sh -- pull_request_template.md
+==> lint-citations.sh: no files in scope                   (resolved against the root)
+
+$ cd .github && ../scripts/lint-markdown.sh -- pull_request_template.md
+Finding: .github/pull_request_template.md                  (resolved against the cwd)
+```
+
+Left as it is, and recorded rather than fixed, for two reasons. It predates this feature, and changing it would change a documented CLI, which FR-007 forbids of this change. And the second run above shows a larger effect of the same cause — `xargs` runs the native tool in the caller's working directory with a repository-relative path, so it lints zero files and exits `0` — which is a defect of running a check from anywhere but the root, not of the path list. Both belong to a change that can carry a CLI amendment; this one names them so the next reader does not have to rediscover that the divergence is known.

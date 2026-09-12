@@ -8,7 +8,7 @@ description: 'Task list for feature 012 — one shared library directory for the
 
 **Prerequisites**: `plan.md`, `spec.md`, `research.md` — all present. No `data-model.md`, `contracts/` or `quickstart.md`; `plan.md` says why.
 
-**Status**: Retrospective. Every task below is complete and the boxes record what was done, not what is intended. The order is the order the work actually happened in, across three review rounds, because that order is the useful record — the second and third groups exist because a review found something the first group missed.
+**Status**: Retrospective. Every task below is complete and the boxes record what was done, not what is intended. The order is the order the work actually happened in, across five review rounds, because that order is the useful record — the second and third groups exist because a review found something the first group missed.
 
 **Tests**: The specification does not request TDD, and the work was not done test-first. `scripts/selftest.sh` is this repository's proof-the-checks-can-fail suite rather than a unit-test harness, and the cases added in T014–T016 are regression guards written against defects a review had already identified. That is stated plainly rather than dressed as a TDD phase.
 
@@ -100,10 +100,23 @@ A Claude Code plugin, not an application. Real paths: `scripts/` for entry point
 - [x] T046 [P] [US1] Correct `README.md`'s smoke-case sentence, which explained a count four cases out of date (round four L1)
 - [x] T047 [P] [US1] Note the amendment in `specs/001-quality-gate-plugin/contracts/cli.md`'s citations section, whose omission of the path list was what the phantom exemption was read from (round four L2)
 
+## Phase 4d: Review round five
+
+**Purpose**: Three medium findings and three low. All six are round four's own wake: the behaviour changed and three descriptions of the old one survived, including inside the file whose new cases assert the new behaviour.
+
+- [x] T048 [P] [US3] Correct `ep_usage`'s header in `scripts/selftest.sh`: it said `citations` "narrows on no path list", which FR-006a and the `cite_narrow` cases forty lines above it contradict (M1)
+- [x] T049 [P] [US3] Drop `ep_expect`'s justification for a status set: round four deleted the set, every caller passes one value, and the "citations note below" it pointed at is gone (L1)
+- [x] T050 [P] [US1] Correct `plan.md`, which still said `usage()` takes three variables and that `citations` does not narrow — both contradicted by the same file eight lines earlier (M2)
+- [x] T051 [US1] Extract `requested_relative` into `scripts/lib/common.sh` and call it from both `filter_list` and `standard_citations`: resolving `REQUESTED_PATHS` is the half of the narrowing the two genuinely share (M3)
+- [x] T052 [US2] Refuse a template record that names no file, rather than letting `awk` fail to open it: `find` separates with newlines, so a name containing one arrives as two records (L2)
+- [x] T053 [US3] Add `citations/newline-in-name` to `scripts/selftest.sh`, and prove it reports `exit 2, and the refusal was not reported` when the guard is removed (L2)
+- [x] T054 [P] [US1] Record in `research.md` §14 that a relative path in `-- PATH...` resolves against the working directory in six checks and against the repository root in `citations`, which is what `check-cli.md` specifies — pre-existing, and out of scope while FR-007 holds (L3)
+- [x] T055 [P] [US1] Amend `research.md` §13 with why `filter_list` as a whole was not reusable, and fix the contents list, which had been three sections short since round three
+
 ## Phase 5: Verification
 
 - [x] T029 Run `sh scripts/lint.sh` — all seven checks pass (SC-001)
-- [x] T030 Run `sh scripts/selftest.sh` — 17 standards, 3 aggregate cases, 13 format-hook, 20 git-hook, 5 compaction-audit, 3 citations-scope, 18 entry-point (SC-001)
+- [x] T030 Run `sh scripts/selftest.sh` — 17 standards, 3 aggregate cases, 13 format-hook, 20 git-hook, 5 compaction-audit, 4 citations-scope, 18 entry-point (SC-001)
 - [x] T031 Run `LINT_FORCE_CONTAINER=1 sh scripts/lint.sh` — the container path returns the same verdict (SC-001)
 - [x] T032 Demonstrate SC-002: reinstating the subshell form makes `lint/errexit` fail, and restoring it makes it pass
 - [x] T033 Demonstrate SC-004: `check_main markdwon` in `scripts/lint-markdown.sh` passes `scripts/lint-shell.sh` and fails `scripts/selftest.sh` at `entry/lint-markdown.sh`
