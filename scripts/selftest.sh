@@ -1429,8 +1429,7 @@ printf '# Nothing here is checked\n' > "$EP_SCOPE"
 EP_REL=${EP_SCOPE#"$REPO_ROOT"/}
 
 # ep_expect NAME WANT CMD... -- executes CMD and checks its status against WANT,
-# a space-separated set. A set rather than one value because two of these cases
-# cannot be made hermetic: see the citations note below.
+# the one status the wrapper must return.
 ep_expect() {
 	EP_CASES=$((EP_CASES + 1))
 	_ep_name=$1
@@ -1451,9 +1450,10 @@ ep_expect() {
 }
 
 # ep_usage NAME present|absent PATTERN -- FR-009: a check's -h must not promise
-# a behaviour it does not have. `citations` reads .github/ rather than a filtered
-# list, so it narrows on no path list, rewrites nothing and can return neither 3
-# nor 4; every other check does all three. Asserted in both directions, because a
+# a behaviour it does not have. `citations` runs no tool at all, so it rewrites
+# nothing and can return neither 3 nor 4; every other check does both. It does
+# narrow on a path list, like every check -- that line is shared and is asserted
+# by the citations cases above, not here. Asserted in both directions, because a
 # default that went blank for everyone would satisfy the negative on its own.
 ep_usage() {
 	EP_CASES=$((EP_CASES + 1))
@@ -1495,8 +1495,8 @@ done
 
 # FR-009, at the surface where the promise is actually made. `citations` runs no
 # tool, so it rewrites nothing and cannot reach the no-tool or no-git exits;
-# `markdown` stands for every check that does all three. Both directions,
-# because a default that went blank for everyone would satisfy the negatives.
+# `markdown` stands for every check that does both. Both directions, because a
+# default that went blank for everyone would satisfy the negatives.
 ep_usage lint-citations.sh absent 'where the tool supports it'
 ep_usage lint-citations.sh absent '4 not a git tree'
 ep_usage lint-markdown.sh present 'where the tool supports it'
