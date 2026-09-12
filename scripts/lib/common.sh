@@ -187,7 +187,7 @@ normalise_status() {
 # bashism, TERM is POSIX.
 init_runner() {
 	LIST=$(mktemp)
-	trap 'rm -f "$LIST" "$LIST.req" "$LIST.raw" "$LIST.out"' EXIT INT TERM
+	trap 'rm -f "$LIST" "$LIST.req" "$LIST.out"' EXIT INT TERM
 }
 
 # repo_relative PATH -- prints PATH relative to the repository root, or nothing
@@ -221,6 +221,33 @@ repo_relative() {
 	esac
 }
 
+# requested_relative FILE -- writes REQUESTED_PATHS to FILE, one
+# repository-relative path per line, dropping anything that does not resolve to
+# something inside the repository.
+#
+# Shared, because two checks narrow two differently-built lists and 004's
+# check-cli.md states one semantics for the path list, not one per check:
+# filter_list narrows a NUL-separated `git ls-files` list, standard_citations
+# narrows a newline-separated `find` list, and this is the half they had in
+# common. A second copy of it is what let `citations` drift out of the contract
+# once before -- research.md section 13.
+requested_relative() {
+	rq_out=$1
+	: > "$rq_out"
+	# A heredoc rather than a pipe: a pipe would put the loop in a subshell,
+	# where repo_relative's `die` would end the subshell only.
+	while IFS= read -r rq_path; do
+		if [ -n "$rq_path" ]; then
+			rq_rel=$(repo_relative "$rq_path")
+			if [ -n "$rq_rel" ]; then
+				printf '%s\n' "$rq_rel" >> "$rq_out"
+			fi
+		fi
+	done << REQUESTED
+$REQUESTED_PATHS
+REQUESTED
+}
+
 # filter_list -- narrows LIST to REQUESTED_PATHS.
 #
 # It filters the list the check already computed; it never treats a requested
@@ -228,14 +255,7 @@ repo_relative() {
 # reach a file outside the check's globs or excluded by its own configuration,
 # which is exactly what FR-006 and FR-007 forbid.
 filter_list() {
-	printf '%s' "$REQUESTED_PATHS" > "$LIST.raw"
-	: > "$LIST.req"
-	while IFS= read -r fl_path; do
-		fl_rel=$(repo_relative "$fl_path")
-		if [ -n "$fl_rel" ]; then
-			printf '%s\n' "$fl_rel" >> "$LIST.req"
-		fi
-	done < "$LIST.raw"
+	requested_relative "$LIST.req"
 
 	# The comparison below is line-oriented, so a file name containing a
 	# newline would match the wrong record. `git ls-files -z` emits names

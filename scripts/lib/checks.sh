@@ -103,26 +103,19 @@ standard_citations() {
 	fi
 
 	# The same narrowing filter_list applies to a git-derived list, over the
-	# list this check computes for itself. Resolved through repo_relative, so
-	# an absolute path and a relative one behave identically and a path outside
-	# the repository drops out -- 004's check-cli.md, Semantics of the path
-	# list. `if`, not `&&`: under set -e a failing left-hand side would end the
-	# run, and a requested path outside the tree is an ordinary outcome.
+	# list this check computes for itself, and through the same
+	# requested_relative -- so an absolute path and a relative one behave
+	# identically and a path outside the repository drops out (004's
+	# check-cli.md, Semantics of the path list). Only the resolution is shared:
+	# filter_list itself operates on a NUL-separated list, and converting this
+	# newline-separated one to reuse it would destroy the very distinction the
+	# guard below exists to make -- research.md section 13.
 	if [ -n "$REQUESTED_PATHS" ]; then
-		: > "$_ct_work/requested"
-		while IFS= read -r _ct_req; do
-			if [ -n "$_ct_req" ]; then
-				_ct_rel=$(repo_relative "$_ct_req")
-				if [ -n "$_ct_rel" ]; then
-					printf '%s\n' "$_ct_rel" >> "$_ct_work/requested"
-				fi
-			fi
-		done << REQUESTED
-$REQUESTED_PATHS
-REQUESTED
+		requested_relative "$_ct_work/requested"
 
 		# grep exits 1 when nothing matches, which is the documented
-		# "matched nothing" outcome rather than a failure.
+		# "matched nothing" outcome rather than a failure. `if`, not `&&`:
+		# under set -e a failing left-hand side would end the run.
 		if grep -x -F -f "$_ct_work/requested" \
 			< "$_ct_work/templates" > "$_ct_work/narrowed"; then
 			mv "$_ct_work/narrowed" "$_ct_work/templates"
