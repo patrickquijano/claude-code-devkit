@@ -6,11 +6,6 @@
 # the bodies live here and every caller reaches them through run_standard.
 #
 # Sourced, not executed. POSIX sh only.
-#
-# SC2310: `have` and `format_plugins_resolved` are predicates, so set -e being
-# disabled inside their conditions is intended. File-wide because a disable
-# comment covers only the next command and both are called more than once.
-# shellcheck disable=SC2310
 
 # shellcheck source=common.sh
 . "$SCRIPT_DIR/lib/common.sh"
@@ -217,7 +212,13 @@ standard_format() {
 		_fm_action='--check'
 	fi
 
+	# SC2310: both are predicates, asked in a condition on purpose, so set -e
+	# being disabled inside them is the intent. Scoped to the two call sites
+	# rather than disabled for the file, which would also silence a genuinely
+	# unguarded call added to a check body later.
+	# shellcheck disable=SC2310
 	if [ -z "${LINT_FORCE_CONTAINER:-}" ] && have prettier; then
+		# shellcheck disable=SC2310
 		if format_plugins_resolved prettier; then
 			say "$PROG (native: prettier) plugins:$PLUGIN_REPORT"
 			run_files_sh "$LIST" prettier "$IMAGE_FORMAT" \
