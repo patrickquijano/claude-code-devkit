@@ -1297,6 +1297,50 @@ fi
 gh_says install-second 'gpg.format'
 gh_says install-second 'user.signingkey'
 
+# The forge signing-key report. The fixture has no remote, so the honest answer
+# is that the question cannot be judged -- which is the case worth asserting:
+# this report must never need the network to reach exit 0, and must never be
+# silently absent. Asserting the registered/NOT-registered verdicts would need a
+# live forge and an account, so they are exercised by hand and documented in the
+# contract instead.
+gh_says install-second 'forge signing key'
+gh_says install-second 'not checked'
+
+# The guard on the remedy line, which is the half of this report that tells a
+# contributor to run something. `user.signingkey` may name a PRIVATE key -- git
+# accepts one and ssh-keygen fingerprints it -- and `gh ssh-key add` sends
+# whatever file it is handed without reading it first, so a remedy that named
+# the configured path blindly would be an instruction to upload a private key.
+# These cases need no network, unlike the two verdicts above.
+IH_KEYDIR="$WORK/forge-key"
+if command -v ssh-keygen > /dev/null 2>&1 \
+	&& mkdir -p "$IH_KEYDIR" \
+	&& ssh-keygen -q -t ed25519 -N '' -f "$IH_KEYDIR/k" -C selftest < /dev/null 2> /dev/null \
+	&& [ -f "$IH_KEYDIR/k.pub" ]; then
+	GH_CASES=$((GH_CASES + 1))
+	IH_PUB=$(lib_run hooks-install.sh install-hooks.sh '' ih_public_key_file "$IH_KEYDIR/k" 2> /dev/null || true)
+	if [ "$IH_PUB" = "$IH_KEYDIR/k.pub" ]; then
+		say 'githook/forge-key-private: a private-key path resolves to its public half'
+	else
+		say "githook/forge-key-private: named \"$IH_PUB\" for a private-key path"
+		GH_FAILURES="$GH_FAILURES forge-key-private"
+	fi
+
+	# No public half anywhere: the honest answer is to name no path at all.
+	# Naming this one would hand over the private key.
+	GH_CASES=$((GH_CASES + 1))
+	cp "$IH_KEYDIR/k" "$IH_KEYDIR/orphan"
+	IH_PUB=$(lib_run hooks-install.sh install-hooks.sh '' ih_public_key_file "$IH_KEYDIR/orphan" 2> /dev/null || true)
+	if [ -z "$IH_PUB" ]; then
+		say 'githook/forge-key-orphan: a private key with no public half names nothing'
+	else
+		say "githook/forge-key-orphan: named \"$IH_PUB\", which is private key material"
+		GH_FAILURES="$GH_FAILURES forge-key-orphan"
+	fi
+else
+	skip githook/forge-key 'no ssh-keygen, or it produced no key pair'
+fi
+
 # --- compaction-audit.sh -------------------------------------------------
 #
 # The audit is what makes "nothing normative was dropped" checkable rather than

@@ -72,6 +72,20 @@ The last line of either invocation reads `state: active` or `state: inactive`. T
 
 **It never writes `gpg.format` or `user.signingkey`.** Those identify a signing scheme and a person's key, and guessing either produces commits signed by the wrong identity — which is worse than no signature, because an unsigned commit is visibly unattributed while a wrongly signed one is confidently misattributed. The installer reports them and stops there.
 
+### An authentication key is not a signing key
+
+The installer also reports a `forge signing key` line, because a correctly signed commit can still read **Unverified** on the forge and no local check can tell.
+
+GitHub keeps two separate key lists. `user/keys` holds the keys that may **push**; `user/ssh_signing_keys` holds the keys whose **signatures** it will verify. Adding a key to the first does not add it to the second, and only the second is consulted when a commit is verified. A key in the first list alone pushes perfectly and produces commits the API reports as `verified: false`, `reason: unknown_key`.
+
+Nothing on this machine sees that. `git verify-commit` resolves the signature against `allowed_signers` here and says `Good signature`; the `pre-push` check reads `%G?`, which is that same local answer. The gap is only visible from the forge's side, which is why the installer asks it rather than the hook.
+
+This repository had it: eighteen commits' worth of authored history read `Unverified` while `main` looked clean, because squash-merge replaces the author's commit with one GitHub signs itself. Registering the key repaired the history retroactively — the forge recomputes verification when it is read, so no rebase and no rewrite were needed.
+
+The line reports `github: registered`, `github: NOT registered` with the `gh ssh-key add --type signing` remedy, or `not checked` with the reason it could not judge. It never fails the run, and `gh` is optional: without it the script still needs nothing but POSIX `sh` and git.
+
+The remedy names a public key file and never the configured path unread. `user.signingkey` may point at a _private_ key — git accepts one, and `gh ssh-key add` uploads whatever file it is given without checking what is in it — so the installer reads the file, resolves a private-key path to the public half beside it, and where it finds no public key file names the command's shape and leaves the path to you.
+
 ## The commit-message rule
 
 The first line must be:

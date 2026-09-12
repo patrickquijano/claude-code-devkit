@@ -78,6 +78,18 @@ never write `gpg.format` or `user.signingkey`, and never anything `--global`. Gu
 commits signed by the wrong identity, which is worse than an unsigned commit: one is visibly
 unattributed, the other is confidently misattributed.
 
+## The forge's signing-key list is a different list
+
+A forge separates the keys that may **push** from the keys whose **signatures** it will verify, and
+consults only the second when it verifies a commit. A key registered in the first alone pushes
+cleanly and leaves every commit reading `Unverified`. No local check can detect this — `git
+verify-commit` and `%G?` both answer from this machine — so `scripts/install-hooks.sh` asks the
+forge and reports the answer.
+
+Keep that question in the **installer**, never in a hook. It needs the network and an optional tool,
+which the rule below forbids a hook to need, and it is report-only: it writes nothing, registers
+nothing, and never changes the exit status.
+
 ## Prove every rule can fail
 
 Every rule these files enforce has a case in `scripts/selftest.sh`, asserting on the exit status
