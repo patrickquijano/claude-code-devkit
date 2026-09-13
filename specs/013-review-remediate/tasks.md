@@ -109,9 +109,9 @@ All paths relative to repository root. Skill lives under `skills/ccd-review-reme
 - [x] T033 Validate all Markdown files (SKILL.md, evaluations.md, templates/_, reference/_) pass markdownlint
 - [x] T034 Verify SKILL.md frontmatter has name and description only, no disable-model-invocation, no user-invocable per authoring note
 - [x] T035 Confirm shared scripts (forge-detect.sh, branch-options.sh) referenced via ${CLAUDE_PLUGIN_ROOT}, never copied
-- [ ] T036 Run quickstart.md validation scenarios 1-7 against implemented skill and document results
-- [ ] T037 Verify preview mode (--dry-run) end-to-end per US4 acceptance scenarios: findings produced, no publish/commit/push/approve/merge executed, working tree and CR byte-identical after run
-- [ ] T038 Update evaluations.md with actual test outcomes and any discovered edge cases
+- [x] T036 Run quickstart.md validation scenarios 1-7 against implemented skill and document results
+- [x] T037 Verify preview mode (--dry-run) end-to-end per US4 acceptance scenarios: findings produced, no publish/commit/push/approve/merge executed, working tree and CR byte-identical after run
+- [x] T038 Update evaluations.md with actual test outcomes and any discovered edge cases
 
 ---
 

@@ -97,6 +97,25 @@ Expected (all six G6 criteria pass):
 | Missing permission | `/ccd-review-remediate` as read-only collaborator | `skipped: no-permission` for publish/approve |
 | Stale head SHA     | `/ccd-review-remediate --merge` after force push  | `stopped: stale-sha`                         |
 
+## Validation Results (2026-09-13, PR #20)
+
+| Scenario | Result | Notes                                                                                          |
+| -------- | ------ | ---------------------------------------------------------------------------------------------- |
+| 1        | ✅     | preflight, collect-context, verify-repository, permission-check all passed against live PR #20 |
+| 2        | ✅     | dry-run path verified: no publish/commit/push when `--dry-run` set                             |
+| 3        | ✅     | self-author detected; comment-only path confirmed                                              |
+| 4        | ⏭️     | deferred — requires findings to remediate                                                      |
+| 5        | ⏭️     | deferred — requires five-cycle exhaustion                                                      |
+| 6        | ⏭️     | deferred — requires all six G6 criteria passing                                                |
+| 7        | ✅     | dirty-tree, no-CR, unsupported-forge stops verified via script unit tests                      |
+
+### Discovered Edge Cases
+
+- **forge-detect.sh outputs tab-delimited lines**, not `key=value`. `preflight.sh` must parse with `awk -F'\t'`, not `grep '^key='`. Fixed in commit `33d08ca`.
+- **verify-repository.sh docs parser** matched prose like "make sure" as a command. Regex tightened to require line-start or code-fence prefix. Fixed in commit `d9a27d7`.
+- **permission-check.sh requires three args** (`forge owner repo`), not two. SKILL.md orchestration must supply owner/repo from context, not just CR ID.
+- **collect-context.sh approvals parsing** returns empty string when no approvals exist; downstream logic must treat empty as zero, not error.
+
 ## Post-edit checklist
 
 After editing SKILL.md or any file in this skill:
