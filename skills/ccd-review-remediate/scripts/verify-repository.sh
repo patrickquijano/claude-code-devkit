@@ -56,7 +56,7 @@ fi
 if [ -z "$VALIDATION_CMD" ]; then
 	for doc in CONTRIBUTING.md DEVELOPING.md README.md docs/developing.md; do
 		[ -f "$doc" ] || continue
-		CMD="$(grep -iE '(run|execute)\s+(.*)(test|validate|check|lint)' "$doc" 2> /dev/null | head -1 | sed 's/.*\(make\|npm\|cargo\|go\|pytest\)/\1/' | sed 's/[[:space:]]*$//')" || true
+		CMD="$(grep -E '^\s*(`{0,3}|>\s*)?(make|npm|yarn|pnpm|cargo|go|pytest|bun|deno)[[:space:]]+[a-zA-Z0-9:._-]+' "$doc" 2> /dev/null | head -1 | grep -oE '(make|npm|yarn|pnpm|cargo|go|pytest|bun|deno)[[:space:]]+[a-zA-Z0-9:._-]+' | head -1)" || true
 		if [ -n "$CMD" ]; then
 			VALIDATION_CMD="$CMD"
 			SOURCE="docs:$doc"
