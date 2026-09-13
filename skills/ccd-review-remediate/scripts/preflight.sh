@@ -15,17 +15,18 @@ fi
 
 # G1: Forge detection
 FORGE_OUTPUT="$(sh "$FORGE_DETECT" 2> /dev/null)" || true
-FORGE_VERDICT="$(echo "$FORGE_OUTPUT" | grep '^verdict=' | cut -d= -f2-)"
+# forge-detect.sh outputs tab-separated key\tvalue lines
+FORGE_VERDICT="$(printf '%s\n' "$FORGE_OUTPUT" | awk -F'\t' '$1 == "verdict" {print $2}')"
 
 if [ "$FORGE_VERDICT" != "ready" ]; then
 	echo "verdict=stopped:unsupported-forge"
-	EVIDENCE="$(echo "$FORGE_OUTPUT" | grep '^evidence=' | cut -d= -f2- || true)"
-	echo "reason=$EVIDENCE"
+	EVIDENCE="$(printf '%s\n' "$FORGE_OUTPUT" | awk -F'\t' '$1 == "evidence" {print $2}' || true)"
+	echo "reason=${EVIDENCE:-unknown}"
 	exit 0
 fi
 
-FORGE="$(echo "$FORGE_OUTPUT" | grep '^forge=' | cut -d= -f2-)"
-CLI="$(echo "$FORGE_OUTPUT" | grep '^cli=' | cut -d= -f2-)"
+FORGE="$(printf '%s\n' "$FORGE_OUTPUT" | awk -F'\t' '$1 == "forge" {print $2}')"
+CLI="$(printf '%s\n' "$FORGE_OUTPUT" | awk -F'\t' '$1 == "cli" {print $2}')"
 
 echo "forge=$FORGE"
 
