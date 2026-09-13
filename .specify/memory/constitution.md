@@ -1,6 +1,30 @@
 <!--
 Sync Impact Report
 
+Version change: 1.3.0 → 1.4.0 (MINOR — one new principle added; no existing principle removed
+or redefined in a way that invalidates prior compliance)
+
+Added principles:
+  - VII. Verified Content Only — new principle governing skills that generate or modify
+    user-facing documentation. Requires that all output be derived from verified repository
+    artifacts, forbids hallucination or inference of unsupported project details, mandates
+    explicit user decisions for licensing and other legal content via AskUserQuestion, and
+    requires deterministic inspection work to be delegated to scripts rather than performed
+    in prose. Rationale: a skill that generates documentation from assumed or inferred facts
+    produces output that looks authoritative but is not, and a silent license selection creates
+    legal obligations the user never chose. The script delegation clause exists because
+    deterministic inspection logic embedded in SKILL.md prose cannot be tested, versioned, or
+    reused independently of the skill's orchestration layer.
+
+Modified principles: none
+Added sections: none
+Removed sections: none
+Deferred items: none
+
+Prior reports
+
+Sync Impact Report
+
 Version change: 1.2.0 → 1.3.0 (MINOR — one existing principle is materially expanded to govern a
 second change path; no principle removed, and nothing redefined in a way that invalidates prior
 compliance)
@@ -25,9 +49,6 @@ Modified principles:
 Added sections: none
 Removed sections: none
 Deferred items: none
-
-Prior reports
--------------
 
 Sync Impact Report
 
@@ -175,6 +196,31 @@ was settled before the defect was reported. What does not differ is that a chang
 MUST carry written evidence of what was decided and whether it worked, which is why the second
 path's three artifacts are named here rather than left to judgement on the day.
 
+### VII. Verified Content Only
+
+Skills that generate or modify user-facing documentation MUST derive all output from verified
+repository artifacts. A skill MUST NOT infer, assume, or hallucinate project details that are
+not present in files, metadata, or configuration within the target directory. Existing accurate
+content MUST be preserved when modifying documentation.
+
+Legal and licensing content MUST NOT be selected silently. Where a license decision is needed,
+the skill MUST present options through `AskUserQuestion` with a recommendation, a concise
+justification, and a non-legal-advice notice, and MUST create or update license files only after
+explicit user selection.
+
+Deterministic inspection, validation, and formatting logic MUST be delegated to scripts under
+`scripts/` rather than embedded in `SKILL.md` prose. The `SKILL.md` file MUST remain thin,
+containing only triggers, workflow steps, safeguards, resource routing, and output requirements.
+Detailed guidance, checklists, and source citations belong in `references/`; reusable structural
+templates belong in `templates/`.
+
+Rationale: a skill that generates documentation from assumed or inferred facts produces output
+that looks authoritative but is not, and users act on it as though it were verified. Silent
+license selection creates legal obligations the user never chose and cannot easily undo.
+Embedding deterministic logic in prose makes it untestable, unversionable, and unreusable
+independently of the skill's orchestration layer — the same hazard Principle IV addresses for
+shell dialects, applied here to the boundary between orchestration and computation.
+
 ## Quality Gate Requirements
 
 Each combination of content kind and concern MUST have exactly one governing configuration file,
@@ -227,4 +273,4 @@ Versioning policy:
 All reviews MUST verify compliance with these principles. Added complexity MUST be justified
 against them; where it cannot be, the simpler alternative is taken.
 
-**Version**: 1.3.0 | **Ratified**: 2026-09-02 | **Last Amended**: 2026-09-05
+**Version**: 1.4.0 | **Ratified**: 2026-09-02 | **Last Amended**: 2026-09-13
