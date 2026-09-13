@@ -93,7 +93,7 @@ fi
 #
 # So a miss downgrades to `undetermined`, and the caller resolves it against the session's own
 # available-skills listing, which is authoritative. See the sibling rule at
-# skills/ccd-speckit-run/reference/preflight.md.
+# skills/ccd-speckit-run/references/preflight.md.
 capability=undetermined
 if [ "$stage_assess" = found ] && [ "$stage_fix" = found ] && [ "$stage_test" = found ]; then
 	capability=present
