@@ -10,39 +10,39 @@
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are all five task requirements (inspect, create/improve, license detection, license decision flow, focused question) covered by explicit functional requirements? [Completeness, Spec §FR-001–FR-015]
-- [ ] CHK002 Are non-goals (no hallucination, no silent license selection, no overwrite of valuable content, no unrelated output) each addressed by at least one testable requirement? [Completeness, Spec §FR-002, FR-003, FR-006, FR-014]
-- [ ] CHK003 Are architecture constraints (thin SKILL.md, scripts/, references/, templates/) expressed as functional requirements governing the skill's own structure? [Completeness, Spec §FR-008–FR-010]
+- [x] CHK001 Are all five task requirements (inspect, create/improve, license detection, license decision flow, focused question) covered by explicit functional requirements? [Completeness, Spec §FR-001–FR-015]
+- [x] CHK002 Are non-goals (no hallucination, no silent license selection, no overwrite of valuable content, no unrelated output) each addressed by at least one testable requirement? [Completeness, Spec §FR-002, FR-003, FR-006, FR-014]
+- [x] CHK003 Are architecture constraints (thin SKILL.md, scripts/, references/, templates/) expressed as functional requirements governing the skill's own structure? [Completeness, Spec §FR-008–FR-010]
 
 ## Requirement Clarity
 
-- [ ] CHK004 Is "verified repository information" defined with sufficient specificity to determine which files and metadata sources are authoritative without ambiguity? [Clarity, Spec §FR-001]
-- [ ] CHK005 Is "valuable existing content" defined with criteria that allow deterministic preservation decisions during improvement runs? [Clarity, Spec §FR-003]
-- [ ] CHK006 Is the trigger condition for the license decision flow specified unambiguously (missing vs inconsistent licensing)? [Clarity, Spec §FR-004]
-- [ ] CHK007 Is "focused question" scoped sufficiently to distinguish it from general clarification or speculative content generation? [Clarity, Spec §FR-011]
+- [x] CHK004 Is "verified repository information" defined with sufficient specificity to determine which files and metadata sources are authoritative without ambiguity? [Clarity, Spec §FR-001]
+- [x] CHK005 Is "valuable existing content" defined with criteria that allow deterministic preservation decisions during improvement runs? [Clarity, Spec §FR-003]
+- [x] CHK006 Is the trigger condition for the license decision flow specified unambiguously (missing vs inconsistent licensing)? [Clarity, Spec §FR-004]
+- [x] CHK007 Is "focused question" scoped sufficiently to distinguish it from general clarification or speculative content generation? [Clarity, Spec §FR-011]
 
 ## Requirement Consistency
 
-- [ ] CHK008 Do architecture constraints in FR-008–FR-010 align with skill-authoring rules in `.claude/rules/skill-authoring.md` (line limits, progressive disclosure, script referencing)? [Consistency, Spec §FR-008–FR-010]
-- [ ] CHK009 Does the license decision flow (FR-005–FR-007) consistently apply Principle VII's prohibition on silent legal content selection? [Consistency, Spec §FR-005–FR-007, Constitution §VII]
-- [ ] CHK010 Are idempotency (FR-012) and non-destructiveness (FR-013) requirements compatible — can both be satisfied simultaneously without conflict? [Consistency, Spec §FR-012–FR-013]
+- [x] CHK008 Do architecture constraints in FR-008–FR-010 align with skill-authoring rules in `.claude/rules/skill-authoring.md` (line limits, progressive disclosure, script referencing)? [Consistency, Spec §FR-008–FR-010]
+- [x] CHK009 Does the license decision flow (FR-005–FR-007) consistently apply Principle VII's prohibition on silent legal content selection? [Consistency, Spec §FR-005–FR-007, Constitution §VII]
+- [x] CHK010 Are idempotency (FR-012) and non-destructiveness (FR-013) requirements compatible — can both be satisfied simultaneously without conflict? [Consistency, Spec §FR-012–FR-013]
 
 ## Safety & Non-Destructiveness
 
-- [ ] CHK011 Are all file-modifying operations gated by explicit user confirmation or proven accuracy verification? [Safety, Spec §FR-003, FR-006, FR-013]
-- [ ] CHK012 Is recoverable content preservation specified for every scenario where existing files are modified or replaced? [Safety, Spec §FR-013]
-- [ ] CHK013 Does the spec prohibit speculative content generation when verified information is insufficient, rather than allowing degraded output? [Safety, Spec §FR-002, FR-011]
+- [x] CHK011 Are all file-modifying operations gated by explicit user confirmation or proven accuracy verification? [Safety, Spec §FR-003, FR-006, FR-013]
+- [x] CHK012 Is recoverable content preservation specified for every scenario where existing files are modified or replaced? [Safety, Spec §FR-013]
+- [x] CHK013 Does the spec prohibit speculative content generation when verified information is insufficient, rather than allowing degraded output? [Safety, Spec §FR-002, FR-011]
 
 ## Idempotency & Determinism
 
-- [ ] CHK014 Is idempotent output (FR-012) defined with sufficient precision to verify byte-identical results on unchanged repositories? [Measurability, Spec §FR-012, SC-007]
-- [ ] CHK015 Are all sources of non-determinism (timestamp injection, random ordering, external fetch variability) explicitly excluded or controlled? [Clarity, Spec §FR-012]
+- [x] CHK014 Is idempotent output (FR-012) defined with sufficient precision to verify byte-identical results on unchanged repositories? [Measurability, Spec §FR-012, SC-007]
+- [x] CHK015 Are all sources of non-determinism (timestamp injection, random ordering, external fetch variability) explicitly excluded or controlled? [Clarity, Spec §FR-012]
 
 ## Progressive Disclosure & Script Delegation
 
-- [ ] CHK016 Is the SKILL.md line budget (under 500 lines) specified as a hard constraint with measurable success criteria? [Measurability, Spec §FR-009, SC-005]
-- [ ] CHK017 Is the boundary between SKILL.md orchestration and script computation defined clearly enough to prevent logic leakage into prose? [Clarity, Spec §FR-008, SC-006]
-- [ ] CHK018 Are references/ and templates/ separation criteria specified with enough detail to determine correct file placement during implementation? [Clarity, Spec §FR-010]
+- [x] CHK016 Is the SKILL.md line budget (under 500 lines) specified as a hard constraint with measurable success criteria? [Measurability, Spec §FR-009, SC-005]
+- [x] CHK017 Is the boundary between SKILL.md orchestration and script computation defined clearly enough to prevent logic leakage into prose? [Clarity, Spec §FR-008, SC-006]
+- [x] CHK018 Are references/ and templates/ separation criteria specified with enough detail to determine correct file placement during implementation? [Clarity, Spec §FR-010]
 
 ## Notes
 
