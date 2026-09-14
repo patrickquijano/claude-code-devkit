@@ -54,20 +54,12 @@ Honored → skip the **Step 8** wait, still show the summary, and **name the phr
 **Step 1 — Preflight.** Establish the head branch and the tree it lives in, and stop early on anything that makes the run pointless. Do all of this before Step 3's reviewer fetch, so an aborted run never pays for it.
 
 ```bash
-git rev-parse --abbrev-ref HEAD
-git rev-parse --git-dir --git-common-dir     # these differ inside a worktree
-git remote get-url origin                    # confirm this is a GitHub remote
-command -v gh
-gh auth status
-gh repo view --json nameWithOwner,isFork,parent,viewerPermission,defaultBranchRef,squashMergeAllowed,deleteBranchOnMerge
-git ls-remote --heads origin <branch>
-gh pr list --head <branch> --state all \
-  --json number,url,state,isDraft,headRefName,baseRefName,isCrossRepository,author
+sh "${CLAUDE_SKILL_DIR}/scripts/preflight.sh"
 ```
 
-Order matters: `command -v gh` and `gh auth status` come **before** any other `gh` call, because "stop when `gh` is unauthenticated" needs a probe behind it — otherwise the first real failure is a confusing error from `gh repo view`.
+The script runs every check in order — git work tree, head branch, remote URL, `gh` availability and authentication, repo metadata, remote branch presence, existing PRs — and exits non-zero with a named reason at the first failure. Parse its pipe-separated output (`BRANCH|…`, `GIT_DIR|…|…`, `REMOTE_URL|…`, `REPO_JSON|…`, `REMOTE_BRANCH|present|absent`, `PR_LIST|…`) rather than re-running the individual commands.
 
-Stop and say why when: not inside a git work tree; detached HEAD (no head branch exists); the remote is not GitHub (name the right skill instead); or `gh` missing, or present but unauthenticated.
+Stop and say why when the script exits non-zero: not inside a git work tree; detached HEAD (no head branch exists); the remote is not GitHub (name the right skill instead); or `gh` missing, or present but unauthenticated.
 
 **Step 1b — Establish the mode.** Detection runs **after** the branch is known to be on the remote and **before** Step 3's reviewer fetch, Step 4's questions and Step 7's description — everything a stop, or a switch to update mode, would otherwise waste. It is not bounded to a time window or to a number of recent pull requests: the branch's whole history on this repository is in scope.
 
