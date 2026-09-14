@@ -99,8 +99,8 @@ Tab separated, repo default branch first then newest commit first: `<branch>  lo
 **Step 3 — Rank the reviewer and assignee candidates.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-github-pr/scripts/reviewer-options.sh"
-gh api user --jq '.login' # the current user, for the assignee default
+sh "${CLAUDE_SKILL_DIR}/scripts/reviewer-options.sh"
+sh "${CLAUDE_SKILL_DIR}/scripts/get-current-user.sh"
 ```
 
 Tab separated, best candidate first: `<handle>  <name|->  user|team  codeowner|-  recent-committer|-`. CODEOWNERS entries who also committed on this branch rank first, then other CODEOWNERS entries, then other recent committers, then everyone else assignable. Take the top four.
@@ -156,17 +156,10 @@ Review activity **present** → do not rebase, do not force-push. Report the sup
 Review activity **absent**, or create mode → rebase and force-push exactly as below. The create path is unchanged.
 
 ```bash
-git fetch origin <base>
-git rebase origin/<base>
+sh "${CLAUDE_SKILL_DIR}/scripts/rebase-branch.sh" < base > [upstream-remote]
 ```
 
-On a fork, fetch the base from the parent, not from `origin`: add the parent once as a remote (`git remote add upstream <parent-url>`), then `git fetch upstream <base>` and `git rebase upstream/<base>`. Rebasing onto the fork's own stale copy of the base branch is the silent failure here — it succeeds, and the PR still shows a diff against commits the parent moved past.
-
-Clean rebase (no conflicts) → force-push the rewritten branch, then continue to Step 6:
-
-```bash
-git push --force-with-lease origin <head>
-```
+Pass `upstream` as the second argument on a fork; omit it (defaults to `origin`) otherwise. The script fetches, rebases, and force-pushes with lease in one call. On conflict it prints `REBASE|conflict` and exits 3 without resolving; the caller decides. Rebasing onto the fork's own stale copy of the base branch is the silent failure here — it succeeds, and the PR still shows a diff against commits the parent moved past.
 
 Conflict during rebase → do **not** resolve unilaterally. Brainstorm the viable approaches for this specific conflict (e.g. resolve manually and continue, merge instead of rebase, skip the rebase and let GitHub's PR page surface the conflict, cherry-pick around the conflicting commit, abort the run) and put them to `AskUserQuestion`: recommended option first with `(Recommended)` and its justification, remaining viable options each with their own justification, `Abort` last. Wait for the user's pick.
 
@@ -198,7 +191,7 @@ Fill the template's own prompts; never leave an HTML comment or an italic placeh
 **Update mode: the existing body is read before anything is proposed.**
 
 ```bash
-gh pr view body --jq '.body' < number > --json
+sh "${CLAUDE_SKILL_DIR}/scripts/get-pr-body.sh" <number>
 ```
 
 `gh pr edit --body` and `--body-file` **replace the body outright.** There is no append mode in `gh` and no merge on GitHub's side. The body is where reviewers tick checklist items and where people write notes they were asked to record, and none of that is recoverable once overwritten. This is the only irreversible thing this skill can do.
@@ -257,25 +250,40 @@ Report the pull request's URL, its number, and which fields were changed.
 
 **Step 9, create mode — Create the PR.** Write the description to a temp file and pass it with `--body-file`. A generated PR description routinely contains backticks, `$`, and newlines; inlining it in a double-quoted `--body` argument makes the shell run those backticks as command substitution. `--body-file` avoids the quoting problem entirely — do not substitute `--body "$(cat …)"` for it.
 
-```bash
+````bash
 printf '%s\n' "$description" > "$tmp"
-gh pr create \
-  --base '<base>' --head '<head>' \
-  --title '<title>' --body-file "$tmp" \
-  --assignee '<login>' --reviewer '<login1>,<org/team>' \
-  --draft
+Write the generated description to a temporary file before invoking the script:
+
+```sh
+project_slug=$(sh "${CLAUDE_SKILL_DIR}/scripts/project-slug.sh") || exit 1
+tmp="/tmp/${project_slug}/pr-body-$$.md"
+mkdir -p "$(dirname "$tmp")"
+# write body to "$tmp" (the model writes this; the script reads it)
+sh "${CLAUDE_SKILL_DIR}/scripts/create-pr.sh" '<base>' '<head>' '<title>' "$tmp" '<assignee>' '<reviewers>' [--draft]
+rm -f "$tmp"
+````
+
+Pass an empty string for `<assignee>` when unassigned, and for `<reviewers>` when none. Pass `--draft` as the seventh argument only when selected. On a fork, `<head>` is `<fork-owner>:<branch>`. The script exits non-zero and names the reason when `gh pr create` fails — every handle passed here came from Step 3's live listing for exactly that reason, so a failure means something changed between fetch and call rather than a bad input.
+
+**Update mode** uses the same temp-file pattern with the edit script:
+
+```sh
+project_slug=$(sh "${CLAUDE_SKILL_DIR}/scripts/project-slug.sh") || exit 1
+tmp="/tmp/${project_slug}/pr-body-$$.md"
+mkdir -p "$(dirname "$tmp")"
+# write updated body to "$tmp"
+sh "${CLAUDE_SKILL_DIR}/scripts/edit-pr.sh" "$tmp" [--title '<title>'] [--base '<base>'] [--add-reviewer '<list>'] [--add-assignee '<login>'] < number > --body-file
+rm -f "$tmp"
 ```
 
-Omit `--assignee` entirely for `Unassigned`, and `--reviewer` for `No reviewers`. Omit `--draft` unless the user selected it. On a fork, `--head <fork-owner>:<branch>`.
-
-`gh pr create` is all-or-nothing on its metadata: one unknown reviewer handle, one label that does not exist in the base repo, or a review requested from the PR author fails the whole call and creates nothing. Every handle passed here came from Step 3's live listing for exactly that reason — never pass a handle the user typed without confirming it appears in that listing.
+Only pass the fields that actually changed. When no field would change, skip the call entirely and say so.
 
 **The merge options, when any is selected.** They need a separate call, because GitHub has no per-PR squash or delete-branch flag at create time — those are repository settings and merge-time choices, unlike GitLab's MR checkboxes.
 
 Build the call from **exactly the options that were selected**, never from a fixed string:
 
-```bash
-gh pr merge '<url>' --auto --squash --delete-branch
+```sh
+sh "${CLAUDE_SKILL_DIR}/scripts/merge-options.sh" '<url>' [--auto] [--squash] [--delete-branch]
 ```
 
 | Selected                        | Flag              |
@@ -334,14 +342,14 @@ GitHub's squash merge takes the commit subject from the PR title and the commit 
 | Update a PR                            | `gh pr edit <number>` (see Step 9, update mode)                                                                            |
 | Reopen a closed PR                     | `gh pr reopen <number>` — a merged PR cannot be reopened                                                                   |
 | Push branch                            | `git push -u origin <branch>`                                                                                              |
-| Fetch base                             | `git fetch origin <base>` (fork: `git fetch upstream <base>`)                                                              |
-| Rebase onto base                       | `git rebase origin/<base>`                                                                                                 |
-| Push rebased branch                    | `git push --force-with-lease origin <head>`                                                                                |
+| Fetch + rebase + force-push            | `sh <skill-dir>/scripts/rebase-branch.sh <base> [upstream-remote]`                                                         |
 | Base candidates                        | `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh`                                                |
 | Reviewer candidates                    | `sh <skill-dir>/scripts/reviewer-options.sh` (wraps `gh repo view --json assignableUsers` plus `CODEOWNERS`)               |
-| Current user                           | `gh api user --jq '.login'`                                                                                                |
-| Create PR                              | `gh pr create` (see Step 9)                                                                                                |
-| Arm auto-merge                         | `gh pr merge <url> --auto --squash --delete-branch`                                                                        |
+| Current user                           | `sh <skill-dir>/scripts/get-current-user.sh`                                                                               |
+| Get existing PR body                   | `sh <skill-dir>/scripts/get-pr-body.sh <number>`                                                                           |
+| Create PR                              | `sh <skill-dir>/scripts/create-pr.sh <base> <head> <title> <body-file> [assignee] [reviewers] [--draft]`                   |
+| Update PR                              | `sh <skill-dir>/scripts/edit-pr.sh <number> [--body-file F] [--title T] [--base B] [--add-reviewer R] [--add-assignee A]`  |
+| Arm auto-merge                         | `sh <skill-dir>/scripts/merge-options.sh <url> [--auto] [--squash] [--delete-branch]`                                      |
 | Available labels                       | `gh label list`                                                                                                            |
 
 Every command and flag in this table, what it does, and the `gh` version it was verified against are recorded in [`docs/forge-review-requests.md`](../../docs/forge-review-requests.md), together with the GitLab equivalents and the places the two forges differ. Check a claim there before changing one here.
