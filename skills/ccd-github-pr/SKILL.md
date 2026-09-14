@@ -154,8 +154,7 @@ The Reviewers question in update mode excludes people already requested from its
 **In update mode, probe first.** Rebasing and force-pushing rewrites the branch's published history, which detaches review threads from the lines they point at. The comments survive; the code they were about does not. So before rebasing, establish whether the selected pull request carries **review activity**:
 
 ```bash
-gh pr view reviews,reviewDecision,latestReviews < number > --json
-gh api "repos/{owner}/{repo}/pulls/<number>/comments" --jq 'length'
+sh "${CLAUDE_SKILL_DIR}/scripts/review-activity.sh" <number>
 ```
 
 **Review activity** means a submitted review, an approval or a change request, or a comment thread attached to a line of the diff. A plain conversation comment on the pull request is **not** review activity, and neither is anything a bot posted: neither is anchored to a commit, so neither is broken by a rewrite. Counting them would suppress the rebase on nearly every run, and on a repository with commenting automation it would suppress it from the first push onward — which is indistinguishable from removing the rebase.
@@ -186,8 +185,7 @@ Never advance to Step 6 until the rebase is either clean or resolved-and-approve
 **Step 6 — Project convention and template check.** GitHub honors a PR template at any of six paths, and the filename is case-insensitive. Look for all of them:
 
 ```bash
-ls .github/pull_request_template.md pull_request_template.md docs/pull_request_template.md 2> /dev/null
-ls .github/PULL_REQUEST_TEMPLATE/ PULL_REQUEST_TEMPLATE/ docs/PULL_REQUEST_TEMPLATE/ 2> /dev/null
+sh "${CLAUDE_SKILL_DIR}/scripts/detect-templates.sh"
 ```
 
 Resolve in this order:
