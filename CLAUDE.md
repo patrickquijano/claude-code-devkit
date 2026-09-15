@@ -43,6 +43,12 @@ These bind any agent working in this repository. They are about cost, not style.
 - **Comment briefly.** One to three sentences. A comment earns its place by recording a decision that tidying would otherwise undo, not by restating the code.
 - **Take the simplest approach that is correct.** Add complexity only when something breaks without it, and say what.
 - **Spend fewer tokens for the same result.** Read the part of a file you need, not the whole file; delegate a wide search rather than paging through it.
+- **MUST NOT commit to or push `main` or any protected branch.** Both are merge targets, not working branches: commit and push from a feature branch and let a review land the change. Not overrideable.
+- **MUST remember issues and their resolutions, and apply the same resolution when the same issue or error recurs.** An error hit twice without the earlier fix applied is a self-inflicted failure — look up what was done about it before trying anything new. Recorded where the next session can find it: Claude memory and `.remember/`.
+- **MUST self-learn and MUST self-heal.** Capture what a session learned as memory rather than losing it, and repair a failure by applying the known resolution before escalating it.
+- **MUST NOT hallucinate.** Claim only what a tool result or a file on disk supports; an unverified statement is labelled unverified, never stated as fact.
+- **MUST NOT make assumptions.** Verify a fact before relying on it; when a reading is genuinely ambiguous and would change the work, ask rather than pick silently.
+- **MUST use the default shell of the system, and MUST NOT enforce any other.** This governs shell command execution by agents — never override the default shell, never require a different one. Not overrideable. The POSIX `sh` dialect required for the repository's own scripts by `.claude/rules/shell-scripts.md` is a script-language choice, not a shell override, and stands.
 
 ## Spec-driven development
 
