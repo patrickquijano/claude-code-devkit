@@ -32,5 +32,5 @@
 ## Notes
 
 - All items pass validation. Spec is ready for `/speckit-clarify` or `/speckit-plan`.
-- FR-008 through FR-010 reference architectural constraints (scripts/, references/, templates/) that are expressed as *what* the skill must do (delegate, separate, keep thin) rather than *how* to implement it — these are valid functional requirements governing the skill's own structure as a deliverable.
-- SC-005 and SC-006 measure structural properties of the skill artifact itself (line count, logic placement), which are verifiable without implementation technology and are appropriate for a skill whose output *is* code.
+- FR-008 through FR-010 reference architectural constraints (scripts/, references/, templates/) that are expressed as _what_ the skill must do (delegate, separate, keep thin) rather than _how_ to implement it — these are valid functional requirements governing the skill's own structure as a deliverable.
+- SC-005 and SC-006 measure structural properties of the skill artifact itself (line count, logic placement), which are verifiable without implementation technology and are appropriate for a skill whose output _is_ code.

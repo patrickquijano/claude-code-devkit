@@ -25,7 +25,7 @@ Questions in this skill follow the repository-wide standard in [`.claude/rules/s
 
 Two calls is the target for a clean run: one for the base branch (Step 3), one for the approval gate (Step 6). A named base the script confirms drops the first. A convention conflict at Step 4, a name collision at Step 5b, or a repo with no `origin` each add one — all three are conditional, and none of them fires on a clean run.
 
-Bundled `scripts/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
+Bundled `scripts/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `"${CLAUDE_SKILL_DIR}/scripts/<name>.sh"` — the substitution variable resolves to this skill's own directory without naming it, so a rename touches the frontmatter and the directory and nothing else. Scripts are executable (`chmod +x`) and invoked directly; the executable bit is guaranteed by the install process and verified by `scripts/lint-shell.sh`. Always quote the variable so a plugin root containing a space does not split.
 
 ## Workflow
 

@@ -37,7 +37,7 @@ Questions in this skill follow the repository-wide standard in [`.claude/rules/s
 
 **Update mode adds at most two more**, neither of which fires when it has nothing to ask: one at Step 1 to pick among several candidates or to decide a closed one's fate, and one at Step 7 for the description. The create path's count is unchanged.
 
-Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-github-pr/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
+Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `"${CLAUDE_SKILL_DIR}/scripts/<name>.sh"` — the substitution variable resolves to this skill's own directory without naming it, so a rename touches the frontmatter and the directory and nothing else. Scripts are executable (`chmod +x`) and invoked directly; the executable bit is guaranteed by the install process and verified by `scripts/lint-shell.sh`. Always quote the variable so a plugin root containing a space does not split.
 
 ## Workflow
 

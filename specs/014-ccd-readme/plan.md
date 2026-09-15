@@ -30,17 +30,17 @@ A Claude Code plugin skill that generates or improves README.md files using only
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Status | Notes |
-| ----------- | -------- | ------- |
-| I. Tooling Independence | PASS | Scripts use POSIX sh only; no package managers or global installs required |
-| II. Fail Fast | PASS | All scripts exit non-zero on first failure; no masked errors |
-| III. Pinned, Official Images | N/A | No container images used |
-| IV. POSIX Shell Only | PASS | All scripts target POSIX sh; ShellCheck validation in CI |
-| V. Configuration Is Committed | PASS | No runtime configuration; all templates and references committed |
-| VI. Spec-Driven Change | PASS | This plan is the spec-driven artifact for feature work |
-| VII. Verified Content Only | PASS | All output derived from verified artifacts; license flow gated by AskUserQuestion; deterministic logic delegated to scripts; SKILL.md thin |
+| Principle                     | Status | Notes                                                                                                                                      |
+| ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| I. Tooling Independence       | PASS   | Scripts use POSIX sh only; no package managers or global installs required                                                                 |
+| II. Fail Fast                 | PASS   | All scripts exit non-zero on first failure; no masked errors                                                                               |
+| III. Pinned, Official Images  | N/A    | No container images used                                                                                                                   |
+| IV. POSIX Shell Only          | PASS   | All scripts target POSIX sh; ShellCheck validation in CI                                                                                   |
+| V. Configuration Is Committed | PASS   | No runtime configuration; all templates and references committed                                                                           |
+| VI. Spec-Driven Change        | PASS   | This plan is the spec-driven artifact for feature work                                                                                     |
+| VII. Verified Content Only    | PASS   | All output derived from verified artifacts; license flow gated by AskUserQuestion; deterministic logic delegated to scripts; SKILL.md thin |
 
 No violations. Complexity tracking section not needed.
 

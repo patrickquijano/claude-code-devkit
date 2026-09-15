@@ -8,7 +8,7 @@
 
 **Input**: User description: "WHAT: A Claude Code plugin skill named ccd-readme that inspects a project directory and either creates a new README.md or improves an existing one, using only verified repository information. It determines whether licensing information is missing or inconsistent and, if a license decision is needed, lazy-loads standard templates from authoritative sources, presents options with a recommendation and non-legal-advice notice, and creates or updates LICENSE.md only after explicit user selection. WHY: Projects often lack README files or have outdated ones; generating them from verified repo data avoids hallucination and preserves accurate existing content. The skill must never infer unsupported project details, silently select a license, overwrite valuable content, or output unrelated information."
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Generate README for Uninitialized Project (Priority: P1)
 
@@ -65,7 +65,7 @@ A developer invokes `/ccd-readme` in a project where licensing information is mi
 - What happens when the user declines to select a license when prompted? The skill proceeds with README generation, omits the license section, and notes in output that licensing was skipped.
 - How does the skill handle symlinks, monorepos, or nested project directories? The skill inspects only the top-level project directory and reports when nested structures are detected, asking the user to clarify scope.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -91,7 +91,7 @@ A developer invokes `/ccd-readme` in a project where licensing information is mi
 - **LicenseDecision**: Record of the user's license selection including chosen SPDX identifier, recommendation presented, justification shown, and non-legal-advice notice displayed.
 - **ReadmeSection**: A discrete section of the README (title, install, usage, architecture, contributing, license) with provenance tracking indicating which verified artifact each section derives from.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

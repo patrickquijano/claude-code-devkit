@@ -8,7 +8,7 @@
 
 **Rationale**: Principle VII requires all output derive from verified repository artifacts. External APIs (GitHub API, npm registry) may return stale or divergent data compared to what is actually on disk. The skill operates on the local working tree, which is the single source of truth for what the developer has.
 
-**Alternatives considered**: GitHub API for repo metadata — rejected because it reflects remote state, not local working tree. npm/crates.io registry lookup — rejected because declared dependencies in manifests are authoritative for what the project *is*, not what was last published.
+**Alternatives considered**: GitHub API for repo metadata — rejected because it reflects remote state, not local working tree. npm/crates.io registry lookup — rejected because declared dependencies in manifests are authoritative for what the project _is_, not what was last published.
 
 ## R-002: README Best Practices Structure
 

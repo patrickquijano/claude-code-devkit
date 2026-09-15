@@ -18,18 +18,18 @@
 
 **Purpose**: Create skill directory structure and placeholder files per plan.md project structure.
 
-- [X] T001 Create skill directory structure: `skills/ccd-readme/`, `skills/ccd-readme/scripts/`, `skills/ccd-readme/templates/`, `skills/ccd-readme/references/`
-- [X] T002 [P] Create empty `skills/ccd-readme/SKILL.md` with frontmatter placeholder
-- [X] T003 [P] Create empty `skills/ccd-readme/scripts/inspect-project.sh` with shebang and POSIX header
-- [X] T004 [P] Create empty `skills/ccd-readme/scripts/validate-readme.sh` with shebang and POSIX header
-- [X] T005 [P] Create empty `skills/ccd-readme/templates/readme-base.md`
-- [X] T006 [P] Create empty `skills/ccd-readme/templates/license-MIT.md`
-- [X] T007 [P] Create empty `skills/ccd-readme/templates/license-Apache-2.0.md`
-- [X] T008 [P] Create empty `skills/ccd-readme/templates/license-ISC.md`
-- [X] T009 [P] Create empty `skills/ccd-readme/templates/license-GPL-3.0.md`
-- [X] T010 [P] Create empty `skills/ccd-readme/references/readme-best-practices.md`
-- [X] T011 [P] Create empty `skills/ccd-readme/references/license-guide.md`
-- [X] T012 [P] Create empty `skills/ccd-readme/references/skill-structure.md`
+- [x] T001 Create skill directory structure: `skills/ccd-readme/`, `skills/ccd-readme/scripts/`, `skills/ccd-readme/templates/`, `skills/ccd-readme/references/`
+- [x] T002 [P] Create empty `skills/ccd-readme/SKILL.md` with frontmatter placeholder
+- [x] T003 [P] Create empty `skills/ccd-readme/scripts/inspect-project.sh` with shebang and POSIX header
+- [x] T004 [P] Create empty `skills/ccd-readme/scripts/validate-readme.sh` with shebang and POSIX header
+- [x] T005 [P] Create empty `skills/ccd-readme/templates/readme-base.md`
+- [x] T006 [P] Create empty `skills/ccd-readme/templates/license-MIT.md`
+- [x] T007 [P] Create empty `skills/ccd-readme/templates/license-Apache-2.0.md`
+- [x] T008 [P] Create empty `skills/ccd-readme/templates/license-ISC.md`
+- [x] T009 [P] Create empty `skills/ccd-readme/templates/license-GPL-3.0.md`
+- [x] T010 [P] Create empty `skills/ccd-readme/references/readme-best-practices.md`
+- [x] T011 [P] Create empty `skills/ccd-readme/references/license-guide.md`
+- [x] T012 [P] Create empty `skills/ccd-readme/references/skill-structure.md`
 
 ---
 
@@ -39,16 +39,16 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [X] T013 Implement `scripts/inspect-project.sh`: detect package manifests (package.json, Cargo.toml, pyproject.toml, go.mod, Gemfile, composer.json), extract project_name, description, languages, dependencies, ci_systems, existing_docs, license_state, readme_exists, readme_language, has_nested_projects; output JSON to stdout; exit non-zero on unreadable directory (data-model.md §ProjectInspectionResult)
-- [X] T014 [P] Implement `scripts/validate-readme.sh`: accept README.md path as argument; check section presence (title, install, usage, license if applicable); verify no broken markdown links; validate SKILL.md line count ≤500; validate zero inline shell control-flow keywords in SKILL.md; exit non-zero on first failure (SC-005, SC-006, quickstart.md VS-006, VS-007)
-- [X] T015 [P] Populate `templates/readme-base.md` with Standard Readme structural skeleton: title+badges placeholder, description, install, usage, API/docs, contributing, license sections with HTML comment markers for provenance tracking (research.md R-002)
-- [X] T016 [P] Populate `templates/license-MIT.md` with SPDX-standard MIT text from authoritative source (research.md R-003)
-- [X] T017 [P] Populate `templates/license-Apache-2.0.md` with SPDX-standard Apache-2.0 text
-- [X] T018 [P] Populate `templates/license-ISC.md` with SPDX-standard ISC text
-- [X] T019 [P] Populate `templates/license-GPL-3.0.md` with SPDX-standard GPL-3.0-only text
-- [X] T020 [P] Populate `references/readme-best-practices.md` with citations to Standard Readme spec, GitHub README guidance, and section-to-artifact mapping table (research.md R-002)
-- [X] T021 [P] Populate `references/license-guide.md` with decision criteria for each supported license, recommendation rationale template, and mandatory non-legal-advice notice text (FR-005, Constitution VII)
-- [X] T022 [P] Populate `references/skill-structure.md` with links to `.claude/rules/skill-authoring.md`, progressive disclosure rules, and line-budget enforcement reference (FR-009, FR-010)
+- [x] T013 Implement `scripts/inspect-project.sh`: detect package manifests (package.json, Cargo.toml, pyproject.toml, go.mod, Gemfile, composer.json), extract project_name, description, languages, dependencies, ci_systems, existing_docs, license_state, readme_exists, readme_language, has_nested_projects; output JSON to stdout; exit non-zero on unreadable directory (data-model.md §ProjectInspectionResult)
+- [x] T014 [P] Implement `scripts/validate-readme.sh`: accept README.md path as argument; check section presence (title, install, usage, license if applicable); verify no broken markdown links; validate SKILL.md line count ≤500; validate zero inline shell control-flow keywords in SKILL.md; exit non-zero on first failure (SC-005, SC-006, quickstart.md VS-006, VS-007)
+- [x] T015 [P] Populate `templates/readme-base.md` with Standard Readme structural skeleton: title+badges placeholder, description, install, usage, API/docs, contributing, license sections with HTML comment markers for provenance tracking (research.md R-002)
+- [x] T016 [P] Populate `templates/license-MIT.md` with SPDX-standard MIT text from authoritative source (research.md R-003)
+- [x] T017 [P] Populate `templates/license-Apache-2.0.md` with SPDX-standard Apache-2.0 text
+- [x] T018 [P] Populate `templates/license-ISC.md` with SPDX-standard ISC text
+- [x] T019 [P] Populate `templates/license-GPL-3.0.md` with SPDX-standard GPL-3.0-only text
+- [x] T020 [P] Populate `references/readme-best-practices.md` with citations to Standard Readme spec, GitHub README guidance, and section-to-artifact mapping table (research.md R-002)
+- [x] T021 [P] Populate `references/license-guide.md` with decision criteria for each supported license, recommendation rationale template, and mandatory non-legal-advice notice text (FR-005, Constitution VII)
+- [x] T022 [P] Populate `references/skill-structure.md` with links to `.claude/rules/skill-authoring.md`, progressive disclosure rules, and line-budget enforcement reference (FR-009, FR-010)
 
 **Checkpoint**: All scripts executable (`chmod +x`), all templates populated, all references cited. User story implementation can now begin.
 
@@ -62,12 +62,12 @@
 
 ### Implementation for User Story 1
 
-- [X] T023 [US1] Implement SKILL.md trigger condition: detect absence of README.md via `inspect-project.sh` output field `readme_exists`; route to generation workflow (FR-001, spec.md §US1 Acceptance Scenario 1)
-- [X] T024 [US1] Implement SKILL.md license decision flow: when `license_state` is `missing` or `present-inconsistent`, invoke `AskUserQuestion` with recommended option, justification, and non-legal-advice notice; block README generation until selection received or user declines (FR-005, FR-006, FR-007)
-- [X] T025 [US1] Implement SKILL.md README assembly: read `templates/readme-base.md`; populate sections from `inspect-project.sh` JSON output; map each section to source artifact path; write README.md to target directory (FR-001, FR-014, data-model.md §ReadmeSection VR-001)
-- [X] T026 [US1] Implement SKILL.md LICENSE.md creation: after explicit user selection, read corresponding `templates/license-{SPDX}.md`; write LICENSE.md to target directory; skip if user declines and note in output (FR-006, spec.md §Edge Cases)
-- [X] T027 [US1] Implement SKILL.md insufficient-information guard: when `inspect-project.sh` reports no recognizable artifacts, invoke `AskUserQuestion` with focused question instead of generating speculative content (FR-002, FR-011, spec.md §US1 Acceptance Scenario 3)
-- [X] T028 [US1] Run quickstart.md VS-001 validation scenario; verify README.md created, LICENSE.md created after selection, no hallucinated content
+- [x] T023 [US1] Implement SKILL.md trigger condition: detect absence of README.md via `inspect-project.sh` output field `readme_exists`; route to generation workflow (FR-001, spec.md §US1 Acceptance Scenario 1)
+- [x] T024 [US1] Implement SKILL.md license decision flow: when `license_state` is `missing` or `present-inconsistent`, invoke `AskUserQuestion` with recommended option, justification, and non-legal-advice notice; block README generation until selection received or user declines (FR-005, FR-006, FR-007)
+- [x] T025 [US1] Implement SKILL.md README assembly: read `templates/readme-base.md`; populate sections from `inspect-project.sh` JSON output; map each section to source artifact path; write README.md to target directory (FR-001, FR-014, data-model.md §ReadmeSection VR-001)
+- [x] T026 [US1] Implement SKILL.md LICENSE.md creation: after explicit user selection, read corresponding `templates/license-{SPDX}.md`; write LICENSE.md to target directory; skip if user declines and note in output (FR-006, spec.md §Edge Cases)
+- [x] T027 [US1] Implement SKILL.md insufficient-information guard: when `inspect-project.sh` reports no recognizable artifacts, invoke `AskUserQuestion` with focused question instead of generating speculative content (FR-002, FR-011, spec.md §US1 Acceptance Scenario 3)
+- [x] T028 [US1] Run quickstart.md VS-001 validation scenario; verify README.md created, LICENSE.md created after selection, no hallucinated content
 
 **Checkpoint**: User Story 1 fully functional. Invoke `/ccd-readme` in empty project → README + LICENSE generated from verified artifacts only.
 
@@ -81,11 +81,11 @@
 
 ### Implementation for User Story 2
 
-- [X] T029 [US2] Implement SKILL.md existing-README detection: when `readme_exists` is true, parse existing README into sections; classify each as accurate (matches verified artifacts), inaccurate (contradicts artifacts), or unverifiable (no corresponding artifact) (FR-003, data-model.md §ReadmeSection `preserved_from_existing`)
-- [X] T030 [US2] Implement SKILL.md content preservation: carry forward all accurate sections byte-identical; flag inaccurate sections with evidence citation and proposed correction; never remove accurate content (FR-003, SC-003, data-model.md VR-003)
-- [X] T031 [US2] Implement SKILL.md gap filling: add missing sections (install, usage, license, contributing) from verified artifacts when absent in existing README; preserve existing language detected by `readme_language` field (spec.md §Edge Cases language handling)
-- [X] T032 [US2] Implement SKILL.md no-change report: when existing README is fully accurate and complete, report no changes needed and do not modify file (spec.md §US2 Acceptance Scenario 2)
-- [X] T033 [US2] Run quickstart.md VS-002 validation scenario; verify custom section preserved, author content preserved, version traced from manifest
+- [x] T029 [US2] Implement SKILL.md existing-README detection: when `readme_exists` is true, parse existing README into sections; classify each as accurate (matches verified artifacts), inaccurate (contradicts artifacts), or unverifiable (no corresponding artifact) (FR-003, data-model.md §ReadmeSection `preserved_from_existing`)
+- [x] T030 [US2] Implement SKILL.md content preservation: carry forward all accurate sections byte-identical; flag inaccurate sections with evidence citation and proposed correction; never remove accurate content (FR-003, SC-003, data-model.md VR-003)
+- [x] T031 [US2] Implement SKILL.md gap filling: add missing sections (install, usage, license, contributing) from verified artifacts when absent in existing README; preserve existing language detected by `readme_language` field (spec.md §Edge Cases language handling)
+- [x] T032 [US2] Implement SKILL.md no-change report: when existing README is fully accurate and complete, report no changes needed and do not modify file (spec.md §US2 Acceptance Scenario 2)
+- [x] T033 [US2] Run quickstart.md VS-002 validation scenario; verify custom section preserved, author content preserved, version traced from manifest
 
 **Checkpoint**: User Stories 1 and 2 both independently functional.
 
@@ -99,11 +99,11 @@
 
 ### Implementation for User Story 3
 
-- [X] T034 [US3] Implement SKILL.md license-state routing: when `license_state` is `present-consistent`, skip license flow entirely; when `present-inconsistent`, offer reconciliation; when `missing` or `ambiguous`, present full selection (FR-004, data-model.md §LicenseState)
-- [X] T035 [US3] Implement SKILL.md AskUserQuestion license prompt: present ≥3 SPDX options with exactly one recommended; include concise justification per research.md R-003; include mandatory non-legal-advice notice from `references/license-guide.md` (FR-005, Constitution VII)
-- [X] T036 [US3] Implement SKILL.md license-template lazy load: read `templates/license-{selected}.md` only after user selection; never load unused templates (FR-007)
-- [X] T037 [US3] Implement SKILL.md decline handling: when user declines license selection, proceed with README generation omitting license section; note in output that licensing was skipped (spec.md §Edge Cases)
-- [X] T038 [US3] Run quickstart.md VS-003 validation scenario; verify LICENSE created after selection, license section omitted when declined
+- [x] T034 [US3] Implement SKILL.md license-state routing: when `license_state` is `present-consistent`, skip license flow entirely; when `present-inconsistent`, offer reconciliation; when `missing` or `ambiguous`, present full selection (FR-004, data-model.md §LicenseState)
+- [x] T035 [US3] Implement SKILL.md AskUserQuestion license prompt: present ≥3 SPDX options with exactly one recommended; include concise justification per research.md R-003; include mandatory non-legal-advice notice from `references/license-guide.md` (FR-005, Constitution VII)
+- [x] T036 [US3] Implement SKILL.md license-template lazy load: read `templates/license-{selected}.md` only after user selection; never load unused templates (FR-007)
+- [x] T037 [US3] Implement SKILL.md decline handling: when user declines license selection, proceed with README generation omitting license section; note in output that licensing was skipped (spec.md §Edge Cases)
+- [x] T038 [US3] Run quickstart.md VS-003 validation scenario; verify LICENSE created after selection, license section omitted when declined
 
 **Checkpoint**: All three user stories independently functional.
 
@@ -113,13 +113,13 @@
 
 **Purpose**: Idempotency, non-destructiveness, monorepo handling, final validation.
 
-- [X] T039 [P] Implement idempotency safeguards: exclude timestamps from all generated content; use sorted glob expansion for file ordering; verify byte-identical output on re-run (FR-012, SC-007, research.md R-005)
-- [X] T040 [P] Implement non-destructiveness guard: before overwriting any existing file, create `.bak` backup or confirm recoverable content preservation; log what was preserved (FR-013)
-- [X] T041 [P] Implement monorepo/nested-project detection: when `has_nested_projects` is true, invoke `AskUserQuestion` to clarify scope before generating any content (data-model.md VR-004, spec.md §Edge Cases)
-- [X] T042 Run quickstart.md VS-004 idempotency check; verify `diff` produces no output on re-run
-- [X] T043 Run quickstart.md VS-005 insufficient-information scenario; verify focused question asked, no speculative content
-- [X] T044 Run quickstart.md VS-006 and VS-007 structural checks; verify SKILL.md ≤500 lines and zero inline shell logic
-- [X] T045 Final constitution compliance review: verify all 7 principles satisfied post-implementation; document any deviations
+- [x] T039 [P] Implement idempotency safeguards: exclude timestamps from all generated content; use sorted glob expansion for file ordering; verify byte-identical output on re-run (FR-012, SC-007, research.md R-005)
+- [x] T040 [P] Implement non-destructiveness guard: before overwriting any existing file, create `.bak` backup or confirm recoverable content preservation; log what was preserved (FR-013)
+- [x] T041 [P] Implement monorepo/nested-project detection: when `has_nested_projects` is true, invoke `AskUserQuestion` to clarify scope before generating any content (data-model.md VR-004, spec.md §Edge Cases)
+- [x] T042 Run quickstart.md VS-004 idempotency check; verify `diff` produces no output on re-run
+- [x] T043 Run quickstart.md VS-005 insufficient-information scenario; verify focused question asked, no speculative content
+- [x] T044 Run quickstart.md VS-006 and VS-007 structural checks; verify SKILL.md ≤500 lines and zero inline shell logic
+- [x] T045 Final constitution compliance review: verify all 7 principles satisfied post-implementation; document any deviations
 
 ---
 

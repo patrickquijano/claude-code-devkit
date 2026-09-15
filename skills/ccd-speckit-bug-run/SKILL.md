@@ -21,11 +21,11 @@ Empty bug report → `AskUserQuestion`, `header: "Report"`: paste the bug report
 
 ## Scripts — run them, do not re-derive them
 
-Two scripts are this skill's own. Invoke as `sh "${CLAUDE_SKILL_DIR}/scripts/<name>.sh"` — that variable resolves to this skill's own directory without naming it, so a rename touches the frontmatter and the directory and nothing else.
+Two scripts are this skill's own. Invoke as `"${CLAUDE_SKILL_DIR}/scripts/<name>.sh"` — that variable resolves to this skill's own directory without naming it, so a rename touches the frontmatter and the directory and nothing else. Scripts are executable (`chmod +x`) and invoked directly; the executable bit is guaranteed by the install process and verified by `scripts/lint-shell.sh`.
 
 Three more belong to sibling skills and are reached through `${CLAUDE_PLUGIN_ROOT}`. They are **not** copied here; a fork of one is the regression this plugin already records against `branch-options.sh`.
 
-Always `sh <path>`, always quoted; the executable bit does not survive every install.
+Always quote the variable so a plugin root containing a space does not split.
 
 | Script                                                                   | Prints                                                                                                                                                                        |
 | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

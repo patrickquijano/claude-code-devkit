@@ -18,16 +18,16 @@ Walks a user from a conflicted working tree to a resolved one: confirms `git` is
 
 ## Scripts — run them, do not re-derive them
 
-Every deterministic step lives in a script that ships with this skill. Invoke them exactly as written, with `sh` explicit and the variable quoted:
+Every deterministic step lives in a script that ships with this skill. Invoke them directly with the variable quoted:
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/conflict-preflight.sh"
-sh "${CLAUDE_SKILL_DIR}/scripts/conflict-list.sh"
-sh "${CLAUDE_SKILL_DIR}/scripts/conflict-apply.sh" <mechanism> <path>
-sh "${CLAUDE_SKILL_DIR}/scripts/conflict-conclude.sh"
+"${CLAUDE_SKILL_DIR}/scripts/conflict-preflight.sh"
+"${CLAUDE_SKILL_DIR}/scripts/conflict-list.sh"
+"${CLAUDE_SKILL_DIR}/scripts/conflict-apply.sh" <mechanism> <path>
+"${CLAUDE_SKILL_DIR}/scripts/conflict-conclude.sh"
 ```
 
-`${CLAUDE_SKILL_DIR}` is the directory holding this file, so no install location is written down and a rename of this skill touches nothing else. `sh` is explicit because the executable bit is not documented to survive installation.
+`${CLAUDE_SKILL_DIR}` is the directory holding this file, so no install location is written down and a rename of this skill touches nothing else. Scripts are executable (`chmod +x`) and invoked directly; the executable bit is guaranteed by the install process and verified by `scripts/lint-shell.sh`.
 
 **Act on the exit code, never on the prose.** Each script's stderr is a diagnostic for the user; its exit code is what this skill branches on. Never reimplement a script's logic in a bash call, and never parse a script's message to decide what happened.
 

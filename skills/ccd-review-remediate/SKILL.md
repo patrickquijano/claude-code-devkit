@@ -23,7 +23,7 @@ Reviews the current branch's open change request, publishes evidence-backed find
 
 ## Scripts
 
-Invoke as `sh "${CLAUDE_SKILL_DIR}/scripts/<name>.sh"`. Shared scripts reached via `${CLAUDE_PLUGIN_ROOT}`.
+Invoke as `"${CLAUDE_SKILL_DIR}/scripts/<name>.sh"`. Scripts are executable (`chmod +x`) and invoked directly; the executable bit is guaranteed by the install process and verified by `scripts/lint-shell.sh`. Shared scripts reached via `${CLAUDE_PLUGIN_ROOT}`.
 
 | Script                                                                 | Prints                                                          |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------- |

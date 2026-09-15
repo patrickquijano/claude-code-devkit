@@ -8,15 +8,15 @@
 
 ## Section-to-Artifact Mapping
 
-| README Section | Verified Artifact Source(s) |
-| ---------------- | ---------------------------- |
+| README Section | Verified Artifact Source(s)                                              |
+| -------------- | ------------------------------------------------------------------------ |
 | Title + Badges | `package.json` `name`, `Cargo.toml` `[package].name`, directory basename |
-| Description | Manifest `description`/`summary`, existing README first paragraph |
-| Install | Package manifest type (`package.json` → npm, `Cargo.toml` → cargo, etc.) |
-| Usage | Source file entry points, existing docs, examples directory |
-| Documentation | `docs/` directory, `CONTRIBUTING*`, API doc config files |
-| Contributing | `CONTRIBUTING*` file, `.github/` templates |
-| License | `LICENSE*` file, manifest `license` field |
+| Description    | Manifest `description`/`summary`, existing README first paragraph        |
+| Install        | Package manifest type (`package.json` → npm, `Cargo.toml` → cargo, etc.) |
+| Usage          | Source file entry points, existing docs, examples directory              |
+| Documentation  | `docs/` directory, `CONTRIBUTING*`, API doc config files                 |
+| Contributing   | `CONTRIBUTING*` file, `.github/` templates                               |
+| License        | `LICENSE*` file, manifest `license` field                                |
 
 ## Structural Rules
 
