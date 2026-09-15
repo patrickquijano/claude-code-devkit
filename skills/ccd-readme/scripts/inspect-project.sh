@@ -185,13 +185,14 @@ if [ "$readme_exists" = "true" ]; then
 	for rf in README.md readme.md Readme.md README.rst README.txt README; do
 		if [ -f "$TARGET_DIR/$rf" ]; then
 			# Check for CJK characters → zh/ja/ko; Cyrillic → ru; Latin default → en
-			if grep -qP '[\x{4e00}-\x{9fff}]' "$TARGET_DIR/$rf" 2> /dev/null; then
+			# Uses awk with byte-range matching for POSIX compliance (no grep -P)
+			if awk '/[\xe4-\xe9][\x80-\xbf]/ { found=1; exit } END { exit !found }' "$TARGET_DIR/$rf" 2> /dev/null; then
 				readme_language='"zh"'
-			elif grep -qP '[\x{3040}-\x{309f}\x{30a0}-\x{30ff}]' "$TARGET_DIR/$rf" 2> /dev/null; then
+			elif awk '/[\xe3][\x80-\xbf]/ { found=1; exit } END { exit !found }' "$TARGET_DIR/$rf" 2> /dev/null; then
 				readme_language='"ja"'
-			elif grep -qP '[\x{ac00}-\x{d7af}]' "$TARGET_DIR/$rf" 2> /dev/null; then
+			elif awk '/[\xea-\xed][\xb0-\xbf]/ { found=1; exit } END { exit !found }' "$TARGET_DIR/$rf" 2> /dev/null; then
 				readme_language='"ko"'
-			elif grep -qP '[\x{0400}-\x{04ff}]' "$TARGET_DIR/$rf" 2> /dev/null; then
+			elif awk '/[\xd0-\xd3][\x80-\xbf]/ { found=1; exit } END { exit !found }' "$TARGET_DIR/$rf" 2> /dev/null; then
 				readme_language='"ru"'
 			else
 				readme_language='"en"'
@@ -209,17 +210,32 @@ if [ "$_nested_count" -gt 0 ] 2> /dev/null; then
 fi
 
 # --- Output JSON ---
-cat << ENDJSON
-{
-	"project_name": "$project_name",
-	"description": ${description:+"\"$description\""},
-	"languages": $languages,
-	"dependencies": $dependencies,
-	"ci_systems": $ci_systems,
-	"existing_docs": $existing_docs,
-	"license_state": "$license_state",
-	"readme_exists": $readme_exists,
-	"readme_language": $readme_language,
-	"has_nested_projects": $has_nested_projects
-}
-ENDJSON
+# Uses printf to guarantee valid JSON regardless of formatter-enforced heredoc spacing.
+_desc_json="null"
+if [ -n "$description" ]; then
+	_desc_json="\"$description\""
+fi
+printf '{
+'
+printf '  "project_name": "%s",
+' "$project_name"
+printf '  "description": %s,
+' "$_desc_json"
+printf '  "languages": %s,
+' "$languages"
+printf '  "dependencies": %s,
+' "$dependencies"
+printf '  "ci_systems": %s,
+' "$ci_systems"
+printf '  "existing_docs": %s,
+' "$existing_docs"
+printf '  "license_state": "%s",
+' "$license_state"
+printf '  "readme_exists": %s,
+' "$readme_exists"
+printf '  "readme_language": %s,
+' "$readme_language"
+printf '  "has_nested_projects": %s
+' "$has_nested_projects"
+printf '}
+'

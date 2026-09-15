@@ -20,6 +20,8 @@ Step 1 establishes which one this run is in, and Steps 4, 5, 7, 8 and 9 read it.
 - **Create** — the branch has no merge request whose source is this branch, or the user chose to open a fresh one. This is the path an unchanged first run takes, and nothing about it changed.
 - **Update** — an existing merge request was found and selected. The run brings it up to date rather than refusing, and everything it would change is shown with both values before anything is written.
 
+The reasoning behind every forge-specific rule below, its source, and the tool version it was verified against are in [`docs/forge-review-requests.md`](../../docs/forge-review-requests.md). The short imperative form is in [`.claude/rules/forge-review-requests.md`](../../.claude/rules/forge-review-requests.md), which loads when this file is opened.
+
 ## Asking the user
 
 Questions in this skill follow the repository-wide standard in [`.claude/rules/skill-authoring.md`](../../.claude/rules/skill-authoring.md).
