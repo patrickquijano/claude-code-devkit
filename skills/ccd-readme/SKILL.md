@@ -3,9 +3,9 @@ name: ccd-readme
 description: Create or improve README.md using only verified repository information, with safety-gated license selection.
 triggers:
   - /ccd-readme
-  - "create readme"
-  - "generate readme"
-  - "improve readme"
+  - 'create readme'
+  - 'generate readme'
+  - 'improve readme'
 ---
 
 # ccd-readme
@@ -16,7 +16,7 @@ Generate or improve a README.md using only verified repository artifacts. Never 
 
 ### Step 1: Inspect Project
 
-Run `${CLAUDE_SKILL_DIR}/scripts/inspect-project.sh` against the target directory. Parse the JSON output into working memory as `ProjectInspectionResult`.
+Run `"${CLAUDE_SKILL_DIR}/scripts/inspect-project.sh"` against the target directory. Parse the JSON output into working memory as `ProjectInspectionResult`. Scripts are executable (`chmod +x`) and invoked directly; the executable bit is guaranteed by the install process and verified by `scripts/lint-shell.sh`.
 
 If the script exits non-zero, report the error and stop.
 
@@ -24,7 +24,7 @@ If the script exits non-zero, report the error and stop.
 
 If `has_nested_projects` is true, invoke `AskUserQuestion`:
 
-```
+```text
 Nested project directories detected. Which scope should the README cover?
 
 Options:
@@ -39,7 +39,7 @@ Wait for response before continuing. If user cancels, stop.
 
 If `project_name` equals the directory basename AND `description` is null AND `languages` is empty AND `dependencies` is null AND `existing_docs` is empty, invoke `AskUserQuestion`:
 
-```
+```text
 Insufficient verified information found to generate a meaningful README.
 
 What is the purpose of this project? (Answer in 1-2 sentences)
@@ -95,6 +95,7 @@ If user declines, note in output that licensing was skipped and omit the license
 ### Step 6: LICENSE.md Creation
 
 If user selected a license in Step 4:
+
 1. Write LICENSE.md to target directory with populated template content
 2. If LICENSE.md already exists and user chose to reconcile, overwrite with selected license
 
@@ -115,7 +116,7 @@ If validation fails, report the failure and do not mark the run as successful.
 
 After completion, report:
 
-```
+```text
 README: [created|updated|unchanged] at [path]
 LICENSE: [created|updated|skipped] at [path]
 Sections: [N] total, [N] preserved, [N] added, [N] corrected

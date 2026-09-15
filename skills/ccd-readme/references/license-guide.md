@@ -4,12 +4,12 @@
 
 ## Supported Licenses
 
-| SPDX ID | Type | Best For | Key Characteristics |
-| --------- | ------ | ---------- | ------------------- |
-| MIT | Permissive | Libraries, utilities, small projects | Minimal restrictions, broad compatibility |
-| Apache-2.0 | Permissive | Corporate projects, APIs, large codebases | Patent grant, trademark protection, NOTICE file |
-| ISC | Permissive | Minimalist projects, embedded systems | Simplest permissive license, functionally equivalent to MIT |
-| GPL-3.0-only | Copyleft | Applications requiring derivative work sharing | Strong copyleft, ensures downstream freedom |
+| SPDX ID      | Type       | Best For                                       | Key Characteristics                                         |
+| ------------ | ---------- | ---------------------------------------------- | ----------------------------------------------------------- |
+| MIT          | Permissive | Libraries, utilities, small projects           | Minimal restrictions, broad compatibility                   |
+| Apache-2.0   | Permissive | Corporate projects, APIs, large codebases      | Patent grant, trademark protection, NOTICE file             |
+| ISC          | Permissive | Minimalist projects, embedded systems          | Simplest permissive license, functionally equivalent to MIT |
+| GPL-3.0-only | Copyleft   | Applications requiring derivative work sharing | Strong copyleft, ensures downstream freedom                 |
 
 ## Recommendation Criteria
 
@@ -24,7 +24,7 @@ When recommending a license, evaluate in this order:
 
 Present exactly this structure when prompting:
 
-```
+```text
 Which license would you like for this project?
 
 ⚠️ This is not legal advice. Consult an attorney for legal guidance.

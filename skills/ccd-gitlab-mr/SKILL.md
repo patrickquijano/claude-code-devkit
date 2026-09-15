@@ -37,7 +37,7 @@ Questions in this skill follow the repository-wide standard in [`.claude/rules/s
 
 **Update mode adds at most two more**, neither of which fires when it has nothing to ask: one at Step 1 to pick among several candidates or to decide a closed one's fate, and one at Step 7 for the description. The create path's count is unchanged.
 
-Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-gitlab-mr/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
+Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `"${CLAUDE_SKILL_DIR}/scripts/<name>.sh"` — the substitution variable resolves to this skill's own directory without naming it, so a rename touches the frontmatter and the directory and nothing else. Scripts are executable (`chmod +x`) and invoked directly; the executable bit is guaranteed by the install process and verified by `scripts/lint-shell.sh`. Always quote the variable so a plugin root containing a space does not split.
 
 ## Workflow
 
@@ -97,7 +97,7 @@ Branch absent from the remote → push it: `git push -u origin <branch>`.
 **Step 2 — Rank the target-branch candidates.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
+"${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
 ```
 
 Tab separated, repo default branch first then newest commit first: `<branch>  local|remote|both  <YYYY-MM-DD>  <tags>`. Drop the source branch from the output, then take the top four.
@@ -105,7 +105,7 @@ Tab separated, repo default branch first then newest commit first: `<branch>  lo
 **Step 3 — Rank the project members.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-gitlab-mr/scripts/member-options.sh"
+"${CLAUDE_PLUGIN_ROOT}/skills/ccd-gitlab-mr/scripts/member-options.sh"
 glab api user --output ndjson # the current user, for the assignee default
 ```
 
@@ -321,8 +321,6 @@ Hard rules, no deviation:
 | Current user                      | `glab api user`                                                                                   |
 | Create MR                         | `glab mr create` (see Step 9)                                                                     |
 | Create MR, fallback               | MCP `save_merge_request` with `merge_request_iid` omitted                                         |
-
-Every command and flag in this table, what it does, and the `glab` version it was verified against are recorded in [`docs/forge-review-requests.md`](../../docs/forge-review-requests.md), together with the GitHub equivalents and the places the two forges differ — including the reviewer prefix. Check a claim there before changing one here.
 
 Neither `glab` nor the GitLab MCP server available → the same operations map to the REST API: `POST /projects/:id/merge_requests`, `PUT /projects/:id/merge_requests/:iid`, `GET /projects/:id/repository/branches`, `GET /projects/:id/members/all`.
 

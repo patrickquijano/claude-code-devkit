@@ -72,7 +72,7 @@ Read a step's file before running that step. Each self-contained.
 
 ## Scripts — run them, do not re-derive them
 
-Deterministic git logic lives in `scripts/`. Those paths are relative to **this SKILL.md's own directory**, not the repo you are working in — the run's working directory is the target repo, where `scripts/` means something else or nothing at all. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
+Deterministic git logic lives in `scripts/`. Those paths are relative to **this SKILL.md's own directory**, not the repo you are working in — the run's working directory is the target repo, where `scripts/` means something else or nothing at all. Invoke them as `"${CLAUDE_SKILL_DIR}/scripts/<name>.sh"` — the substitution variable resolves to this skill's own directory without naming it, so a rename touches the frontmatter and the directory and nothing else. Scripts are executable (`chmod +x`) and invoked directly; the executable bit is guaranteed by the install process and verified by `scripts/lint-shell.sh`. Always quote the variable so a plugin root containing a space does not split.
 
 Step 0 resolves `<skill-dir>` once and records it as `skill_dir` in the state file. Every later step reads it from there rather than guessing the install location again.
 

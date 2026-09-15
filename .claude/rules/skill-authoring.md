@@ -28,16 +28,19 @@ Reasoning and sources: [`docs/skill-authoring-practices.md`](../../docs/skill-au
 
 ## Referencing bundled files
 
-- A skill's own scripts and reference files: `sh "${CLAUDE_SKILL_DIR}/scripts/<name>.sh"`.
+- A skill's own scripts and reference files: `"${CLAUDE_SKILL_DIR}/scripts/<name>.sh"`.
   `${CLAUDE_SKILL_DIR}` does not spell out the skill's directory name, so a rename touches the
-  frontmatter and the directory and nothing else.
+  frontmatter and the directory and nothing else. Scripts MUST be executable (`chmod +x`) and
+  invoked directly — no `sh` prefix. The executable bit is guaranteed by the install process and
+  verified by `scripts/lint-shell.sh`.
 - Files genuinely shared between skills:
-  `sh "${CLAUDE_PLUGIN_ROOT}/skills/<owner>/scripts/<name>.sh"`. Three qualify today, each existing
+  `"${CLAUDE_PLUGIN_ROOT}/skills/<owner>/scripts/<name>.sh"`. Three qualify today, each existing
   exactly once: `branch-options.sh` in `ccd-branch-push`, and `forge-detect.sh` and
   `cleanup-plan.sh` in `ccd-speckit-run`. `ccd-pipeline-fix` reaches `forge-detect.sh` this way
   rather than carrying a copy. A fork of any of them is the regression, not the sharing.
-- Always `sh <path>`, never direct execution — nothing documents that the executable bit survives
-  installation. Always quote the variable, so a plugin root containing a space does not split.
+- Always quote the variable, so a plugin root containing a space does not split.
+- Every shell script MUST be POSIX-compliant (`#!/bin/sh`), fail fast (`set -eu` at the top),
+  and use only native commands. No external dependencies unless explicitly documented.
 
 ## The three budgets
 
@@ -48,6 +51,24 @@ Reasoning and sources: [`docs/skill-authoring-practices.md`](../../docs/skill-au
 - Only the first 5,000 tokens of a skill survive compaction. Anything a long-running skill must
   still know at its last step belongs in a file it writes, not in its own prose — the way
   `ccd-speckit-run` keeps run state in `.specify/.speckit-run-state.json`.
+
+## Operational guidelines
+
+Every skill MUST adhere to the following operational contracts. These are non-negotiable and apply to all skills in this repository:
+
+- **Default shell only.** Skills MUST use the system default shell (`/bin/sh`). Overriding the shell (e.g., `#!/bin/bash`, `zsh`, `fish`) is forbidden.
+- **Native commands only.** Skills MUST use native POSIX utilities (`git`, `grep`, `sed`, `awk`, etc.). External dependencies or non-standard tools are prohibited unless explicitly documented in the skill's frontmatter.
+- **POSIX compliance.** All bundled shell scripts MUST be POSIX-compliant (`#!/bin/sh` at the shebang line).
+- **Executable scripts.** All bundled shell scripts MUST have the executable bit set (`chmod +x`). The install process guarantees this; `scripts/lint-shell.sh` verifies it.
+- **Fail fast.** All bundled shell scripts MUST include `set -eu` (or `set -euf`) immediately after the shebang to abort on any error or unset variable.
+- **Error memory and resolution.** Skills MUST track issues encountered during execution and their resolutions. When the same issue recurs, the skill MUST apply the previously successful resolution automatically. This state is ephemeral (session-scoped) unless persisted via the project memory system.
+- **Self-learning.** Skills MUST adapt behavior based on prior executions within the same session, refining heuristics or skipping known-failing paths when safe to do so.
+- **Self-healing.** Skills MUST attempt automatic recovery from transient failures (e.g., retrying network calls, re-running idempotent steps) before surfacing errors to the user.
+- **No hallucination.** Skills MUST NOT fabricate data, paths, branch names, or outcomes. Every assertion must be grounded in tool output or verified state.
+- **No assumptions.** Skills MUST NOT assume repository structure, remote names, branch existence, or user intent. Verify everything explicitly.
+- **Path confinement.** Skills MUST NOT read, write, or scan any path outside the current project directory (`$PWD` or the git work tree root). Cross-project access is forbidden unless explicitly authorized.
+- **Standalone by default.** Skills MUST NOT reference external files, URLs, or resources outside their own directory unless explicitly mentioned in this rule set or the skill's frontmatter. Shared scripts under `${CLAUDE_PLUGIN_ROOT}` are the sole exception.
+- **Proactive triggering.** Skill descriptions MUST be written to trigger easily and proactively. The first sentence of `description` must state the primary use case clearly enough for automatic dispatch.
 
 ## Asking the user something
 

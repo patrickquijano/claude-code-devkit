@@ -37,7 +37,7 @@ Questions in this skill follow the repository-wide standard in [`.claude/rules/s
 
 **Update mode adds at most two more**, neither of which fires when it has nothing to ask: one at Step 1 to pick among several candidates or to decide a closed one's fate, and one at Step 7 for the description. The create path's count is unchanged.
 
-Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-github-pr/scripts/<name>.sh` — the substitution variable a plugin's own files use to reach what they ship with, so the path holds wherever the plugin is installed and no install location is written down. Use `sh` explicitly; the executable bit does not survive every install path.
+Bundled `scripts/` and `templates/` paths below are relative to **this SKILL.md's own directory**, not the repo you are working in. Invoke them as `"${CLAUDE_SKILL_DIR}/scripts/<name>.sh"` — the substitution variable resolves to this skill's own directory without naming it, so a rename touches the frontmatter and the directory and nothing else. Scripts are executable (`chmod +x`) and invoked directly; the executable bit is guaranteed by the install process and verified by `scripts/lint-shell.sh`. Always quote the variable so a plugin root containing a space does not split.
 
 ## Workflow
 
@@ -54,7 +54,7 @@ Honored → skip the **Step 8** wait, still show the summary, and **name the phr
 **Step 1 — Preflight.** Establish the head branch and the tree it lives in, and stop early on anything that makes the run pointless. Do all of this before Step 3's reviewer fetch, so an aborted run never pays for it.
 
 ```bash
-sh "${CLAUDE_SKILL_DIR}/scripts/preflight.sh"
+"${CLAUDE_SKILL_DIR}/scripts/preflight.sh"
 ```
 
 The script runs every check in order — git work tree, head branch, remote URL, `gh` availability and authentication, repo metadata, remote branch presence, existing PRs — and exits non-zero with a named reason at the first failure. Parse its pipe-separated output (`BRANCH|…`, `GIT_DIR|…|…`, `REMOTE_URL|…`, `REPO_JSON|…`, `REMOTE_BRANCH|present|absent`, `PR_LIST|…`) rather than re-running the individual commands.
@@ -91,7 +91,7 @@ Branch absent from the remote → push it: `git push -u origin <branch>`.
 **Step 2 — Rank the base-branch candidates.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
+"${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
 ```
 
 Tab separated, repo default branch first then newest commit first: `<branch>  local|remote|both  <YYYY-MM-DD>  <tags>`. Drop the head branch from the output, then take the top four.
@@ -99,8 +99,8 @@ Tab separated, repo default branch first then newest commit first: `<branch>  lo
 **Step 3 — Rank the reviewer and assignee candidates.**
 
 ```bash
-sh "${CLAUDE_SKILL_DIR}/scripts/reviewer-options.sh"
-sh "${CLAUDE_SKILL_DIR}/scripts/get-current-user.sh"
+"${CLAUDE_SKILL_DIR}/scripts/reviewer-options.sh"
+"${CLAUDE_SKILL_DIR}/scripts/get-current-user.sh"
 ```
 
 Tab separated, best candidate first: `<handle>  <name|->  user|team  codeowner|-  recent-committer|-`. CODEOWNERS entries who also committed on this branch rank first, then other CODEOWNERS entries, then other recent committers, then everyone else assignable. Take the top four.
@@ -146,7 +146,7 @@ The Reviewers question in update mode excludes people already requested from its
 **In update mode, probe first.** Rebasing and force-pushing rewrites the branch's published history, which detaches review threads from the lines they point at. The comments survive; the code they were about does not. So before rebasing, establish whether the selected pull request carries **review activity**:
 
 ```bash
-sh "${CLAUDE_SKILL_DIR}/scripts/review-activity.sh" <number>
+"${CLAUDE_SKILL_DIR}/scripts/review-activity.sh" <number>
 ```
 
 **Review activity** means a submitted review, an approval or a change request, or a comment thread attached to a line of the diff. A plain conversation comment on the pull request is **not** review activity, and neither is anything a bot posted: neither is anchored to a commit, so neither is broken by a rewrite. Counting them would suppress the rebase on nearly every run, and on a repository with commenting automation it would suppress it from the first push onward — which is indistinguishable from removing the rebase.
@@ -156,7 +156,7 @@ Review activity **present** → do not rebase, do not force-push. Report the sup
 Review activity **absent**, or create mode → rebase and force-push exactly as below. The create path is unchanged.
 
 ```bash
-sh "${CLAUDE_SKILL_DIR}/scripts/rebase-branch.sh" < base > [upstream-remote]
+"${CLAUDE_SKILL_DIR}/scripts/rebase-branch.sh" < base > [upstream-remote]
 ```
 
 Pass `upstream` as the second argument on a fork; omit it (defaults to `origin`) otherwise. The script fetches, rebases, and force-pushes with lease in one call. On conflict it prints `REBASE|conflict` and exits 3 without resolving; the caller decides. Rebasing onto the fork's own stale copy of the base branch is the silent failure here — it succeeds, and the PR still shows a diff against commits the parent moved past.
@@ -170,7 +170,7 @@ Never advance to Step 6 until the rebase is either clean or resolved-and-approve
 **Step 6 — Project convention and template check.** GitHub honors a PR template at any of six paths, and the filename is case-insensitive. Look for all of them:
 
 ```bash
-sh "${CLAUDE_SKILL_DIR}/scripts/detect-templates.sh"
+"${CLAUDE_SKILL_DIR}/scripts/detect-templates.sh"
 ```
 
 Resolve in this order:
@@ -191,7 +191,7 @@ Fill the template's own prompts; never leave an HTML comment or an italic placeh
 **Update mode: the existing body is read before anything is proposed.**
 
 ```bash
-sh "${CLAUDE_SKILL_DIR}/scripts/get-pr-body.sh" <number>
+"${CLAUDE_SKILL_DIR}/scripts/get-pr-body.sh" <number>
 ```
 
 `gh pr edit --body` and `--body-file` **replace the body outright.** There is no append mode in `gh` and no merge on GitHub's side. The body is where reviewers tick checklist items and where people write notes they were asked to record, and none of that is recoverable once overwritten. This is the only irreversible thing this skill can do.
@@ -255,11 +255,11 @@ printf '%s\n' "$description" > "$tmp"
 Write the generated description to a temporary file before invoking the script:
 
 ```sh
-project_slug=$(sh "${CLAUDE_SKILL_DIR}/scripts/project-slug.sh") || exit 1
+project_slug=$("${CLAUDE_SKILL_DIR}/scripts/project-slug.sh") || exit 1
 tmp="/tmp/${project_slug}/pr-body-$$.md"
 mkdir -p "$(dirname "$tmp")"
 # write body to "$tmp" (the model writes this; the script reads it)
-sh "${CLAUDE_SKILL_DIR}/scripts/create-pr.sh" '<base>' '<head>' '<title>' "$tmp" '<assignee>' '<reviewers>' [--draft]
+"${CLAUDE_SKILL_DIR}/scripts/create-pr.sh" '<base>' '<head>' '<title>' "$tmp" '<assignee>' '<reviewers>' [--draft]
 rm -f "$tmp"
 ````
 
@@ -268,11 +268,11 @@ Pass an empty string for `<assignee>` when unassigned, and for `<reviewers>` whe
 **Update mode** uses the same temp-file pattern with the edit script:
 
 ```sh
-project_slug=$(sh "${CLAUDE_SKILL_DIR}/scripts/project-slug.sh") || exit 1
+project_slug=$("${CLAUDE_SKILL_DIR}/scripts/project-slug.sh") || exit 1
 tmp="/tmp/${project_slug}/pr-body-$$.md"
 mkdir -p "$(dirname "$tmp")"
 # write updated body to "$tmp"
-sh "${CLAUDE_SKILL_DIR}/scripts/edit-pr.sh" "$tmp" [--title '<title>'] [--base '<base>'] [--add-reviewer '<list>'] [--add-assignee '<login>'] < number > --body-file
+"${CLAUDE_SKILL_DIR}/scripts/edit-pr.sh" "$tmp" [--title '<title>'] [--base '<base>'] [--add-reviewer '<list>'] [--add-assignee '<login>'] < number > --body-file
 rm -f "$tmp"
 ```
 
@@ -283,7 +283,7 @@ Only pass the fields that actually changed. When no field would change, skip the
 Build the call from **exactly the options that were selected**, never from a fixed string:
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/merge-options.sh" '<url>' [--auto] [--squash] [--delete-branch]
+"${CLAUDE_SKILL_DIR}/scripts/merge-options.sh" '<url>' [--auto] [--squash] [--delete-branch]
 ```
 
 | Selected                        | Flag              |
@@ -349,10 +349,8 @@ GitHub's squash merge takes the commit subject from the PR title and the commit 
 | Get existing PR body                   | `sh <skill-dir>/scripts/get-pr-body.sh <number>`                                                                           |
 | Create PR                              | `sh <skill-dir>/scripts/create-pr.sh <base> <head> <title> <body-file> [assignee] [reviewers] [--draft]`                   |
 | Update PR                              | `sh <skill-dir>/scripts/edit-pr.sh <number> [--body-file F] [--title T] [--base B] [--add-reviewer R] [--add-assignee A]`  |
-| Arm auto-merge                         | `sh <skill-dir>/scripts/merge-options.sh <url> [--auto] [--squash] [--delete-branch]`                                      |
+| Arm auto-merge                         | `<skill-dir>/scripts/merge-options.sh <url> [--auto] [--squash] [--delete-branch]`                                         |
 | Available labels                       | `gh label list`                                                                                                            |
-
-Every command and flag in this table, what it does, and the `gh` version it was verified against are recorded in [`docs/forge-review-requests.md`](../../docs/forge-review-requests.md), together with the GitLab equivalents and the places the two forges differ. Check a claim there before changing one here.
 
 `repos/{owner}/{repo}/collaborators` is **not** a usable member source: it returns 403 without push access on the repo. `assignableUsers` resolves for a read-only token, which is why the script uses it.
 

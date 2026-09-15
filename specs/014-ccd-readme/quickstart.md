@@ -186,7 +186,7 @@ grep -cE '^\s*(if|for|while|case|do|done|fi|esac)\b' skills/ccd-readme/SKILL.md
 
 ```sh
 rm -rf /tmp/test-project-no-readme /tmp/test-project-existing-readme \
-       /tmp/test-project-no-license /tmp/test-project-empty
+  /tmp/test-project-no-license /tmp/test-project-empty
 ```
 
 ## Notes

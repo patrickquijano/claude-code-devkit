@@ -21,11 +21,11 @@ Empty argument → resolve the most recent failed run on the current branch and 
 
 ## Scripts
 
-One script is this skill's own. Invoke as `sh "${CLAUDE_SKILL_DIR}/scripts/<name>.sh"` — that variable resolves to this skill's own directory without naming it, so a rename touches the frontmatter and the directory and nothing else.
+One script is this skill's own. Invoke as `"${CLAUDE_SKILL_DIR}/scripts/<name>.sh"` — that variable resolves to this skill's own directory without naming it, so a rename touches the frontmatter and the directory and nothing else. Scripts are executable (`chmod +x`) and invoked directly; the executable bit is guaranteed by the install process and verified by `scripts/lint-shell.sh`.
 
 One belongs to a sibling and is reached through `${CLAUDE_PLUGIN_ROOT}`. It is **not** copied here; a fork of a shared script is the regression this plugin already records against `branch-options.sh`.
 
-Always `sh <path>`, always quoted; the executable bit does not survive every install.
+Always quote the variable so a plugin root containing a space does not split.
 
 | Script                                                                 | Prints                                                                                                  |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
@@ -46,7 +46,7 @@ Always `sh <path>`, always quoted; the executable bit does not survive every ins
 Read-only. Establishes what this run can do before it promises anything.
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/pipeline-evidence.sh"
+"${CLAUDE_SKILL_DIR}/scripts/pipeline-evidence.sh"
 ```
 
 Record: `forge`, `retrieval_path`, `dispatch_target`.
