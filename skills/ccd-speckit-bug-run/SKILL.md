@@ -40,7 +40,7 @@ Always quote the variable so a plugin root containing a space does not split.
 The outcome reader is invoked after every stage, so its form is given here once rather than repeated at each:
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/bug-outcome.sh" ".specify/bugs/<slug>"
+"${CLAUDE_SKILL_DIR}/scripts/bug-outcome.sh" ".specify/bugs/<slug>"
 ```
 
 Act on what they print. Never reimplement their rules in prose, never override a verdict by hand, never re-read a report to second-guess `bug-outcome.sh` — a second opinion from the same session is not evidence.
@@ -85,7 +85,7 @@ Copy into your response, tick off as you go:
 Nothing is dispatched and nothing is written until this passes.
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/bug-preflight.sh" "<slug or omit>"
+"${CLAUDE_SKILL_DIR}/scripts/bug-preflight.sh" "<slug or omit>"
 ```
 
 Act on it:
@@ -108,7 +108,7 @@ Then two probes whose results are read much later, and must not be re-derived at
 **The forge.** Step 4b raises a pull request on GitHub and a merge request on GitLab, through two different skills. Which one — if either — is decided **here**, from the remote:
 
 ```sh
-sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run/scripts/forge-detect.sh"
+"${CLAUDE_PLUGIN_ROOT}/skills/ccd-speckit-run/scripts/forge-detect.sh"
 ```
 
 Record its `forge`, `host`, `review-skill`, `cli` and `cli-status` lines as `tooling.forge`, `tooling.forge_host`, `tooling.review_skill`, `tooling.forge_cli` and `tooling.forge_cli_status`. `other` and `none` are ordinary results meaning this run has no review-request step; nothing else changes. Never re-derive the host in prose — that script handles scp-like URLs, embedded credentials, ports, and the self-hosted case where the hostname says nothing.

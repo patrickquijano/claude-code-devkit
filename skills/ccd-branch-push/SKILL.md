@@ -49,7 +49,7 @@ git rev-parse --git-dir --git-common-dir # these differ inside a worktree
 
 Stop and say why, rather than proceeding, when any of these holds:
 
-- Not inside a git work tree (`sh ${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh` exits 1 and says so).
+- Not inside a git work tree (`${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh` exits 1 and says so).
 - No remote configured — the Step 7 push has nowhere to go.
 - **No remote named `origin`.** Step 7 pushes to `origin` by name, so a repo whose only remote is `upstream` or `fork` passes a bare "is there a remote" check and then dies at the push, after the approval gate. Name the remotes that do exist and ask with `AskUserQuestion` which to push to, or stop. Recommend the remote the current branch already tracks where there is one, and say so; where nothing is tracked, **no recommendation is defensible** — which of `upstream` and `fork` is the right target is a fact about the user's workflow, not about the repository. Say that rather than picking the first one listed. Never assume the single remote is `origin` — use the name the user picked everywhere Step 7 says `origin`.
 
@@ -68,7 +68,7 @@ git diff --cached
 **Step 3 — Pick the base branch.** Run the bundled ranking script and take the **top four** lines as the option set:
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
+"${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
 ```
 
 Output is tab separated, repo default branch first then newest commit first: `<branch>  local|remote|both  <YYYY-MM-DD>  <tags>`, where `<tags>` is a comma-joined subset of `default` and `current`, or `-`.

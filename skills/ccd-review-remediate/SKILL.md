@@ -56,7 +56,7 @@ Read the `verdict` line, never the exit status. `exit 0` means the check ran.
 ## Step 0 — Preflight
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/preflight.sh"
+"${CLAUDE_SKILL_DIR}/scripts/preflight.sh"
 ```
 
 Record: `forge`, `cli_status`, `cr_id`, `head_sha`, `dirty_tree`.
@@ -66,7 +66,7 @@ Gate G1–G3 from `contracts/gate-decision.md`: stop on unsupported-forge, no-ch
 ## Step 1 — Context Collection
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/collect-context.sh"
+"${CLAUDE_SKILL_DIR}/scripts/collect-context.sh"
 ```
 
 Populate ChangeRequest entity fields per `data-model.md`. Detect self-author (FR-047). Cache permission probe result via `permission-check.sh` (CHK010).

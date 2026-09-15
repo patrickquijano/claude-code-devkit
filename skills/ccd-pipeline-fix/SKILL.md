@@ -46,7 +46,7 @@ Always quote the variable so a plugin root containing a space does not split.
 Read-only. Establishes what this run can do before it promises anything.
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/pipeline-evidence.sh"
+"${CLAUDE_SKILL_DIR}/scripts/pipeline-evidence.sh"
 ```
 
 Record: `forge`, `retrieval_path`, `dispatch_target`.

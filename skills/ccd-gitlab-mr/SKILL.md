@@ -20,8 +20,6 @@ Step 1 establishes which one this run is in, and Steps 4, 5, 7, 8 and 9 read it.
 - **Create** — the branch has no merge request whose source is this branch, or the user chose to open a fresh one. This is the path an unchanged first run takes, and nothing about it changed.
 - **Update** — an existing merge request was found and selected. The run brings it up to date rather than refusing, and everything it would change is shown with both values before anything is written.
 
-The reasoning behind every forge-specific rule below, its source, and the tool version it was verified against are in [`docs/forge-review-requests.md`](../../docs/forge-review-requests.md). The short imperative form is in [`.claude/rules/forge-review-requests.md`](../../.claude/rules/forge-review-requests.md), which loads when this file is opened.
-
 ## Asking the user
 
 Questions in this skill follow the repository-wide standard in [`.claude/rules/skill-authoring.md`](../../.claude/rules/skill-authoring.md).
@@ -97,7 +95,7 @@ Branch absent from the remote → push it: `git push -u origin <branch>`.
 **Step 2 — Rank the target-branch candidates.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
+"${CLAUDE_PLUGIN_ROOT}/skills/ccd-branch-push/scripts/branch-options.sh"
 ```
 
 Tab separated, repo default branch first then newest commit first: `<branch>  local|remote|both  <YYYY-MM-DD>  <tags>`. Drop the source branch from the output, then take the top four.
@@ -105,7 +103,7 @@ Tab separated, repo default branch first then newest commit first: `<branch>  lo
 **Step 3 — Rank the project members.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/skills/ccd-gitlab-mr/scripts/member-options.sh"
+"${CLAUDE_PLUGIN_ROOT}/skills/ccd-gitlab-mr/scripts/member-options.sh"
 glab api user --output ndjson # the current user, for the assignee default
 ```
 
@@ -321,8 +319,6 @@ Hard rules, no deviation:
 | Current user                      | `glab api user`                                                                                   |
 | Create MR                         | `glab mr create` (see Step 9)                                                                     |
 | Create MR, fallback               | MCP `save_merge_request` with `merge_request_iid` omitted                                         |
-
-Every command and flag in this table, what it does, and the `glab` version it was verified against are recorded in [`docs/forge-review-requests.md`](../../docs/forge-review-requests.md), together with the GitHub equivalents and the places the two forges differ — including the reviewer prefix. Check a claim there before changing one here.
 
 Neither `glab` nor the GitLab MCP server available → the same operations map to the REST API: `POST /projects/:id/merge_requests`, `PUT /projects/:id/merge_requests/:iid`, `GET /projects/:id/repository/branches`, `GET /projects/:id/members/all`.
 

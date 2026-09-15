@@ -36,7 +36,7 @@ Every deterministic step lives in a script that ships with this skill. Invoke th
 ### 1. Preflight — before anything else
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/conflict-preflight.sh"
+"${CLAUDE_SKILL_DIR}/scripts/conflict-preflight.sh"
 ```
 
 | Exit | Meaning                         | Do                                                                                                                                                                                                                                                                                           |
@@ -64,7 +64,7 @@ Only when the branch is behind and no operation is in progress. Present the ways
 ### 3. Identify
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/conflict-list.sh"
+"${CLAUDE_SKILL_DIR}/scripts/conflict-list.sh"
 ```
 
 One line per conflicted path: `path`, `kind`, `stages`, `text|binary`.
@@ -115,7 +115,7 @@ Where the kind is `both-modified` and all three stages are present, showing the 
 ### 5. Apply what was approved
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/conflict-apply.sh" <mechanism> <path>
+"${CLAUDE_SKILL_DIR}/scripts/conflict-apply.sh" <mechanism> <path>
 ```
 
 One path per invocation, only what the user approved.
@@ -147,7 +147,7 @@ After every applied resolution, run `conflict-list.sh` again.
 - **The same set as last pass** → **no progress.** Report that the resolution did not resolve what it targeted, then `AskUserQuestion`, `header: "No progress"`: try a different resolution for the same paths (recommended — the previous choice demonstrably did not take, and changing it is the only move that can), open the files and resolve by hand outside this skill, or abort the whole operation. Never loop.
 
 ```sh
-sh "${CLAUDE_SKILL_DIR}/scripts/conflict-conclude.sh"
+"${CLAUDE_SKILL_DIR}/scripts/conflict-conclude.sh"
 ```
 
 | Exit | Meaning                             | Do                                                                                                                                                                                                                                                                                                   |
